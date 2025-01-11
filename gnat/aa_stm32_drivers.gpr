@@ -1,0 +1,60 @@
+--  SPDX-FileCopyrightText: 2025 Max Reznik <reznikmm@gmail.com>
+--
+--  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+----------------------------------------------------------------
+
+with "../config/aa_stm32_drivers_config.gpr";
+project Aa_Stm32_Drivers is
+
+   BOARD := external ("BOARD", "stm32f429disco");
+
+   for Runtime ("Ada") use "light-tasking-" & BOARD;
+   for Target use "arm-eabi";
+
+   for Library_Name use "aa_stm32";
+   for Library_Version use Project'Library_Name & ".so." & Aa_Stm32_Drivers_Config.Crate_Version;
+
+   for Source_Dirs use
+     ("../source/",
+      "../source/" & BOARD);
+
+   for Object_Dir use "../obj/" & Aa_Stm32_Drivers_Config.Build_Profile;
+   for Create_Missing_Dirs use "True";
+   for Library_Dir use "../lib";
+
+   type Library_Type_Type is ("relocatable", "static", "static-pic");
+   Library_Type : Library_Type_Type :=
+     external ("AA_STM32_DRIVERS_LIBRARY_TYPE", external ("LIBRARY_TYPE", "static"));
+   for Library_Kind use Library_Type;
+
+   Ada_Compiler_Switches := AA_STM32_Drivers_Config.Ada_Compiler_Switches;
+
+   package Compiler is
+      for Default_Switches ("Ada") use Ada_Compiler_Switches;
+
+      for Switches ("s-textio.adb")
+        use Ada_Compiler_Switches & ("-gnatg");
+
+      for Switches ("i-stm32-exti.ads")
+        use Ada_Compiler_Switches & ("-gnatg");
+
+      for Switches ("i-stm32-i2c.ads")
+        use Ada_Compiler_Switches & ("-gnatg");
+
+      for Switches ("i-stm32-spi.ads")
+        use Ada_Compiler_Switches & ("-gnatg");
+
+      for Switches ("i-stm32-tim.ads")
+        use Ada_Compiler_Switches & ("-gnatg");
+
+   end Compiler;
+
+   package Binder is
+      for Switches ("Ada") use ("-Es"); --  Symbolic traceback
+   end Binder;
+
+   package Install is
+      for Artifacts (".") use ("share");
+   end Install;
+
+end Aa_Stm32_Drivers;

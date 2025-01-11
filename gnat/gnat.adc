@@ -1,0 +1,1 @@
+pragma Warnings (Off, "STM32"" is an internal GNAT");
