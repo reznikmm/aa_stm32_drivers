@@ -21,5 +21,12 @@ gnat_arm_elf = "*"
 a0b_callbacks = "~0.2.0"
 cortex_m = "^1.0.0"
 
+[configuration.variables]
+AA_MCU = {type = "Enum", values = ["stm32f4", "stm32f429disco"]}
+
 [configuration.values]
 cortex_m.core = "m4f"
+
+[[actions]]
+type = "test"
+command = ["alr", "-C", "demos", "build"]

@@ -1,0 +1,25 @@
+name = "demos"
+description = "STM32 driver demos"
+version = "0.1.0-dev"
+
+authors = ["Max Reznik"]
+maintainers = ["Max Reznik <reznikmm@gmail.com>"]
+maintainers-logins = ["reznikmm"]
+licenses = "Apache-2.0 WITH LLVM-exception"
+website = ""
+tags = []
+
+executables = ["demos"]
+
+[configuration]
+generate_ada = false
+generate_c = false
+
+[[depends-on]]
+aa_stm32_drivers = "~0.1.0"
+
+[[pins]]
+aa_stm32_drivers = { path='..' }
+
+[configuration.values]
+aa_stm32_drivers.aa_mcu = "stm32f4"
