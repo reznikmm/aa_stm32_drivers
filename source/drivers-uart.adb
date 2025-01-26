@@ -109,9 +109,11 @@ package body Drivers.UART is
 
          Output_Buffer : String (1 .. Positive'Last)
            with Import, Address => Self.Output.Buffer;
+
+         SR : constant Interfaces.STM32.USART.SR_Register := Periph.SR;
+         --  Keep SR copy to avoid losing clear-on-read bits
       begin
-         if Periph.CR1.RXNEIE /= 0 and then Periph.SR.RXNE /= 0 then
-            Periph.SR.RXNE := 0;
+         if Periph.CR1.RXNEIE /= 0 and then SR.RXNE /= 0 then
             Input_Buffer (Input.Next) := Character'Val (Periph.DR.DR);
             Input.Next := Input.Next + 1;
 
@@ -122,9 +124,11 @@ package body Drivers.UART is
             end if;
          end if;
 
-         if Periph.CR1.TXEIE /= 0 and then Periph.SR.TXE /= 0 then
-            Periph.SR.TXE := 0;
-            Periph.DR.DR := Character'Pos (Output_Buffer (Output.Next));
+         if Periph.CR1.TXEIE /= 0 and then SR.TXE /= 0 then
+            Periph.DR :=
+              (DR     => Character'Pos (Output_Buffer (Output.Next)),
+               others => 0);
+
             Output.Next := Output.Next + 1;
 
             if Output.Next > Output.Last then
@@ -134,7 +138,7 @@ package body Drivers.UART is
             end if;
          end if;
 
-         if Periph.CR1.TCIE /= 0 and then Periph.SR.TC /= 0 then
+         if Periph.CR1.TCIE /= 0 and then SR.TC /= 0 then
             --  Change UART speed on transmission complete
             Periph.CR1.TE := 0;  --  Transmitter disable
             Periph.CR1.RE := 0;  --  Receiver disable
@@ -147,12 +151,10 @@ package body Drivers.UART is
               Interfaces.STM32.USART.BRR_DIV_Mantissa_Field
                 (Self.Divider / 100);
 
-            Periph.SR.TC := 0;
             Periph.CR1.TCIE := 0;  --  disable transmission complete interrupt
             Periph.CR1.TE := 1;  --  Transmitter enable
             Periph.CR1.RE := 1;  --  Receiver enable
          end if;
-
       end On_Interrupt;
 
       ---------------
@@ -267,6 +269,7 @@ package body Drivers.UART is
 
       procedure On_Interrupt (Self : in out Internal_Data) is
          use type Interfaces.STM32.Bit;
+         use type Interfaces.STM32.UInt32;
 
          Input : Buffer_Record renames Self.Input;
 
@@ -277,9 +280,11 @@ package body Drivers.UART is
 
          Output_Buffer : String (1 .. Positive'Last)
            with Import, Address => Self.Output.Buffer;
+
+         SR : constant Interfaces.STM32.USART.SR_Register_1 := Periph.SR;
+         --  Keep SR copy to avoid losing clear-on-read bits
       begin
-         if Periph.CR1.RXNEIE /= 0 and then Periph.SR.RXNE /= 0 then
-            Periph.SR.RXNE := 0;
+         if Periph.CR1.RXNEIE /= 0 and then SR.RXNE /= 0 then
             Input_Buffer (Input.Next) := Character'Val (Periph.DR.DR);
             Input.Next := Input.Next + 1;
 
@@ -290,9 +295,11 @@ package body Drivers.UART is
             end if;
          end if;
 
-         if Periph.CR1.TXEIE /= 0 and then Periph.SR.TXE /= 0 then
-            Periph.SR.TXE := 0;
-            Periph.DR.DR := Character'Pos (Output_Buffer (Output.Next));
+         if Periph.CR1.TXEIE /= 0 and then SR.TXE /= 0 then
+            Periph.DR :=
+              (DR     => Character'Pos (Output_Buffer (Output.Next)),
+               others => 0);
+
             Output.Next := Output.Next + 1;
 
             if Output.Next > Output.Last then
@@ -300,6 +307,24 @@ package body Drivers.UART is
                A0B.Callbacks.Emit (Output.Done);
                A0B.Callbacks.Unset (Output.Done);
             end if;
+         end if;
+
+         if Periph.CR1.TCIE /= 0 and then SR.TC /= 0 then
+            --  Change UART speed on transmission complete
+            Periph.CR1.TE := 0;  --  Transmitter disable
+            Periph.CR1.RE := 0;  --  Receiver disable
+
+            Periph.BRR.DIV_Fraction :=
+              Interfaces.STM32.USART.BRR_DIV_Fraction_Field
+                ((Self.Divider mod 100 * 16 + 50) / 100);
+
+            Periph.BRR.DIV_Mantissa :=
+              Interfaces.STM32.USART.BRR_DIV_Mantissa_Field
+                (Self.Divider / 100);
+
+            Periph.CR1.TCIE := 0;  --  disable transmission complete interrupt
+            Periph.CR1.TE := 1;  --  Transmitter enable
+            Periph.CR1.RE := 1;  --  Receiver enable
          end if;
       end On_Interrupt;
 

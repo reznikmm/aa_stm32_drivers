@@ -22,7 +22,7 @@ package body Drivers.Flash is
    ------------
 
    protected Device
-     with Priority => System.Interrupt_Priority'First
+     with Interrupt_Priority => System.Interrupt_Priority'First
    is
 
       procedure Set_Callback (Done : A0B.Callbacks.Callback);
