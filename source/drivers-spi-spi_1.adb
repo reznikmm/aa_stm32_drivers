@@ -47,14 +47,19 @@ package body Drivers.SPI.SPI_1 is
       SCK   : Pin;
       MISO  : Pin;
       MOSI  : Pin;
-      Speed : Interfaces.Unsigned_32)
+      Speed : Interfaces.Unsigned_32;
+      Mode  : SPI_Mode)
    is
       pragma Unreferenced (Self);
    begin
       Interfaces.STM32.RCC.RCC_Periph.APB2ENR.SPI1EN := 1;
 
       Implementation.Configure
-        (SCK   => SCK, MISO => MISO, MOSI => MOSI, Speed => Speed,
+        (SCK   => SCK,
+         MISO  => MISO,
+         MOSI  => MOSI,
+         Speed => Speed,
+         Mode  => Mode,
          Clock => System.STM32.System_Clocks.PCLK2);
    end Configure;
 

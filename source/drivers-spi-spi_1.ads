@@ -23,7 +23,8 @@ package Drivers.SPI.SPI_1 is
       SCK   : Pin;
       MISO  : Pin;
       MOSI  : Pin;
-      Speed : Interfaces.Unsigned_32)
+      Speed : Interfaces.Unsigned_32;
+      Mode  : SPI_Mode)
      with Pre =>
        SCK  in ('A', 5) | ('B', 3) and then
        MISO in ('A', 6) | ('B', 4) and then

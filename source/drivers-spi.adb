@@ -60,11 +60,14 @@ package body Drivers.SPI is
          MISO  : Pin;
          MOSI  : Pin;
          Speed : Interfaces.Unsigned_32;
+         Mode  : SPI_Mode;
          Clock : Interfaces.STM32.UInt32)
       is
          use type Interfaces.Unsigned_32;
          BR : Interfaces.STM32.SPI.CR1_BR_Field := 0;
 
+         CPHA : Boolean := Mode in 1 | 3;
+         CPOL : Boolean := Mode in 2 | 3;
       begin
          Init_GPIO (SCK);
          Init_GPIO (MISO);
@@ -83,8 +86,8 @@ package body Drivers.SPI is
             BIDIMODE       => False,  --  2-line unidirectional data mode
             BIDIOE         => False,  --  Output disabled in bidirectional mode
             RXONLY         => False,  --  Full duplex (Transmit and receive)
-            CPHA           => True,   --  Mode 3
-            CPOL           => True,   --  Mode 3
+            CPHA           => CPHA,
+            CPOL           => CPOL,
             BR             => BR,     --  Baud rate control
             SPE            => False,
             LSBFIRST       => False,  --  MSB transmitted first

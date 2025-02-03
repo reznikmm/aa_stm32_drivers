@@ -20,6 +20,21 @@ private with A0B.Callbacks;
 package Drivers.SPI is
    pragma Preelaborate;
 
+   type SPI_Mode is range 0 .. 3;
+   --  Clock polarity and phase mode.
+   --
+   --  Also known as CPOL and CPHA (for clock polarity and clock phase)
+   --  options. The combinations of polarity and phases are referred to by
+   --  these "SPI mode" numbers with CPOL as the high order bit and CPHA as
+   --  the low order bit:
+   --
+   --  | Mode | CPOL | CPHA | Data Shifted       | Data Sampled |
+   --  | ---- | ---- | ---- | ------------------ | ------------ |
+   --  |    0 |    0 |    0 | falling SCLK or CS |  rising SCLK |
+   --  |    1 |    0 |    1 |  rising SCLK       | falling SCLK |
+   --  |    2 |    1 |    0 |  rising SCLK or CS | falling SCLK |
+   --  |    3 |    1 |    1 | falling SCLK       |  rising SCLK |
+
 private
 
    procedure Init_GPIO (Item : Pin);
@@ -41,6 +56,7 @@ private
          MISO  : Pin;
          MOSI  : Pin;
          Speed : Interfaces.Unsigned_32;
+         Mode  : SPI_Mode;
          Clock : Interfaces.STM32.UInt32);
 
       procedure On_Interrupt (Self : in out Internal_Data);
