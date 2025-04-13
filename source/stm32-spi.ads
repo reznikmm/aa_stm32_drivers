@@ -11,8 +11,9 @@
 --  When the operation is completed, it triggers a callback provided as a
 --  parameter.
 
-private with Interfaces.STM32.GPIO;
-private with Interfaces.STM32.SPI;
+private with STM32.Registers.GPIO;
+private with STM32.Registers.SPI;
+private with Interfaces;
 private with System;
 
 private with A0B.Callbacks;
@@ -40,11 +41,11 @@ private
    procedure Init_GPIO (Item : Pin);
 
    procedure Init_GPIO
-     (Periph : in out Interfaces.STM32.GPIO.GPIO_Peripheral;
+     (Periph : in out STM32.Registers.GPIO.GPIO_Peripheral;
       Pin  : Pin_Index);
 
    generic
-      Periph : in out Interfaces.STM32.SPI.SPI_Peripheral;
+      Periph : in out STM32.Registers.SPI.SPI_Peripheral;
    package SPI_Implementation is
       --  Generic implementation for SPI initializaion, operations and
       --  interrupt handling procedure
@@ -57,7 +58,7 @@ private
          MOSI  : Pin;
          Speed : Interfaces.Unsigned_32;
          Mode  : SPI_Mode;
-         Clock : Interfaces.STM32.UInt32);
+         Clock : Interfaces.Unsigned_32);
 
       procedure On_Interrupt (Self : in out Internal_Data);
 

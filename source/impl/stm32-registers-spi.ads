@@ -1,57 +1,51 @@
---  SPDX-FileCopyrightText: 2025 Max Reznik <reznikmm@gmail.com>
---
---  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-----------------------------------------------------------------
-
 pragma Style_Checks (Off);
 
 --  This spec has been automatically generated from STM32F40x.svd
 
+pragma Restrictions (No_Elaboration_Code);
 
+with Interfaces;
 with System;
 
-package Interfaces.STM32.SPI is
+package STM32.Registers.SPI is
    pragma Preelaborate;
-   pragma No_Elaboration_Code_All;
 
    ---------------
    -- Registers --
    ---------------
 
-   subtype CR1_BR_Field is Interfaces.STM32.UInt3;
-
    --  control register 1
    type CR1_Register is record
       --  Clock phase
-      CPHA           : Boolean := False;
+      CPHA           : Boolean;
       --  Clock polarity
-      CPOL           : Boolean := False;
+      CPOL           : Boolean;
       --  Master selection
-      MSTR           : Boolean := False;
+      MSTR           : Boolean;
       --  Baud rate control
-      BR             : CR1_BR_Field := 16#0#;
+      BR             : Interfaces.Unsigned_32 range 0 .. 7;
       --  SPI enable
-      SPE            : Boolean := False;
+      SPE            : Boolean;
       --  Frame format
-      LSBFIRST       : Boolean := False;
+      LSBFIRST       : Boolean;
       --  Internal slave select
-      SSI            : Boolean := False;
+      SSI            : Boolean;
       --  Software slave management
-      SSM            : Boolean := False;
+      SSM            : Boolean;
       --  Receive only
-      RXONLY         : Boolean := False;
+      RXONLY         : Boolean;
       --  Data frame format
-      DFF            : Boolean := False;
+      DFF            : Boolean;
       --  CRC transfer next
-      CRCNEXT        : Boolean := False;
+      CRCNEXT        : Boolean;
       --  Hardware CRC calculation enable
-      CRCEN          : Boolean := False;
+      CRCEN          : Boolean;
       --  Output enable in bidirectional mode
-      BIDIOE         : Boolean := False;
+      BIDIOE         : Boolean;
       --  Bidirectional data mode enable
-      BIDIMODE       : Boolean := False;
+      BIDIMODE       : Boolean;
       --  unspecified
-      Reserved_16_31 : Interfaces.STM32.UInt16 := 16#0#;
+      Reserved_16_31 : Interfaces.Unsigned_32 range 0 .. 65535;
    end record
      with Object_Size => 32, Bit_Order => System.Low_Order_First;
 
@@ -76,23 +70,23 @@ package Interfaces.STM32.SPI is
    --  control register 2
    type CR2_Register is record
       --  Rx buffer DMA enable
-      RXDMAEN       : Boolean := False;
+      RXDMAEN       : Boolean;
       --  Tx buffer DMA enable
-      TXDMAEN       : Boolean := False;
+      TXDMAEN       : Boolean;
       --  SS output enable
-      SSOE          : Boolean := False;
+      SSOE          : Boolean;
       --  unspecified
-      Reserved_3_3  : Interfaces.STM32.Bit := 16#0#;
+      Reserved_3_3  : Interfaces.Unsigned_32 range 0 .. 1;
       --  Frame format
-      FRF           : Boolean := False;
+      FRF           : Boolean;
       --  Error interrupt enable
-      ERRIE         : Boolean := False;
+      ERRIE         : Boolean;
       --  RX buffer not empty interrupt enable
-      RXNEIE        : Boolean := False;
+      RXNEIE        : Boolean;
       --  Tx buffer empty interrupt enable
-      TXEIE         : Boolean := False;
+      TXEIE         : Boolean;
       --  unspecified
-      Reserved_8_31 : Interfaces.STM32.UInt24 := 16#0#;
+      Reserved_8_31 : Interfaces.Unsigned_32 range 0 .. 16777215;
    end record
      with Object_Size => 32, Bit_Order => System.Low_Order_First;
 
@@ -111,25 +105,25 @@ package Interfaces.STM32.SPI is
    --  status register
    type SR_Register is record
       --  Read-only. Receive buffer not empty
-      RXNE          : Boolean := False;
+      RXNE          : Boolean;
       --  Read-only. Transmit buffer empty
-      TXE           : Boolean := True;
+      TXE           : Boolean;
       --  Read-only. Channel side
-      CHSIDE        : Boolean := False;
+      CHSIDE        : Boolean;
       --  Read-only. Underrun flag
-      UDR           : Boolean := False;
+      UDR           : Boolean;
       --  CRC error flag
-      CRCERR        : Boolean := False;
+      CRCERR        : Boolean;
       --  Read-only. Mode fault
-      MODF          : Boolean := False;
+      MODF          : Boolean;
       --  Read-only. Overrun flag
-      OVR           : Boolean := False;
+      OVR           : Boolean;
       --  Read-only. Busy flag
-      BSY           : Boolean := False;
+      BSY           : Boolean;
       --  Read-only. TI frame format error
-      TIFRFE        : Boolean := False;
+      TIFRFE        : Boolean;
       --  unspecified
-      Reserved_9_31 : Interfaces.STM32.UInt23 := 16#0#;
+      Reserved_9_31 : Interfaces.Unsigned_32 range 0 .. 8388607;
    end record
      with Object_Size => 32, Bit_Order => System.Low_Order_First;
 
@@ -146,14 +140,12 @@ package Interfaces.STM32.SPI is
       Reserved_9_31 at 0 range 9 .. 31;
    end record;
 
-   subtype DR_DR_Field is Interfaces.STM32.UInt16;
-
    --  data register
    type DR_Register is record
       --  Data register
-      DR             : DR_DR_Field := 16#0#;
+      DR             : Interfaces.Unsigned_32 range 0 .. 65535;
       --  unspecified
-      Reserved_16_31 : Interfaces.STM32.UInt16 := 16#0#;
+      Reserved_16_31 : Interfaces.Unsigned_32 range 0 .. 65535;
    end record
      with Object_Size => 32, Bit_Order => System.Low_Order_First;
 
@@ -162,14 +154,12 @@ package Interfaces.STM32.SPI is
       Reserved_16_31 at 0 range 16 .. 31;
    end record;
 
-   subtype CRCPR_CRCPOLY_Field is Interfaces.STM32.UInt16;
-
    --  CRC polynomial register
    type CRCPR_Register is record
       --  CRC polynomial register
-      CRCPOLY        : CRCPR_CRCPOLY_Field := 16#7#;
+      CRCPOLY        : Interfaces.Unsigned_32 range 0 .. 65535;
       --  unspecified
-      Reserved_16_31 : Interfaces.STM32.UInt16 := 16#0#;
+      Reserved_16_31 : Interfaces.Unsigned_32 range 0 .. 65535;
    end record
      with Object_Size => 32, Bit_Order => System.Low_Order_First;
 
@@ -178,14 +168,12 @@ package Interfaces.STM32.SPI is
       Reserved_16_31 at 0 range 16 .. 31;
    end record;
 
-   subtype RXCRCR_RxCRC_Field is Interfaces.STM32.UInt16;
-
    --  RX CRC register
    type RXCRCR_Register is record
       --  Read-only. Rx CRC register
-      RxCRC          : RXCRCR_RxCRC_Field;
+      RxCRC          : Interfaces.Unsigned_32 range 0 .. 65535;
       --  unspecified
-      Reserved_16_31 : Interfaces.STM32.UInt16;
+      Reserved_16_31 : Interfaces.Unsigned_32 range 0 .. 65535;
    end record
      with Object_Size => 32, Bit_Order => System.Low_Order_First;
 
@@ -194,14 +182,12 @@ package Interfaces.STM32.SPI is
       Reserved_16_31 at 0 range 16 .. 31;
    end record;
 
-   subtype TXCRCR_TxCRC_Field is Interfaces.STM32.UInt16;
-
    --  TX CRC register
    type TXCRCR_Register is record
       --  Read-only. Tx CRC register
-      TxCRC          : TXCRCR_TxCRC_Field;
+      TxCRC          : Interfaces.Unsigned_32 range 0 .. 65535;
       --  unspecified
-      Reserved_16_31 : Interfaces.STM32.UInt16;
+      Reserved_16_31 : Interfaces.Unsigned_32 range 0 .. 65535;
    end record
      with Object_Size => 32, Bit_Order => System.Low_Order_First;
 
@@ -210,32 +196,28 @@ package Interfaces.STM32.SPI is
       Reserved_16_31 at 0 range 16 .. 31;
    end record;
 
-   subtype I2SCFGR_DATLEN_Field is Interfaces.STM32.UInt2;
-   subtype I2SCFGR_I2SSTD_Field is Interfaces.STM32.UInt2;
-   subtype I2SCFGR_I2SCFG_Field is Interfaces.STM32.UInt2;
-
    --  I2S configuration register
    type I2SCFGR_Register is record
       --  Channel length (number of bits per audio channel)
-      CHLEN          : Boolean := False;
+      CHLEN          : Boolean;
       --  Data length to be transferred
-      DATLEN         : I2SCFGR_DATLEN_Field := 16#0#;
+      DATLEN         : Interfaces.Unsigned_32 range 0 .. 3;
       --  Steady state clock polarity
-      CKPOL          : Boolean := False;
+      CKPOL          : Boolean;
       --  I2S standard selection
-      I2SSTD         : I2SCFGR_I2SSTD_Field := 16#0#;
+      I2SSTD         : Interfaces.Unsigned_32 range 0 .. 3;
       --  unspecified
-      Reserved_6_6   : Interfaces.STM32.Bit := 16#0#;
+      Reserved_6_6   : Interfaces.Unsigned_32 range 0 .. 1;
       --  PCM frame synchronization
-      PCMSYNC        : Boolean := False;
+      PCMSYNC        : Boolean;
       --  I2S configuration mode
-      I2SCFG         : I2SCFGR_I2SCFG_Field := 16#0#;
+      I2SCFG         : Interfaces.Unsigned_32 range 0 .. 3;
       --  I2S Enable
-      I2SE           : Boolean := False;
+      I2SE           : Boolean;
       --  I2S mode selection
-      I2SMOD         : Boolean := False;
+      I2SMOD         : Boolean;
       --  unspecified
-      Reserved_12_31 : Interfaces.STM32.UInt20 := 16#0#;
+      Reserved_12_31 : Interfaces.Unsigned_32 range 0 .. 1048575;
    end record
      with Object_Size => 32, Bit_Order => System.Low_Order_First;
 
@@ -252,18 +234,16 @@ package Interfaces.STM32.SPI is
       Reserved_12_31 at 0 range 12 .. 31;
    end record;
 
-   subtype I2SPR_I2SDIV_Field is Interfaces.STM32.Byte;
-
    --  I2S prescaler register
    type I2SPR_Register is record
       --  I2S Linear prescaler
-      I2SDIV         : I2SPR_I2SDIV_Field := 16#A#;
+      I2SDIV         : Interfaces.Unsigned_32 range 0 .. 255;
       --  Odd factor for the prescaler
-      ODD            : Boolean := False;
+      ODD            : Boolean;
       --  Master clock output enable
-      MCKOE          : Boolean := False;
+      MCKOE          : Boolean;
       --  unspecified
-      Reserved_10_31 : Interfaces.STM32.UInt22 := 16#0#;
+      Reserved_10_31 : Interfaces.Unsigned_32 range 0 .. 4194303;
    end record
      with Object_Size => 32, Bit_Order => System.Low_Order_First;
 
@@ -342,4 +322,4 @@ package Interfaces.STM32.SPI is
    SPI3_Periph : aliased SPI_Peripheral
      with Import, Address => SPI3_Base;
 
-end Interfaces.STM32.SPI;
+end STM32.Registers.SPI;

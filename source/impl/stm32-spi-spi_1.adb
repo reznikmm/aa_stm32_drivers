@@ -3,7 +3,7 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ----------------------------------------------------------------
 
-with Interfaces.STM32.RCC;
+with STM32.Registers.RCC;
 with System.STM32;
 
 package body STM32.SPI.SPI_1 is
@@ -52,7 +52,7 @@ package body STM32.SPI.SPI_1 is
    is
       pragma Unreferenced (Self);
    begin
-      Interfaces.STM32.RCC.RCC_Periph.APB2ENR.SPI1EN := 1;
+      STM32.Registers.RCC.RCC_Periph.APB2ENR.SPI1EN := True;
 
       Implementation.Configure
         (SCK   => SCK,
@@ -60,7 +60,7 @@ package body STM32.SPI.SPI_1 is
          MOSI  => MOSI,
          Speed => Speed,
          Mode  => Mode,
-         Clock => System.STM32.System_Clocks.PCLK2);
+         Clock => Interfaces.Unsigned_32 (System.STM32.System_Clocks.PCLK2));
    end Configure;
 
    -------------------------
