@@ -24,8 +24,8 @@ package STM32.UART.UART_5 is
       RX    : Pin;
       Speed : Interfaces.Unsigned_32)
      with Pre =>
-       TX in ('C', 12) and then
-       RX in ('D', 2);
+       TX in (PC, 12) and then
+       RX in (PD, 2);
    --
    --  Configure UART_5 on given pins and speed
 

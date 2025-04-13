@@ -24,8 +24,8 @@ package STM32.UART.USART_6 is
       RX    : Pin;
       Speed : Interfaces.Unsigned_32)
      with Pre =>
-       TX in ('C', 6) and then
-       RX in ('C', 7);
+       TX in (PC, 6) and then
+       RX in (PC, 7);
    --
    --  Configure USART_6 on given pins and speed
 

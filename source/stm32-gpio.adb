@@ -80,15 +80,15 @@ package body STM32.GPIO is
       Enable_GPIO (Pin.Port);
 
       case Pin.Port is
-         when 'A' =>
+         when PA =>
             Configure_Interrupt (Interfaces.STM32.GPIO.GPIOA_Periph, Pin.Pin);
-         when 'B' =>
+         when PB =>
             Configure_Interrupt (Interfaces.STM32.GPIO.GPIOB_Periph, Pin.Pin);
-         when 'C' =>
+         when PC =>
             Configure_Interrupt (Interfaces.STM32.GPIO.GPIOC_Periph, Pin.Pin);
-         when 'D' =>
+         when PD =>
             Configure_Interrupt (Interfaces.STM32.GPIO.GPIOD_Periph, Pin.Pin);
-         when 'E' =>
+         when PE =>
             Configure_Interrupt (Interfaces.STM32.GPIO.GPIOE_Periph, Pin.Pin);
       end case;
 
@@ -110,15 +110,15 @@ package body STM32.GPIO is
       Enable_GPIO (Pin.Port);
 
       case Pin.Port is
-         when 'A' =>
+         when PA =>
             Configure_Output (Interfaces.STM32.GPIO.GPIOA_Periph, Pin.Pin);
-         when 'B' =>
+         when PB =>
             Configure_Output (Interfaces.STM32.GPIO.GPIOB_Periph, Pin.Pin);
-         when 'C' =>
+         when PC =>
             Configure_Output (Interfaces.STM32.GPIO.GPIOC_Periph, Pin.Pin);
-         when 'D' =>
+         when PD =>
             Configure_Output (Interfaces.STM32.GPIO.GPIOD_Periph, Pin.Pin);
-         when 'E' =>
+         when PE =>
             Configure_Output (Interfaces.STM32.GPIO.GPIOE_Periph, Pin.Pin);
       end case;
    end Configure_Output;
@@ -146,15 +146,15 @@ package body STM32.GPIO is
         Interfaces.STM32.RCC.RCC_Periph;
    begin
       case Port is
-         when 'A' =>
+         when PA =>
             RCC.AHB1ENR.GPIOAEN  := 1;
-         when 'B' =>
+         when PB =>
             RCC.AHB1ENR.GPIOBEN  := 1;
-         when 'C' =>
+         when PC =>
             RCC.AHB1ENR.GPIOCEN  := 1;
-         when 'D' =>
+         when PD =>
             RCC.AHB1ENR.GPIODEN  := 1;
-         when 'E' =>
+         when PE =>
             RCC.AHB1ENR.GPIOEEN  := 1;
       end case;
    end Enable_GPIO;
@@ -198,15 +198,15 @@ package body STM32.GPIO is
       Value : Interfaces.STM32.Bit) is
    begin
       case Pin.Port is
-         when 'A' =>
+         when PA =>
             Set_Output (Interfaces.STM32.GPIO.GPIOA_Periph, Pin.Pin, Value);
-         when 'B' =>
+         when PB =>
             Set_Output (Interfaces.STM32.GPIO.GPIOB_Periph, Pin.Pin, Value);
-         when 'C' =>
+         when PC =>
             Set_Output (Interfaces.STM32.GPIO.GPIOC_Periph, Pin.Pin, Value);
-         when 'D' =>
+         when PD =>
             Set_Output (Interfaces.STM32.GPIO.GPIOD_Periph, Pin.Pin, Value);
-         when 'E' =>
+         when PE =>
             Set_Output (Interfaces.STM32.GPIO.GPIOE_Periph, Pin.Pin, Value);
       end case;
    end Set_Output;

@@ -24,8 +24,8 @@ package STM32.UART.UART_4 is
       RX    : Pin;
       Speed : Interfaces.Unsigned_32)
      with Pre =>
-       TX in ('A', 0) | ('C', 10) and then
-       RX in ('A', 1) | ('C', 11);
+       TX in (PA, 0) | (PC, 10) and then
+       RX in (PA, 1) | (PC, 11);
    --
    --  Configure UART_4 on given pins and speed (baud rate)
 
