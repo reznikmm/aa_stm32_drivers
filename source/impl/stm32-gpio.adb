@@ -3,12 +3,12 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ----------------------------------------------------------------
 
-with Interfaces.STM32.SYSCFG;
+with Interfaces;
+
 with STM32.Registers.EXTI;
 with STM32.Registers.GPIO;
 with STM32.Registers.RCC;
-
-with STM32.Registers.GPIO;
+with STM32.Registers.SYSCFG;
 
 package body STM32.GPIO is
 
@@ -79,23 +79,17 @@ package body STM32.GPIO is
       EXTI_Periph : STM32.Registers.EXTI.EXTI_Peripheral renames
         STM32.Registers.EXTI.EXTI_Periph;
 
-      SYSCFG_Periph : Interfaces.STM32.SYSCFG.SYSCFG_Peripheral renames
-        Interfaces.STM32.SYSCFG.SYSCFG_Periph;
+      SYSCFG_Periph : STM32.Registers.SYSCFG.SYSCFG_Peripheral renames
+        STM32.Registers.SYSCFG.SYSCFG_Periph;
 
-      EXTICR : array (STM32.Pin_Index range 0 .. 3) of
-        Interfaces.STM32.SYSCFG.EXTICR1_Register
-          with Import, Address => SYSCFG_Periph.EXTICR1'Address;
-
-      Port : constant Natural :=
-        STM32.Port'Pos (Pin.Port) - STM32.Port'Pos (STM32.Port'First);
+      Port : constant Interfaces.Unsigned_32 := STM32.Port'Pos (Pin.Port);
    begin
       Enable_GPIO (Pin.Port);
 
       Configure_Interrupt
         (STM32.Registers.GPIO.GPIO_Periph (Pin.Port), Pin.Pin);
 
-      EXTICR (Pin.Pin / 4).EXTI.Arr (Pin.Pin mod 4) :=
-        Interfaces.STM32.SYSCFG.EXTICR1_EXTI_Element (Port);
+      SYSCFG_Periph.EXTICR (Pin.Pin / 4).EXTI (Pin.Pin mod 4) := Port;
 
       EXTI_Periph.RTSR (Natural (Pin.Pin)) := True;  --  Rising trigger
       EXTI_Periph.FTSR (Natural (Pin.Pin)) := False;  --  Falling trigger
@@ -176,8 +170,7 @@ package body STM32.GPIO is
          Pin    : Pin_Index;
          Value  : STM32.Bit)
       is
-         use type Interfaces.STM32.Bit;
-         use type Interfaces.STM32.UInt16;
+         use type STM32.Bit;
       begin
          if Value = 0 then
             Periph.BSRR.BR (Pin) := True;
