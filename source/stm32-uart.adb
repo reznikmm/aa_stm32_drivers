@@ -41,15 +41,15 @@ package body STM32.UART is
       STM32.GPIO.Enable_GPIO (TX.Port);
 
       case TX.Port is
-         when 'A' =>
+         when PA =>
             Init_GPIO (Interfaces.STM32.GPIO.GPIOA_Periph, TX.Pin, Fun);
-         when 'B' =>
+         when PB =>
             Init_GPIO (Interfaces.STM32.GPIO.GPIOB_Periph, TX.Pin, Fun);
-         when 'C' =>
+         when PC =>
             Init_GPIO (Interfaces.STM32.GPIO.GPIOC_Periph, TX.Pin, Fun);
-         when 'D' =>
+         when PD =>
             Init_GPIO (Interfaces.STM32.GPIO.GPIOD_Periph, TX.Pin, Fun);
-         when 'E' =>
+         when PE =>
             Init_GPIO (Interfaces.STM32.GPIO.GPIOE_Periph, TX.Pin, Fun);
       end case;
    end Init_GPIO;

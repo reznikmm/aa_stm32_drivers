@@ -24,8 +24,8 @@ package STM32.UART.USART_1 is
       RX    : Pin;
       Speed : Interfaces.Unsigned_32)
      with Pre =>
-       TX in ('A', 9)  | ('B', 6) and then
-       RX in ('A', 10) | ('B', 7);
+       TX in (PA, 9)  | (PB, 6) and then
+       RX in (PA, 10) | (PB, 7);
    --
    --  Configure USART_1 on given pins and speed
 

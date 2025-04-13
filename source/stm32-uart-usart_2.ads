@@ -24,8 +24,8 @@ package STM32.UART.USART_2 is
       RX    : Pin;
       Speed : Interfaces.Unsigned_32)
      with Pre =>
-       TX in ('A', 2) | ('D', 5) and then
-       RX in ('A', 3) | ('D', 6);
+       TX in (PA, 2) | (PD, 5) and then
+       RX in (PA, 3) | (PD, 6);
    --
    --  Configure USART_2 on given pins and speed
 
