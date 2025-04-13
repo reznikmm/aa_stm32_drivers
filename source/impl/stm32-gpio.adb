@@ -3,10 +3,10 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ----------------------------------------------------------------
 
-with Interfaces.STM32.RCC;
 with Interfaces.STM32.SYSCFG;
 with STM32.Registers.EXTI;
 with STM32.Registers.GPIO;
+with STM32.Registers.RCC;
 
 with STM32.Registers.GPIO;
 
@@ -137,21 +137,10 @@ package body STM32.GPIO is
    -----------------
 
    procedure Enable_GPIO (Port : STM32.Port) is
-      RCC : Interfaces.STM32.RCC.RCC_Peripheral renames
-        Interfaces.STM32.RCC.RCC_Periph;
+      RCC : STM32.Registers.RCC.RCC_Peripheral renames
+        STM32.Registers.RCC.RCC_Periph;
    begin
-      case Port is
-         when PA =>
-            RCC.AHB1ENR.GPIOAEN  := 1;
-         when PB =>
-            RCC.AHB1ENR.GPIOBEN  := 1;
-         when PC =>
-            RCC.AHB1ENR.GPIOCEN  := 1;
-         when PD =>
-            RCC.AHB1ENR.GPIODEN  := 1;
-         when PE =>
-            RCC.AHB1ENR.GPIOEEN  := 1;
-      end case;
+      RCC.AHB1ENR.GPIOxEN (Port) := True;
    end Enable_GPIO;
 
    ------------------------
