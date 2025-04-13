@@ -18,8 +18,8 @@ procedure UART is
 begin
    STM32.UART.USART_1.Configure
      (USART_1,
-      TX    => ('A', 9),
-      RX    => ('A', 10),
+      TX    => (STM32.PA, 9),
+      RX    => (STM32.PA, 10),
       Speed => 115_200);
 
    loop

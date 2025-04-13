@@ -40,15 +40,15 @@ package body STM32.Timer is
       STM32.GPIO.Enable_GPIO (Item.Port);
 
       case Item.Port is
-         when 'A' =>
+         when PA =>
             Init_GPIO (Interfaces.STM32.GPIO.GPIOA_Periph, Item.Pin);
-         when 'B' =>
+         when PB =>
             Init_GPIO (Interfaces.STM32.GPIO.GPIOB_Periph, Item.Pin);
-         when 'C' =>
+         when PC =>
             Init_GPIO (Interfaces.STM32.GPIO.GPIOC_Periph, Item.Pin);
-         when 'D' =>
+         when PD =>
             Init_GPIO (Interfaces.STM32.GPIO.GPIOD_Periph, Item.Pin);
-         when 'E' =>
+         when PE =>
             Init_GPIO (Interfaces.STM32.GPIO.GPIOE_Periph, Item.Pin);
       end case;
    end Init_GPIO;

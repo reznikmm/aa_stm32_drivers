@@ -24,8 +24,8 @@ package STM32.UART.USART_3 is
       RX    : Pin;
       Speed : Interfaces.Unsigned_32)
      with Pre =>
-       TX in ('B', 10) | ('C', 10) | ('D', 8) and then
-       RX in ('B', 11) | ('C', 11) | ('D', 9);
+       TX in (PB, 10) | (PC, 10) | (PD, 8) and then
+       RX in (PB, 11) | (PC, 11) | (PD, 9);
    --
    --  Configure USART_3 on given pins and speed
 

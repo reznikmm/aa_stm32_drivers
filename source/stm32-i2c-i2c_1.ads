@@ -24,8 +24,8 @@ package STM32.I2C.I2C_1 is
       SDA   : Pin;
       Speed : Interfaces.Unsigned_32)
         with Pre =>
-         SCL in ('B', 6) | ('B', 8) and then
-         SDA in ('B', 7) | ('B', 9);
+         SCL in (PB, 6) | (PB, 8) and then
+         SDA in (PB, 7) | (PB, 9);
    --
    --  (Re-)configure I2C_1 on given pins and speed
 

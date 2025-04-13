@@ -19,7 +19,7 @@ package STM32.Timer.TIM_3 is
       Pin   : STM32.Pin;
       Speed : Interfaces.Unsigned_32)
      with Pre =>
-       Pin in ('C', 8);
+       Pin in (PC, 8);
    --
    --  Configure TIM3 on given pins and speed
 

@@ -26,9 +26,9 @@ package STM32.SPI.SPI_1 is
       Speed : Interfaces.Unsigned_32;
       Mode  : SPI_Mode)
      with Pre =>
-       SCK  in ('A', 5) | ('B', 3) and then
-       MISO in ('A', 6) | ('B', 4) and then
-       MOSI in ('A', 7) | ('B', 5);
+       SCK  in (PA, 5) | (PB, 3) and then
+       MISO in (PA, 6) | (PB, 4) and then
+       MOSI in (PA, 7) | (PB, 5);
    --
    --  (Re-)configure SPI_1 on given pins and speed
 
