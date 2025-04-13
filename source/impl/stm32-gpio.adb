@@ -3,10 +3,10 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ----------------------------------------------------------------
 
-with STM32.Registers.GPIO;
 with Interfaces.STM32.RCC;
 with Interfaces.STM32.SYSCFG;
-with Interfaces.STM32.EXTI;
+with STM32.Registers.EXTI;
+with STM32.Registers.GPIO;
 
 with STM32.Registers.GPIO;
 
@@ -38,12 +38,12 @@ package body STM32.GPIO is
 
    procedure Clear_Interrupt (Pin : STM32.Pin) is
 
-      EXTI_Periph : Interfaces.STM32.EXTI.EXTI_Peripheral renames
-        Interfaces.STM32.EXTI.EXTI_Periph;
+      EXTI_Periph : STM32.Registers.EXTI.EXTI_Peripheral renames
+        STM32.Registers.EXTI.EXTI_Periph;
 
-      Value : Interfaces.STM32.EXTI.PR_Register := (others => <>);
+      Value : STM32.Registers.EXTI.Boolean_Array_23 := (others => False);
    begin
-      Value.PR.Arr (Pin.Pin) := True;
+      Value (Natural (Pin.Pin)) := True;
       EXTI_Periph.PR := Value;  --  Clear pending
    end Clear_Interrupt;
 
@@ -76,8 +76,8 @@ package body STM32.GPIO is
             else STM32.GPIO.No_Pull);
       end Configure_Interrupt;
 
-      EXTI_Periph : Interfaces.STM32.EXTI.EXTI_Peripheral renames
-        Interfaces.STM32.EXTI.EXTI_Periph;
+      EXTI_Periph : STM32.Registers.EXTI.EXTI_Peripheral renames
+        STM32.Registers.EXTI.EXTI_Periph;
 
       SYSCFG_Periph : Interfaces.STM32.SYSCFG.SYSCFG_Peripheral renames
         Interfaces.STM32.SYSCFG.SYSCFG_Periph;
@@ -97,10 +97,10 @@ package body STM32.GPIO is
       EXTICR (Pin.Pin / 4).EXTI.Arr (Pin.Pin mod 4) :=
         Interfaces.STM32.SYSCFG.EXTICR1_EXTI_Element (Port);
 
-      EXTI_Periph.RTSR.TR.Arr (Pin.Pin) := True;  --  Rising trigger
-      EXTI_Periph.FTSR.TR.Arr (Pin.Pin) := False;  --  Falling trigger
-      EXTI_Periph.PR.PR.Arr (Pin.Pin) := True;  --  Clear pending
-      EXTI_Periph.IMR.MR.Arr (Pin.Pin) := True;  --  Unmask interrupt
+      EXTI_Periph.RTSR (Natural (Pin.Pin)) := True;  --  Rising trigger
+      EXTI_Periph.FTSR (Natural (Pin.Pin)) := False;  --  Falling trigger
+      EXTI_Periph.PR (Natural (Pin.Pin)) := True;  --  Clear pending
+      EXTI_Periph.IMR (Natural (Pin.Pin)) := True;  --  Unmask interrupt
    end Configure_Interrupt;
 
    ----------------------
@@ -159,10 +159,10 @@ package body STM32.GPIO is
    ------------------------
 
    function Pending_Interrupts return Pending_Interrupt_Set is
-      EXTI_Periph : Interfaces.STM32.EXTI.EXTI_Peripheral renames
-        Interfaces.STM32.EXTI.EXTI_Periph;
+      EXTI_Periph : STM32.Registers.EXTI.EXTI_Peripheral renames
+        STM32.Registers.EXTI.EXTI_Periph;
    begin
-      return Pending_Interrupt_Set (EXTI_Periph.PR.PR.Arr (0 .. 15));
+      return Pending_Interrupt_Set (EXTI_Periph.PR (0 .. 15));
    end Pending_Interrupts;
 
    ----------------
