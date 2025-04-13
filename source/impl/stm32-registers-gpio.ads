@@ -139,4 +139,24 @@ package STM32.Registers.GPIO is
      with
        Import, Address => STM32.Registers.GPIOA_Base;
 
+   Mode_IN  : constant := 0;
+   Mode_OUT : constant := 1;
+   Mode_AF  : constant := 2;
+   Mode_AN  : constant := 3;
+
+   --  OTYPER constants
+   Push_Pull  : constant Boolean := False;
+   Open_Drain : constant Boolean := True;
+
+   --  OSPEEDR constants
+   Speed_2MHz   : constant := 0; -- Low speed
+   Speed_25MHz  : constant := 1; -- Medium speed
+   Speed_50MHz  : constant := 2; -- Fast speed
+   Speed_100MHz : constant := 3; -- High speed
+
+   --  PUPDR constants
+   No_Pull   : constant := 0;
+   Pull_Up   : constant := 1;
+   Pull_Down : constant := 2;
+
 end STM32.Registers.GPIO;

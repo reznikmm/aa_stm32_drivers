@@ -12,26 +12,6 @@ with STM32.Registers.SYSCFG;
 
 package body STM32.GPIO is
 
-   Mode_IN  : constant := 0;
-   Mode_OUT : constant := 1;
-   Mode_AF  : constant := 2;
-   Mode_AN  : constant := 3;
-
-   --  OTYPER constants
-   Push_Pull  : constant Boolean := False;
-   Open_Drain : constant Boolean := True;
-
-   --  OSPEEDR constants
-   Speed_2MHz   : constant := 0; -- Low speed
-   Speed_25MHz  : constant := 1; -- Medium speed
-   Speed_50MHz  : constant := 2; -- Fast speed
-   Speed_100MHz : constant := 3; -- High speed
-
-   --  PUPDR constants
-   No_Pull   : constant := 0;
-   Pull_Up   : constant := 1;
-   Pull_Down : constant := 2;
-
    ---------------------
    -- Clear_Interrupt --
    ---------------------
@@ -69,11 +49,11 @@ package body STM32.GPIO is
         (GPIO : in out STM32.Registers.GPIO.GPIO_Peripheral;
          Pin  : Pin_Index) is
       begin
-         GPIO.MODER (Pin) := Mode_IN;
+         GPIO.MODER (Pin) := STM32.Registers.GPIO.Mode_IN;
          GPIO.PUPDR (Pin) :=
-           (if Pull_Up then STM32.GPIO.Pull_Up
-            elsif Pull_Down then STM32.GPIO.Pull_Down
-            else STM32.GPIO.No_Pull);
+           (if Pull_Up then STM32.Registers.GPIO.Pull_Up
+            elsif Pull_Down then STM32.Registers.GPIO.Pull_Down
+            else STM32.Registers.GPIO.No_Pull);
       end Configure_Interrupt;
 
       EXTI_Periph : STM32.Registers.EXTI.EXTI_Peripheral renames
@@ -115,10 +95,10 @@ package body STM32.GPIO is
         (GPIO : in out STM32.Registers.GPIO.GPIO_Peripheral;
          Pin  : Pin_Index) is
       begin
-         GPIO.MODER     (Pin) := Mode_OUT;
-         GPIO.PUPDR     (Pin) := No_Pull;
-         GPIO.OSPEEDR   (Pin) := Speed_50MHz;
-         GPIO.OTYPER    (Pin) := Push_Pull;
+         GPIO.MODER     (Pin) := STM32.Registers.GPIO.Mode_OUT;
+         GPIO.PUPDR     (Pin) := STM32.Registers.GPIO.No_Pull;
+         GPIO.OSPEEDR   (Pin) := STM32.Registers.GPIO.Speed_50MHz;
+         GPIO.OTYPER    (Pin) := STM32.Registers.GPIO.Push_Pull;
       end Configure_Output;
 
    begin

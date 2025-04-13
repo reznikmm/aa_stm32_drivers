@@ -4,14 +4,14 @@
 ----------------------------------------------------------------
 
 with System.STM32;
-with Interfaces.STM32.GPIO;
+with STM32.Registers.GPIO;
 
 with STM32.GPIO;
 
 package body STM32.I2C is
 
    procedure Init_GPIO
-     (Periph : in out Interfaces.STM32.GPIO.GPIO_Peripheral;
+     (Periph : in out STM32.Registers.GPIO.GPIO_Peripheral;
       Pin    : Pin_Index);
 
    ---------------
@@ -21,19 +21,7 @@ package body STM32.I2C is
    procedure Init_GPIO (Item : Pin) is
    begin
       STM32.GPIO.Enable_GPIO (Item.Port);
-
-      case Item.Port is
-         when PA =>
-            Init_GPIO (Interfaces.STM32.GPIO.GPIOA_Periph, Item.Pin);
-         when PB =>
-            Init_GPIO (Interfaces.STM32.GPIO.GPIOB_Periph, Item.Pin);
-         when PC =>
-            Init_GPIO (Interfaces.STM32.GPIO.GPIOC_Periph, Item.Pin);
-         when PD =>
-            Init_GPIO (Interfaces.STM32.GPIO.GPIOD_Periph, Item.Pin);
-         when PE =>
-            Init_GPIO (Interfaces.STM32.GPIO.GPIOE_Periph, Item.Pin);
-      end case;
+      Init_GPIO (STM32.Registers.GPIO.GPIO_Periph (Item.Port), Item.Pin);
    end Init_GPIO;
 
    ---------------
@@ -41,21 +29,16 @@ package body STM32.I2C is
    ---------------
 
    procedure Init_GPIO
-     (Periph : in out Interfaces.STM32.GPIO.GPIO_Peripheral;
+     (Periph : in out STM32.Registers.GPIO.GPIO_Peripheral;
       Pin    : Pin_Index)
    is
       AF_I2C1_3 : constant := 4;
    begin
-      Periph.MODER.Arr     (Pin) := System.STM32.Mode_AF;
-      Periph.OSPEEDR.Arr   (Pin) := System.STM32.Speed_100MHz;
-      Periph.OTYPER.OT.Arr (Pin) := System.STM32.Open_Drain;
-      Periph.PUPDR.Arr     (Pin) := System.STM32.No_Pull;
-
-      if Pin in Periph.AFRL.Arr'Range then
-         Periph.AFRL.Arr (Pin) := AF_I2C1_3;
-      else
-         Periph.AFRH.Arr (Pin) := AF_I2C1_3;
-      end if;
+      Periph.MODER   (Pin) := STM32.Registers.GPIO.Mode_AF;
+      Periph.OSPEEDR (Pin) := STM32.Registers.GPIO.Speed_100MHz;
+      Periph.OTYPER  (Pin) := STM32.Registers.GPIO.Open_Drain;
+      Periph.PUPDR   (Pin) := STM32.Registers.GPIO.No_Pull;
+      Periph.AFR     (Pin) := AF_I2C1_3;
    end Init_GPIO;
 
    ------------------------
@@ -78,41 +61,45 @@ package body STM32.I2C is
 
          Speed_x3  : constant Interfaces.Unsigned_32 := 3 * Speed;
 
-         CCR       : Interfaces.STM32.I2C.CCR_CCR_Field range 4 .. 4095;
+         CCR       : Interfaces.Unsigned_32 range 4 .. 4095;
          --  The minimum allowed value is 0x04
       begin
          pragma Assert (Clock_MHz in 4 .. 50);
          Init_GPIO (SCL);
          Init_GPIO (SDA);
 
-         Periph.CR1 := (others => <>);  --  Disable I2C
+         Periph.CR1 :=
+           (Reserved_2_2   => 0,
+            Reserved_14_14 => 0,
+            Reserved_16_31 => 0,
+            others         => False);
+         --  Disable I2C
 
          Periph.CR2 :=
-           (FREQ    => Interfaces.STM32.I2C.CR2_FREQ_Field (Clock_MHz),
+           (FREQ    => Clock_MHz,
             ITERREN => True,   --  Error interrupt enable
             ITEVTEN => True,   --  Event interrupt enable
             ITBUFEN => True,   --  Buffer interrupt enable
             DMAEN   => False,  --  DMA requests enable
             LAST    => False,  --  DMA last transfer
-            others  => <>);
+            others  => 0);
 
-         CCR := Interfaces.STM32.I2C.CCR_CCR_Field
-           ((Clock + Speed_x3 - 1) / Speed_x3);
+         CCR := (Clock + Speed_x3 - 1) / Speed_x3;
 
          Periph.CCR :=
            (CCR    => CCR,
             DUTY   => False,  --  Fast mode duty cycle
             F_S    => True,   --  I2C master mode selection
-            others => <>);
+            others => 0);
 
          --  SCL rise time is 300ns
-         Periph.TRISE.TRISE := Interfaces.STM32.I2C.TRISE_TRISE_Field
-           (300 * Clock_MHz / 1000 + 1);
+         Periph.TRISE.TRISE := 300 * Clock_MHz / 1000 + 1;
 
          Periph.OAR1 :=
-           (ADD7    => 0,      --  Slave address
+           (ADD0    => False,
+            ADD7    => 0,      --  Slave address
             ADDMODE => False,  --  7 bit address
-            others  => <>);
+            others  => 0);
 
          Periph.CR1.PE := True;
       end Configure;
@@ -122,7 +109,7 @@ package body STM32.I2C is
       --------------
 
       procedure On_Error (Self : in out Internal_Data) is
-         SR1   : constant Interfaces.STM32.I2C.SR1_Register := Periph.SR1;
+         SR1   : constant STM32.Registers.I2C.SR1_Register := Periph.SR1;
       begin
 
          if SR1.BERR or SR1.AF or SR1.ARLO then
@@ -148,16 +135,16 @@ package body STM32.I2C is
       --------------
 
       procedure On_Event (Self : in out Internal_Data) is
-         use type Interfaces.STM32.I2C.DR_DR_Field;
+         use type Interfaces.Unsigned_8;
 
          Buffer : String (1 .. Positive'Last)
            with Import, Address => Self.Buffer;
 
          RX    : constant Boolean := (Self.Slave and 1) /= 0;
-         SR1   : constant Interfaces.STM32.I2C.SR1_Register := Periph.SR1;
+         SR1   : constant STM32.Registers.I2C.SR1_Register := Periph.SR1;
          ACK   : constant Boolean := Self.Next < Self.Last - 1;
-         Dummy : Interfaces.STM32.I2C.SR2_Register;
-         None  : constant Interfaces.STM32.I2C.SR2_Register :=
+         Dummy : STM32.Registers.I2C.SR2_Register;
+         None  : constant STM32.Registers.I2C.SR2_Register :=
            (Reserved_3_3   => 0,
             Reserved_16_31 => 0,
             PEC            => 0,
@@ -169,7 +156,7 @@ package body STM32.I2C is
          --  Clear ADDR in EV6
 
          if SR1.SB then
-            Periph.DR.DR := Self.Slave;
+            Periph.DR.DR := Interfaces.Unsigned_32 (Self.Slave);
 
          elsif RX then
 
@@ -230,9 +217,9 @@ package body STM32.I2C is
          Read   : Natural;
          Done   : A0B.Callbacks.Callback)
       is
-         use type Interfaces.STM32.I2C.DR_DR_Field;
+         use type Interfaces.Unsigned_8;
 
-         Reading : constant Interfaces.STM32.I2C.DR_DR_Field range 0 .. 1 :=
+         Reading : constant Interfaces.Unsigned_8 range 0 .. 1 :=
            (if Write = 0 and Read > 0 then 1 else 0);
       begin
          pragma Assert (not A0B.Callbacks.Is_Set (Self.Done));
@@ -242,7 +229,7 @@ package body STM32.I2C is
          Self.Next   := 1;
          Self.Read   := (if Write > 0 then Read else 0);
          Self.Done   := Done;
-         Self.Slave  := 2 * Interfaces.STM32.I2C.DR_DR_Field (Slave) + Reading;
+         Self.Slave  := 2 * Interfaces.Unsigned_8 (Slave) + Reading;
          Self.Error  := False;
 
          Periph.CR1 :=
