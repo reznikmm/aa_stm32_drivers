@@ -14,6 +14,7 @@ project Aa_Stm32_Drivers is
 
    for Source_Dirs use
      ("../source/",
+      "../source/impl",
       "../source/" & MCU);
 
    for Object_Dir use "../obj/" & Aa_Stm32_Drivers_Config.Build_Profile;
