@@ -3,7 +3,7 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ----------------------------------------------------------------
 
-with Interfaces.STM32.RCC;
+with STM32.Registers.RCC;
 
 package body STM32.I2C.I2C_1 is
 
@@ -19,7 +19,7 @@ package body STM32.I2C.I2C_1 is
    is
       pragma Unreferenced (Self);
    begin
-      Interfaces.STM32.RCC.RCC_Periph.APB1ENR.I2C1EN := 1;
+      STM32.Registers.RCC.RCC_Periph.APB1ENR.I2C1EN := True;
       Implementation.Configure (SCL, SDA, Speed);
    end Configure;
 

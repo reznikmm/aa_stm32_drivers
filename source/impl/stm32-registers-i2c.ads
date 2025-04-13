@@ -3,16 +3,15 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ----------------------------------------------------------------
 
-pragma Style_Checks (Off);
+--  This spec has been automatically generated from STM32F429x.svd
 
---  This spec has been automatically generated from STM32F40x.svd
+pragma Restrictions (No_Elaboration_Code);
 
-
+with Interfaces;
 with System;
 
-package Interfaces.STM32.I2C is
+package STM32.Registers.I2C is
    pragma Preelaborate;
-   pragma No_Elaboration_Code_All;
 
    ---------------
    -- Registers --
@@ -21,39 +20,39 @@ package Interfaces.STM32.I2C is
    --  Control register 1
    type CR1_Register is record
       --  Peripheral enable
-      PE             : Boolean := False;
+      PE             : Boolean;
       --  SMBus mode
-      SMBUS          : Boolean := False;
+      SMBUS          : Boolean;
       --  unspecified
-      Reserved_2_2   : Interfaces.STM32.Bit := 16#0#;
+      Reserved_2_2   : Interfaces.Unsigned_32 range 0 .. 1;
       --  SMBus type
-      SMBTYPE        : Boolean := False;
+      SMBTYPE        : Boolean;
       --  ARP enable
-      ENARP          : Boolean := False;
+      ENARP          : Boolean;
       --  PEC enable
-      ENPEC          : Boolean := False;
+      ENPEC          : Boolean;
       --  General call enable
-      ENGC           : Boolean := False;
+      ENGC           : Boolean;
       --  Clock stretching disable (Slave mode)
-      NOSTRETCH      : Boolean := False;
+      NOSTRETCH      : Boolean;
       --  Start generation
-      START          : Boolean := False;
+      START          : Boolean;
       --  Stop generation
-      STOP           : Boolean := False;
+      STOP           : Boolean;
       --  Acknowledge enable
-      ACK            : Boolean := False;
+      ACK            : Boolean;
       --  Acknowledge/PEC Position (for data reception)
-      POS            : Boolean := False;
+      POS            : Boolean;
       --  Packet error checking
-      PEC            : Boolean := False;
+      PEC            : Boolean;
       --  SMBus alert
-      ALERT          : Boolean := False;
+      ALERT          : Boolean;
       --  unspecified
-      Reserved_14_14 : Interfaces.STM32.Bit := 16#0#;
+      Reserved_14_14 : Interfaces.Unsigned_32 range 0 .. 1;
       --  Software reset
-      SWRST          : Boolean := False;
+      SWRST          : Boolean;
       --  unspecified
-      Reserved_16_31 : Interfaces.STM32.UInt16 := 16#0#;
+      Reserved_16_31 : Interfaces.Unsigned_32 range 0 .. 65535;
    end record
      with Object_Size => 32, Bit_Order => System.Low_Order_First;
 
@@ -77,26 +76,24 @@ package Interfaces.STM32.I2C is
       Reserved_16_31 at 0 range 16 .. 31;
    end record;
 
-   subtype CR2_FREQ_Field is Interfaces.STM32.UInt6;
-
    --  Control register 2
    type CR2_Register is record
       --  Peripheral clock frequency
-      FREQ           : CR2_FREQ_Field := 16#0#;
+      FREQ           : Interfaces.Unsigned_32 range 0 .. 63;
       --  unspecified
-      Reserved_6_7   : Interfaces.STM32.UInt2 := 16#0#;
+      Reserved_6_7   : Interfaces.Unsigned_32 range 0 .. 3;
       --  Error interrupt enable
-      ITERREN        : Boolean := False;
+      ITERREN        : Boolean;
       --  Event interrupt enable
-      ITEVTEN        : Boolean := False;
+      ITEVTEN        : Boolean;
       --  Buffer interrupt enable
-      ITBUFEN        : Boolean := False;
+      ITBUFEN        : Boolean;
       --  DMA requests enable
-      DMAEN          : Boolean := False;
+      DMAEN          : Boolean;
       --  DMA last transfer
-      LAST           : Boolean := False;
+      LAST           : Boolean;
       --  unspecified
-      Reserved_13_31 : Interfaces.STM32.UInt19 := 16#0#;
+      Reserved_13_31 : Interfaces.Unsigned_32 range 0 .. 524287;
    end record
      with Object_Size => 32, Bit_Order => System.Low_Order_First;
 
@@ -111,23 +108,20 @@ package Interfaces.STM32.I2C is
       Reserved_13_31 at 0 range 13 .. 31;
    end record;
 
-   subtype OAR1_ADD7_Field is Interfaces.STM32.UInt7;
-   subtype OAR1_ADD10_Field is Interfaces.STM32.UInt2;
-
    --  Own address register 1
    type OAR1_Register is record
       --  Interface address
-      ADD0           : Boolean := False;
+      ADD0           : Boolean;
       --  Interface address
-      ADD7           : OAR1_ADD7_Field := 16#0#;
+      ADD7           : Interfaces.Unsigned_32 range 0 .. 127;
       --  Interface address
-      ADD10          : OAR1_ADD10_Field := 16#0#;
+      ADD10          : Interfaces.Unsigned_32 range 0 .. 3;
       --  unspecified
-      Reserved_10_14 : Interfaces.STM32.UInt5 := 16#0#;
+      Reserved_10_14 : Interfaces.Unsigned_32 range 0 .. 31;
       --  Addressing mode (slave mode)
-      ADDMODE        : Boolean := False;
+      ADDMODE        : Boolean;
       --  unspecified
-      Reserved_16_31 : Interfaces.STM32.UInt16 := 16#0#;
+      Reserved_16_31 : Interfaces.Unsigned_32 range 0 .. 65535;
    end record
      with Object_Size => 32, Bit_Order => System.Low_Order_First;
 
@@ -140,16 +134,14 @@ package Interfaces.STM32.I2C is
       Reserved_16_31 at 0 range 16 .. 31;
    end record;
 
-   subtype OAR2_ADD2_Field is Interfaces.STM32.UInt7;
-
    --  Own address register 2
    type OAR2_Register is record
       --  Dual addressing mode enable
-      ENDUAL        : Boolean := False;
+      ENDUAL        : Boolean;
       --  Interface address
-      ADD2          : OAR2_ADD2_Field := 16#0#;
+      ADD2          : Interfaces.Unsigned_32 range 0 .. 127;
       --  unspecified
-      Reserved_8_31 : Interfaces.STM32.UInt24 := 16#0#;
+      Reserved_8_31 : Interfaces.Unsigned_32 range 0 .. 16777215;
    end record
      with Object_Size => 32, Bit_Order => System.Low_Order_First;
 
@@ -159,14 +151,12 @@ package Interfaces.STM32.I2C is
       Reserved_8_31 at 0 range 8 .. 31;
    end record;
 
-   subtype DR_DR_Field is Interfaces.STM32.Byte;
-
    --  Data register
    type DR_Register is record
       --  8-bit data register
-      DR            : DR_DR_Field := 16#0#;
+      DR            : Interfaces.Unsigned_32 range 0 .. 255;
       --  unspecified
-      Reserved_8_31 : Interfaces.STM32.UInt24 := 16#0#;
+      Reserved_8_31 : Interfaces.Unsigned_32 range 0 .. 16777215;
    end record
      with Object_Size => 32, Bit_Order => System.Low_Order_First;
 
@@ -178,39 +168,39 @@ package Interfaces.STM32.I2C is
    --  Status register 1
    type SR1_Register is record
       --  Read-only. Start bit (Master mode)
-      SB             : Boolean := False;
+      SB             : Boolean;
       --  Read-only. Address sent (master mode)/matched (slave mode)
-      ADDR           : Boolean := False;
+      ADDR           : Boolean;
       --  Read-only. Byte transfer finished
-      BTF            : Boolean := False;
+      BTF            : Boolean;
       --  Read-only. 10-bit header sent (Master mode)
-      ADD10          : Boolean := False;
+      ADD10          : Boolean;
       --  Read-only. Stop detection (slave mode)
-      STOPF          : Boolean := False;
+      STOPF          : Boolean;
       --  unspecified
-      Reserved_5_5   : Interfaces.STM32.Bit := 16#0#;
+      Reserved_5_5   : Interfaces.Unsigned_32 range 0 .. 1;
       --  Read-only. Data register not empty (receivers)
-      RxNE           : Boolean := False;
+      RxNE           : Boolean;
       --  Read-only. Data register empty (transmitters)
-      TxE            : Boolean := False;
+      TxE            : Boolean;
       --  Bus error
-      BERR           : Boolean := False;
+      BERR           : Boolean;
       --  Arbitration lost (master mode)
-      ARLO           : Boolean := False;
+      ARLO           : Boolean;
       --  Acknowledge failure
-      AF             : Boolean := False;
+      AF             : Boolean;
       --  Overrun/Underrun
-      OVR            : Boolean := False;
+      OVR            : Boolean;
       --  PEC Error in reception
-      PECERR         : Boolean := False;
+      PECERR         : Boolean;
       --  unspecified
-      Reserved_13_13 : Interfaces.STM32.Bit := 16#0#;
+      Reserved_13_13 : Interfaces.Unsigned_32 range 0 .. 1;
       --  Timeout or Tlow error
-      TIMEOUT        : Boolean := False;
+      TIMEOUT        : Boolean;
       --  SMBus alert
-      SMBALERT       : Boolean := False;
+      SMBALERT       : Boolean;
       --  unspecified
-      Reserved_16_31 : Interfaces.STM32.UInt16 := 16#0#;
+      Reserved_16_31 : Interfaces.Unsigned_32 range 0 .. 65535;
    end record
      with Object_Size => 32, Bit_Order => System.Low_Order_First;
 
@@ -234,8 +224,6 @@ package Interfaces.STM32.I2C is
       Reserved_16_31 at 0 range 16 .. 31;
    end record;
 
-   subtype SR2_PEC_Field is Interfaces.STM32.Byte;
-
    --  Status register 2
    type SR2_Register is record
       --  Read-only. Master/slave
@@ -245,7 +233,7 @@ package Interfaces.STM32.I2C is
       --  Read-only. Transmitter/receiver
       TRA            : Boolean;
       --  unspecified
-      Reserved_3_3   : Interfaces.STM32.Bit;
+      Reserved_3_3   : Interfaces.Unsigned_32 range 0 .. 1;
       --  Read-only. General call address (Slave mode)
       GENCALL        : Boolean;
       --  Read-only. SMBus device default address (Slave mode)
@@ -255,9 +243,9 @@ package Interfaces.STM32.I2C is
       --  Read-only. Dual flag (Slave mode)
       DUALF          : Boolean;
       --  Read-only. acket error checking register
-      PEC            : SR2_PEC_Field;
+      PEC            : Interfaces.Unsigned_32 range 0 .. 255;
       --  unspecified
-      Reserved_16_31 : Interfaces.STM32.UInt16;
+      Reserved_16_31 : Interfaces.Unsigned_32 range 0 .. 65535;
    end record
      with Object_Size => 32, Bit_Order => System.Low_Order_First;
 
@@ -274,20 +262,18 @@ package Interfaces.STM32.I2C is
       Reserved_16_31 at 0 range 16 .. 31;
    end record;
 
-   subtype CCR_CCR_Field is Interfaces.STM32.UInt12;
-
    --  Clock control register
    type CCR_Register is record
       --  Clock control register in Fast/Standard mode (Master mode)
-      CCR            : CCR_CCR_Field := 16#0#;
+      CCR            : Interfaces.Unsigned_32 range 0 .. 4095;
       --  unspecified
-      Reserved_12_13 : Interfaces.STM32.UInt2 := 16#0#;
+      Reserved_12_13 : Interfaces.Unsigned_32 range 0 .. 3;
       --  Fast mode duty cycle
-      DUTY           : Boolean := False;
+      DUTY           : Boolean;
       --  I2C master mode selection
-      F_S            : Boolean := False;
+      F_S            : Boolean;
       --  unspecified
-      Reserved_16_31 : Interfaces.STM32.UInt16 := 16#0#;
+      Reserved_16_31 : Interfaces.Unsigned_32 range 0 .. 65535;
    end record
      with Object_Size => 32, Bit_Order => System.Low_Order_First;
 
@@ -299,20 +285,36 @@ package Interfaces.STM32.I2C is
       Reserved_16_31 at 0 range 16 .. 31;
    end record;
 
-   subtype TRISE_TRISE_Field is Interfaces.STM32.UInt6;
-
    --  TRISE register
    type TRISE_Register is record
       --  Maximum rise time in Fast/Standard mode (Master mode)
-      TRISE         : TRISE_TRISE_Field := 16#2#;
+      TRISE         : Interfaces.Unsigned_32 range 0 .. 63;
       --  unspecified
-      Reserved_6_31 : Interfaces.STM32.UInt26 := 16#0#;
+      Reserved_6_31 : Interfaces.Unsigned_32 range 0 .. 67108863;
    end record
      with Object_Size => 32, Bit_Order => System.Low_Order_First;
 
    for TRISE_Register use record
       TRISE         at 0 range 0 .. 5;
       Reserved_6_31 at 0 range 6 .. 31;
+   end record;
+
+   --  FLTR register
+   type FLTR_Register is record
+      --  Digital Noise Filter. 0 to disable, or filtering capability up to N *
+      --  TPCLK1
+      DNF           : Interfaces.Unsigned_32 range 0 .. 15;
+      --  Analog noise filter OFF
+      ANOFF         : Boolean;
+      --  unspecified
+      Reserved_5_31 : Interfaces.Unsigned_32 range 0 .. 134217727;
+   end record
+     with Object_Size => 32, Bit_Order => System.Low_Order_First;
+
+   for FLTR_Register use record
+      DNF           at 0 range 0 .. 3;
+      ANOFF         at 0 range 4 .. 4;
+      Reserved_5_31 at 0 range 5 .. 31;
    end record;
 
    -----------------
@@ -348,6 +350,9 @@ package Interfaces.STM32.I2C is
       --  TRISE register
       TRISE : aliased TRISE_Register;
       pragma Volatile_Full_Access (TRISE);
+      --  FLTR register
+      FLTR  : aliased FLTR_Register;
+      pragma Volatile_Full_Access (FLTR);
    end record
      with Volatile;
 
@@ -361,6 +366,7 @@ package Interfaces.STM32.I2C is
       SR2   at 16#18# range 0 .. 31;
       CCR   at 16#1C# range 0 .. 31;
       TRISE at 16#20# range 0 .. 31;
+      FLTR  at 16#24# range 0 .. 31;
    end record;
 
    --  Inter-integrated circuit
@@ -375,4 +381,4 @@ package Interfaces.STM32.I2C is
    I2C3_Periph : aliased I2C_Peripheral
      with Import, Address => I2C3_Base;
 
-end Interfaces.STM32.I2C;
+end STM32.Registers.I2C;

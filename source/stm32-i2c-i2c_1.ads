@@ -11,7 +11,7 @@ with System;
 with A0B.Callbacks;
 
 private with Ada.Interrupts.Names;
-private with Interfaces.STM32.I2C;
+private with STM32.Registers.I2C;
 
 package STM32.I2C.I2C_1 is
 
@@ -42,7 +42,7 @@ package STM32.I2C.I2C_1 is
 private
 
    package Implementation is new I2C_Implementation
-     (Interfaces.STM32.I2C.I2C1_Periph);
+     (STM32.Registers.I2C.I2C1_Periph);
 
    protected type Device (Priority : System.Any_Priority)
      with Priority => Priority

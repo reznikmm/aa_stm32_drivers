@@ -16,7 +16,8 @@ with System;
 
 with A0B.Callbacks;
 
-private with Interfaces.STM32.I2C;
+private with Interfaces;
+private with STM32.Registers.I2C;
 
 package STM32.I2C is
    pragma Preelaborate;
@@ -28,7 +29,7 @@ private
    procedure Init_GPIO (Item : Pin);
 
    generic
-      Periph : in out Interfaces.STM32.I2C.I2C_Peripheral;
+      Periph : in out STM32.Registers.I2C.I2C_Peripheral;
    package I2C_Implementation is
       --  Generic implementation for I2C initializaion, operations and
       --  interrupt handling procedure
@@ -64,7 +65,7 @@ private
          Next     : Positive;
          Read     : Natural;
          Done     : A0B.Callbacks.Callback;
-         Slave    : Interfaces.STM32.I2C.DR_DR_Field;  --  Slave + Dir bit
+         Slave    : Interfaces.Unsigned_8;  --  Slave + Dir bit
          Error    : Boolean;
       end record;
       --  If Read > 0 then don't call Done, but start reading instead
