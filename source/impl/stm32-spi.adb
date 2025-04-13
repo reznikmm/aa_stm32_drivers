@@ -3,8 +3,6 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ----------------------------------------------------------------
 
-with System.STM32;
-
 with STM32.GPIO;
 
 package body STM32.SPI is
@@ -14,21 +12,16 @@ package body STM32.SPI is
    ---------------
 
    procedure Init_GPIO
-     (Periph : in out Interfaces.STM32.GPIO.GPIO_Peripheral;
+     (Periph : in out STM32.Registers.GPIO.GPIO_Peripheral;
       Pin    : Pin_Index)
    is
       AF_SPI1_6    : constant := 5;
    begin
-      Periph.MODER.Arr     (Pin) := System.STM32.Mode_AF;
-      Periph.OSPEEDR.Arr   (Pin) := System.STM32.Speed_100MHz;
-      Periph.OTYPER.OT.Arr (Pin) := System.STM32.Push_Pull;
-      Periph.PUPDR.Arr     (Pin) := System.STM32.Pull_Up;
-
-      if Pin in Periph.AFRL.Arr'Range then
-         Periph.AFRL.Arr (Pin) := AF_SPI1_6;
-      else
-         Periph.AFRH.Arr (Pin) := AF_SPI1_6;
-      end if;
+      Periph.MODER   (Pin) := STM32.Registers.GPIO.Mode_AF;
+      Periph.OSPEEDR (Pin) := STM32.Registers.GPIO.Speed_100MHz;
+      Periph.OTYPER  (Pin) := STM32.Registers.GPIO.Push_Pull;
+      Periph.PUPDR   (Pin) := STM32.Registers.GPIO.Pull_Up;
+      Periph.AFR     (Pin) := AF_SPI1_6;
    end Init_GPIO;
 
    ---------------
@@ -38,19 +31,7 @@ package body STM32.SPI is
    procedure Init_GPIO (Item : Pin) is
    begin
       STM32.GPIO.Enable_GPIO (Item.Port);
-
-      case Item.Port is
-         when PA =>
-            Init_GPIO (Interfaces.STM32.GPIO.GPIOA_Periph, Item.Pin);
-         when PB =>
-            Init_GPIO (Interfaces.STM32.GPIO.GPIOB_Periph, Item.Pin);
-         when PC =>
-            Init_GPIO (Interfaces.STM32.GPIO.GPIOC_Periph, Item.Pin);
-         when PD =>
-            Init_GPIO (Interfaces.STM32.GPIO.GPIOD_Periph, Item.Pin);
-         when PE =>
-            Init_GPIO (Interfaces.STM32.GPIO.GPIOE_Periph, Item.Pin);
-      end case;
+      Init_GPIO (STM32.Registers.GPIO.GPIO_Periph (Item.Port), Item.Pin);
    end Init_GPIO;
 
    package body SPI_Implementation is
@@ -61,10 +42,10 @@ package body STM32.SPI is
          MOSI  : Pin;
          Speed : Interfaces.Unsigned_32;
          Mode  : SPI_Mode;
-         Clock : Interfaces.STM32.UInt32)
+         Clock : Interfaces.Unsigned_32)
       is
          use type Interfaces.Unsigned_32;
-         BR : Interfaces.STM32.SPI.CR1_BR_Field := 0;
+         BR : Interfaces.Unsigned_32 := 0;
 
          CPHA : Boolean := Mode in 1 | 3;
          CPOL : Boolean := Mode in 2 | 3;
@@ -74,8 +55,8 @@ package body STM32.SPI is
          Init_GPIO (MOSI);
 
          for J in 1 .. 8 loop
-            exit when Interfaces.Unsigned_32 (Clock) / 2 ** J <= Speed;
-            BR := Interfaces.STM32.SPI.CR1_BR_Field'Succ (BR);
+            exit when Clock / 2 ** J <= Speed;
+            BR := BR + 1;
          end loop;
 
          Periph.CR1.SPE := False;  --  Disable
@@ -109,7 +90,7 @@ package body STM32.SPI is
          Buffer : String (1 .. Positive'Last)
            with Import, Address => Self.Buffer;
 
-         SR : constant Interfaces.STM32.SPI.SR_Register := Periph.SR;
+         SR : constant STM32.Registers.SPI.SR_Register := Periph.SR;
          --  This register is cleared when read, so read it once
       begin
          if Periph.CR2.TXEIE and then SR.TXE then

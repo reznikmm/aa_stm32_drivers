@@ -11,7 +11,7 @@ with System;
 with A0B.Callbacks;
 
 private with Ada.Interrupts.Names;
-private with Interfaces.STM32.SPI;
+private with STM32.Registers.SPI;
 
 package STM32.SPI.SPI_1 is
 
@@ -47,7 +47,7 @@ package STM32.SPI.SPI_1 is
 private
 
    package Implementation is new SPI_Implementation
-     (Interfaces.STM32.SPI.SPI1_Periph);
+     (STM32.Registers.SPI.SPI1_Periph);
 
    protected type Device (Priority : System.Any_Priority)
      with Priority => Priority
