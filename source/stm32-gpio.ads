@@ -3,8 +3,6 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ----------------------------------------------------------------
 
-with Interfaces.STM32;
-
 package STM32.GPIO is
    pragma Preelaborate;
 
@@ -12,7 +10,7 @@ package STM32.GPIO is
 
    procedure Set_Output
      (Pin   : STM32.Pin;
-      Value : Interfaces.STM32.Bit);
+      Value : STM32.Bit);
 
    procedure Configure_Interrupt
      (Pin       : STM32.Pin;

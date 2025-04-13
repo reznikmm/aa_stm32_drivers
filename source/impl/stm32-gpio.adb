@@ -3,22 +3,34 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ----------------------------------------------------------------
 
-with Interfaces.STM32.GPIO;
+with STM32.Registers.GPIO;
 with Interfaces.STM32.RCC;
 with Interfaces.STM32.SYSCFG;
 with Interfaces.STM32.EXTI;
-with System.STM32;
+
+with STM32.Registers.GPIO;
 
 package body STM32.GPIO is
 
-   procedure Set_Output
-     (Periph : in out Interfaces.STM32.GPIO.GPIO_Peripheral;
-      Pin    : Pin_Index;
-      Value  : Interfaces.STM32.Bit);
+   Mode_IN  : constant := 0;
+   Mode_OUT : constant := 1;
+   Mode_AF  : constant := 2;
+   Mode_AN  : constant := 3;
 
-   procedure Configure_Output
-     (GPIO : in out Interfaces.STM32.GPIO.GPIO_Peripheral;
-      Pin  : Pin_Index);
+   --  OTYPER constants
+   Push_Pull  : constant Boolean := False;
+   Open_Drain : constant Boolean := True;
+
+   --  OSPEEDR constants
+   Speed_2MHz   : constant := 0; -- Low speed
+   Speed_25MHz  : constant := 1; -- Medium speed
+   Speed_50MHz  : constant := 2; -- Fast speed
+   Speed_100MHz : constant := 3; -- High speed
+
+   --  PUPDR constants
+   No_Pull   : constant := 0;
+   Pull_Up   : constant := 1;
+   Pull_Down : constant := 2;
 
    ---------------------
    -- Clear_Interrupt --
@@ -46,7 +58,7 @@ package body STM32.GPIO is
    is
 
       procedure Configure_Interrupt
-        (GPIO : in out Interfaces.STM32.GPIO.GPIO_Peripheral;
+        (GPIO : in out STM32.Registers.GPIO.GPIO_Peripheral;
          Pin  : Pin_Index);
 
       -------------------------
@@ -54,14 +66,14 @@ package body STM32.GPIO is
       -------------------------
 
       procedure Configure_Interrupt
-        (GPIO : in out Interfaces.STM32.GPIO.GPIO_Peripheral;
+        (GPIO : in out STM32.Registers.GPIO.GPIO_Peripheral;
          Pin  : Pin_Index) is
       begin
-         GPIO.MODER.Arr (Pin) := System.STM32.Mode_IN;
-         GPIO.PUPDR.Arr (Pin) :=
-           (if Pull_Up then System.STM32.Pull_Up
-            elsif Pull_Down then System.STM32.Pull_Down
-            else System.STM32.No_Pull);
+         GPIO.MODER (Pin) := Mode_IN;
+         GPIO.PUPDR (Pin) :=
+           (if Pull_Up then STM32.GPIO.Pull_Up
+            elsif Pull_Down then STM32.GPIO.Pull_Down
+            else STM32.GPIO.No_Pull);
       end Configure_Interrupt;
 
       EXTI_Periph : Interfaces.STM32.EXTI.EXTI_Peripheral renames
@@ -79,18 +91,8 @@ package body STM32.GPIO is
    begin
       Enable_GPIO (Pin.Port);
 
-      case Pin.Port is
-         when PA =>
-            Configure_Interrupt (Interfaces.STM32.GPIO.GPIOA_Periph, Pin.Pin);
-         when PB =>
-            Configure_Interrupt (Interfaces.STM32.GPIO.GPIOB_Periph, Pin.Pin);
-         when PC =>
-            Configure_Interrupt (Interfaces.STM32.GPIO.GPIOC_Periph, Pin.Pin);
-         when PD =>
-            Configure_Interrupt (Interfaces.STM32.GPIO.GPIOD_Periph, Pin.Pin);
-         when PE =>
-            Configure_Interrupt (Interfaces.STM32.GPIO.GPIOE_Periph, Pin.Pin);
-      end case;
+      Configure_Interrupt
+        (STM32.Registers.GPIO.GPIO_Periph (Pin.Port), Pin.Pin);
 
       EXTICR (Pin.Pin / 4).EXTI.Arr (Pin.Pin mod 4) :=
         Interfaces.STM32.SYSCFG.EXTICR1_EXTI_Element (Port);
@@ -106,35 +108,28 @@ package body STM32.GPIO is
    ----------------------
 
    procedure Configure_Output (Pin : STM32.Pin) is
+
+      procedure Configure_Output
+        (GPIO : in out STM32.Registers.GPIO.GPIO_Peripheral;
+         Pin  : Pin_Index);
+
+      ----------------------
+      -- Configure_Output --
+      ----------------------
+
+      procedure Configure_Output
+        (GPIO : in out STM32.Registers.GPIO.GPIO_Peripheral;
+         Pin  : Pin_Index) is
+      begin
+         GPIO.MODER     (Pin) := Mode_OUT;
+         GPIO.PUPDR     (Pin) := No_Pull;
+         GPIO.OSPEEDR   (Pin) := Speed_50MHz;
+         GPIO.OTYPER    (Pin) := Push_Pull;
+      end Configure_Output;
+
    begin
       Enable_GPIO (Pin.Port);
-
-      case Pin.Port is
-         when PA =>
-            Configure_Output (Interfaces.STM32.GPIO.GPIOA_Periph, Pin.Pin);
-         when PB =>
-            Configure_Output (Interfaces.STM32.GPIO.GPIOB_Periph, Pin.Pin);
-         when PC =>
-            Configure_Output (Interfaces.STM32.GPIO.GPIOC_Periph, Pin.Pin);
-         when PD =>
-            Configure_Output (Interfaces.STM32.GPIO.GPIOD_Periph, Pin.Pin);
-         when PE =>
-            Configure_Output (Interfaces.STM32.GPIO.GPIOE_Periph, Pin.Pin);
-      end case;
-   end Configure_Output;
-
-   ----------------------
-   -- Configure_Output --
-   ----------------------
-
-   procedure Configure_Output
-     (GPIO : in out Interfaces.STM32.GPIO.GPIO_Peripheral;
-      Pin  : Pin_Index) is
-   begin
-      GPIO.MODER.Arr     (Pin) := System.STM32.Mode_OUT;
-      GPIO.PUPDR.Arr     (Pin) := System.STM32.No_Pull;
-      GPIO.OSPEEDR.Arr   (Pin) := System.STM32.Speed_50MHz;
-      GPIO.OTYPER.OT.Arr (Pin) := System.STM32.Push_Pull;
+      Configure_Output (STM32.Registers.GPIO.GPIO_Periph (Pin.Port), Pin.Pin);
    end Configure_Output;
 
    -----------------
@@ -175,40 +170,35 @@ package body STM32.GPIO is
    ----------------
 
    procedure Set_Output
-     (Periph : in out Interfaces.STM32.GPIO.GPIO_Peripheral;
-      Pin    : Pin_Index;
-      Value  : Interfaces.STM32.Bit)
-   is
-      use type Interfaces.STM32.Bit;
-      use type Interfaces.STM32.UInt16;
-   begin
-      if Value = 0 then
-         Periph.BSRR.BR.Val := 2 ** Pin;
-      else
-         Periph.BSRR.BS.Val := 2 ** Pin;
-      end if;
-   end Set_Output;
-
-   ----------------
-   -- Set_Output --
-   ----------------
-
-   procedure Set_Output
      (Pin   : STM32.Pin;
-      Value : Interfaces.STM32.Bit) is
+      Value : STM32.Bit)
+   is
+      procedure Set_Output
+        (Periph : in out STM32.Registers.GPIO.GPIO_Peripheral;
+         Pin    : Pin_Index;
+         Value  : STM32.Bit);
+
+      ----------------
+      -- Set_Output --
+      ----------------
+
+      procedure Set_Output
+        (Periph : in out STM32.Registers.GPIO.GPIO_Peripheral;
+         Pin    : Pin_Index;
+         Value  : STM32.Bit)
+      is
+         use type Interfaces.STM32.Bit;
+         use type Interfaces.STM32.UInt16;
+      begin
+         if Value = 0 then
+            Periph.BSRR.BR (Pin) := True;
+         else
+            Periph.BSRR.BS (Pin) := True;
+         end if;
+      end Set_Output;
+
    begin
-      case Pin.Port is
-         when PA =>
-            Set_Output (Interfaces.STM32.GPIO.GPIOA_Periph, Pin.Pin, Value);
-         when PB =>
-            Set_Output (Interfaces.STM32.GPIO.GPIOB_Periph, Pin.Pin, Value);
-         when PC =>
-            Set_Output (Interfaces.STM32.GPIO.GPIOC_Periph, Pin.Pin, Value);
-         when PD =>
-            Set_Output (Interfaces.STM32.GPIO.GPIOD_Periph, Pin.Pin, Value);
-         when PE =>
-            Set_Output (Interfaces.STM32.GPIO.GPIOE_Periph, Pin.Pin, Value);
-      end case;
+      Set_Output (STM32.Registers.GPIO.GPIO_Periph (Pin.Port), Pin.Pin, Value);
    end Set_Output;
 
 end STM32.GPIO;

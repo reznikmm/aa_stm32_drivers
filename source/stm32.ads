@@ -18,4 +18,7 @@ package STM32 is
    end record
      with Pack;
 
+   type Bit is mod 2
+     with Size => 1;
+
 end STM32;
