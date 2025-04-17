@@ -29,8 +29,10 @@ package body Drivers.GPIO is
       EXTI_Periph : Interfaces.STM32.EXTI.EXTI_Peripheral renames
         Interfaces.STM32.EXTI.EXTI_Periph;
 
+      Value : Interfaces.STM32.EXTI.PR_Register := (others => <>);
    begin
-      EXTI_Periph.PR.PR.Arr (Pin.Pin) := True;  --  Clear pending
+      Value.PR.Arr (Pin.Pin) := True;
+      EXTI_Periph.PR := Value;  --  Clear pending
    end Clear_Interrupt;
 
    -------------------------
@@ -156,6 +158,17 @@ package body Drivers.GPIO is
             RCC.AHB1ENR.GPIOEEN  := 1;
       end case;
    end Enable_GPIO;
+
+   ------------------------
+   -- Pending_Interrupts --
+   ------------------------
+
+   function Pending_Interrupts return Pending_Interrupt_Set is
+      EXTI_Periph : Interfaces.STM32.EXTI.EXTI_Peripheral renames
+        Interfaces.STM32.EXTI.EXTI_Periph;
+   begin
+      return Pending_Interrupt_Set (EXTI_Periph.PR.PR.Arr (0 .. 15));
+   end Pending_Interrupts;
 
    ----------------
    -- Set_Output --

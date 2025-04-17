@@ -25,6 +25,10 @@ package Drivers.GPIO is
    procedure Clear_Interrupt (Pin : Drivers.Pin);
    --  Clear pending interrupt
 
+   type Pending_Interrupt_Set is array (Pin_Index) of Boolean;
+
+   function Pending_Interrupts return Pending_Interrupt_Set;
+
    procedure Enable_GPIO (Port : Drivers.Port);
 
 end Drivers.GPIO;
