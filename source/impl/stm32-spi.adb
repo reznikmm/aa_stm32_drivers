@@ -11,24 +11,29 @@ package body STM32.SPI is
    -- Init_GPIO --
    ---------------
 
-   procedure Init_GPIO
-     (Periph : in out STM32.Registers.GPIO.GPIO_Peripheral;
-      Pin    : Pin_Index)
-   is
-      AF_SPI1_6    : constant := 5;
-   begin
-      Periph.MODER   (Pin) := STM32.Registers.GPIO.Mode_AF;
-      Periph.OSPEEDR (Pin) := STM32.Registers.GPIO.Speed_100MHz;
-      Periph.OTYPER  (Pin) := STM32.Registers.GPIO.Push_Pull;
-      Periph.PUPDR   (Pin) := STM32.Registers.GPIO.Pull_Up;
-      Periph.AFR     (Pin) := AF_SPI1_6;
-   end Init_GPIO;
-
-   ---------------
-   -- Init_GPIO --
-   ---------------
-
    procedure Init_GPIO (Item : Pin) is
+
+      procedure Init_GPIO
+        (Periph : in out STM32.Registers.GPIO.GPIO_Peripheral;
+         Pin    : Pin_Index);
+
+      ---------------
+      -- Init_GPIO --
+      ---------------
+
+      procedure Init_GPIO
+        (Periph : in out STM32.Registers.GPIO.GPIO_Peripheral;
+         Pin    : Pin_Index)
+      is
+         AF_SPI1_6    : constant := 5;
+      begin
+         Periph.MODER   (Pin) := STM32.Registers.GPIO.Mode_AF;
+         Periph.OSPEEDR (Pin) := STM32.Registers.GPIO.Speed_100MHz;
+         Periph.OTYPER  (Pin) := STM32.Registers.GPIO.Push_Pull;
+         Periph.PUPDR   (Pin) := STM32.Registers.GPIO.Pull_Up;
+         Periph.AFR     (Pin) := AF_SPI1_6;
+      end Init_GPIO;
+
    begin
       STM32.GPIO.Enable_GPIO (Item.Port);
       Init_GPIO (STM32.Registers.GPIO.GPIO_Periph (Item.Port), Item.Pin);

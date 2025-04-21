@@ -6,12 +6,13 @@
 --  Driver for USART_6.
 
 with Interfaces;
+with STM32.UART.UART_4;
 with System;
 
 with A0B.Callbacks;
 
 private with Ada.Interrupts.Names;
-private with Interfaces.STM32.USART;
+private with STM32.Registers.USART;
 
 package STM32.UART.USART_6 is
 
@@ -54,15 +55,15 @@ package STM32.UART.USART_6 is
 
 private
 
-   package Implementation is new USART_Implementation
-     (Interfaces.STM32.USART.USART6_Periph);
+   package Implementation is new UART_Implementation
+     (STM32.Registers.USART.USART6_Periph, UART_4_8);
 
    protected type Device (Priority : System.Any_Priority)
      with Priority => Priority
    is
       procedure Set_Speed
         (Speed : Interfaces.Unsigned_32;
-         Clock : Interfaces.STM32.UInt32);
+         Clock : Interfaces.Unsigned_32);
 
       procedure Start_Reading
         (Buffer : System.Address;

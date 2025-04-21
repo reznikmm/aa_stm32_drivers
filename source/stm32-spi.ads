@@ -40,10 +40,6 @@ private
 
    procedure Init_GPIO (Item : Pin);
 
-   procedure Init_GPIO
-     (Periph : in out STM32.Registers.GPIO.GPIO_Peripheral;
-      Pin  : Pin_Index);
-
    generic
       Periph : in out STM32.Registers.SPI.SPI_Peripheral;
    package SPI_Implementation is
