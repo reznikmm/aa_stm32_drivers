@@ -3,7 +3,7 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ----------------------------------------------------------------
 
-with Interfaces.STM32.RCC;
+with STM32.Registers.RCC;
 with System.STM32;
 
 package body STM32.UART.USART_3 is
@@ -16,7 +16,7 @@ package body STM32.UART.USART_3 is
 
       procedure Set_Speed
         (Speed : Interfaces.Unsigned_32;
-         Clock : Interfaces.STM32.UInt32) is
+         Clock : Interfaces.Unsigned_32) is
       begin
          Implementation.Set_Speed (Data, Speed, Clock);
       end Set_Speed;
@@ -56,11 +56,11 @@ package body STM32.UART.USART_3 is
    is
       pragma Unreferenced (Self);
    begin
-      Interfaces.STM32.RCC.RCC_Periph.APB1ENR.USART3EN := 1;
+      STM32.Registers.RCC.RCC_Periph.APB1ENR.USART3EN := True;
 
       Implementation.Configure
         (TX, RX, Speed,
-         Clock => System.STM32.System_Clocks.PCLK1);
+         Clock => Interfaces.Unsigned_32 (System.STM32.System_Clocks.PCLK1));
    end Configure;
 
    ---------------
@@ -71,7 +71,9 @@ package body STM32.UART.USART_3 is
      (Self  : in out Device;
       Speed : Interfaces.Unsigned_32) is
    begin
-      Self.Set_Speed (Speed, Clock => System.STM32.System_Clocks.PCLK1);
+      Self.Set_Speed
+        (Speed,
+         Clock => Interfaces.Unsigned_32 (System.STM32.System_Clocks.PCLK1));
    end Set_Speed;
 
    -------------------
