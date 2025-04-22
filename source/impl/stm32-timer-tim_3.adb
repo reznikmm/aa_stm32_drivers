@@ -3,7 +3,7 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ----------------------------------------------------------------
 
-with Interfaces.STM32.RCC;
+with STM32.Registers.RCC;
 with System.STM32;
 
 package body STM32.Timer.TIM_3 is
@@ -19,14 +19,15 @@ package body STM32.Timer.TIM_3 is
    is
       pragma Unreferenced (Self);
    begin
-      Interfaces.STM32.RCC.RCC_Periph.APB1ENR.TIM3EN := 1;
-      Interfaces.STM32.RCC.RCC_Periph.APB1RSTR.TIM3RST := 1;
-      Interfaces.STM32.RCC.RCC_Periph.APB1RSTR.TIM3RST := 0;
+      STM32.Registers.RCC.RCC_Periph.APB1ENR.TIM_EN_2_7 (3) := True;
+      STM32.Registers.RCC.RCC_Periph.APB1RSTR.TIM_EN_2_7 (3) := True;
+      STM32.Registers.RCC.RCC_Periph.APB1RSTR.TIM_EN_2_7 (3) := False;
 
       Implementation.Configure
         (Pin,
+         AF_TIM3_CH3,
          Speed,
-         Clock => System.STM32.System_Clocks.TIMCLK1);
+         Clock => Interfaces.Unsigned_32 (System.STM32.System_Clocks.TIMCLK1));
    end Configure;
 
    ------------
