@@ -4,7 +4,7 @@
 ----------------------------------------------------------------
 
 with STM32.Registers.RCC;
-with System.STM32;
+with STM32.System_Clocks;
 
 package body STM32.SPI.SPI_1 is
 
@@ -60,7 +60,7 @@ package body STM32.SPI.SPI_1 is
          MOSI  => MOSI,
          Speed => Speed,
          Mode  => Mode,
-         Clock => Interfaces.Unsigned_32 (System.STM32.System_Clocks.PCLK2));
+         Clock => STM32.System_Clocks.PCLK2);
    end Configure;
 
    -------------------------

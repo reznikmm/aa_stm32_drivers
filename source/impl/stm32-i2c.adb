@@ -3,7 +3,7 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ----------------------------------------------------------------
 
-with System.STM32;
+with STM32.System_Clocks;
 with STM32.Registers.GPIO;
 
 with STM32.GPIO;
@@ -54,8 +54,7 @@ package body STM32.I2C is
       is
          use type Interfaces.Unsigned_32;
 
-         Clock : constant Interfaces.Unsigned_32 :=
-           Interfaces.Unsigned_32 (System.STM32.System_Clocks.PCLK1);
+         Clock : constant Interfaces.Unsigned_32 := STM32.System_Clocks.PCLK1;
 
          Clock_MHz : constant Interfaces.Unsigned_32 := Clock / 1_000_000;
 

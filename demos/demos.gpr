@@ -29,4 +29,10 @@ project Demos is
       for Artifacts (".") use ("share");
    end Install;
 
+   package Ide is
+      for Program_Host use "localhost:4242";
+      for Communication_Protocol use "remote";
+      for Connection_Tool use "st-util";
+   end Ide;
+
 end Demos;
