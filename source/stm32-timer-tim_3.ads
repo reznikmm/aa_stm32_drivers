@@ -32,7 +32,7 @@ package STM32.Timer.TIM_3 is
 private
 
    package Implementation is new TIM_Implementation
-     (Interfaces.STM32.TIM.TIM3_Periph);
+     (STM32.Registers.TIM.TIM3_Periph, Channel => 3);
 
    protected type Device (Priority : System.Any_Priority)
      with Priority => Priority

@@ -356,26 +356,18 @@ package STM32.Registers.RCC is
       Reserved_1_31 at 0 range 1 .. 31;
    end record;
 
+   type Boolean_2_7 is array (2 .. 7) of Boolean
+     with Component_Size => 1;
+
+   type Boolean_12_14 is array (12 .. 14) of Boolean
+     with Component_Size => 1;
+
    --  APB1 peripheral reset register
    type APB1RSTR_Register is record
-      --  TIM2 reset
-      TIM2RST        : Boolean;
-      --  TIM3 reset
-      TIM3RST        : Boolean;
-      --  TIM4 reset
-      TIM4RST        : Boolean;
-      --  TIM5 reset
-      TIM5RST        : Boolean;
-      --  TIM6 reset
-      TIM6RST        : Boolean;
-      --  TIM7 reset
-      TIM7RST        : Boolean;
-      --  TIM12 reset
-      TIM12RST       : Boolean;
-      --  TIM13 reset
-      TIM13RST       : Boolean;
-      --  TIM14 reset
-      TIM14RST       : Boolean;
+      --  TIM  reset
+      TIM_EN_2_7     : Boolean_2_7;
+      --  TIM  reset
+      TIM_EN_12_14   : Boolean_12_14;
       --  unspecified
       Reserved_9_10  : Interfaces.Unsigned_32 range 0 .. 3;
       --  Window watchdog reset
@@ -420,15 +412,8 @@ package STM32.Registers.RCC is
      with Object_Size => 32, Bit_Order => System.Low_Order_First;
 
    for APB1RSTR_Register use record
-      TIM2RST        at 0 range 0 .. 0;
-      TIM3RST        at 0 range 1 .. 1;
-      TIM4RST        at 0 range 2 .. 2;
-      TIM5RST        at 0 range 3 .. 3;
-      TIM6RST        at 0 range 4 .. 4;
-      TIM7RST        at 0 range 5 .. 5;
-      TIM12RST       at 0 range 6 .. 6;
-      TIM13RST       at 0 range 7 .. 7;
-      TIM14RST       at 0 range 8 .. 8;
+      TIM_EN_2_7     at 0 range 0 .. 5;
+      TIM_EN_12_14   at 0 range 6 .. 8;
       Reserved_9_10  at 0 range 9 .. 10;
       WWDGRST        at 0 range 11 .. 11;
       Reserved_12_13 at 0 range 12 .. 13;
@@ -620,24 +605,10 @@ package STM32.Registers.RCC is
 
    --  APB1 peripheral clock enable register
    type APB1ENR_Register is record
-      --  TIM2 clock enable
-      TIM2EN         : Boolean;
-      --  TIM3 clock enable
-      TIM3EN         : Boolean;
-      --  TIM4 clock enable
-      TIM4EN         : Boolean;
-      --  TIM5 clock enable
-      TIM5EN         : Boolean;
-      --  TIM6 clock enable
-      TIM6EN         : Boolean;
-      --  TIM7 clock enable
-      TIM7EN         : Boolean;
-      --  TIM12 clock enable
-      TIM12EN        : Boolean;
-      --  TIM13 clock enable
-      TIM13EN        : Boolean;
-      --  TIM14 clock enable
-      TIM14EN        : Boolean;
+      --  TIM x clock enable
+      TIM_EN_2_7     : Boolean_2_7;
+      --  TIM x clock enable
+      TIM_EN_12_14   : Boolean_12_14;
       --  unspecified
       Reserved_9_10  : Interfaces.Unsigned_32 range 0 .. 3;
       --  Window watchdog clock enable
@@ -682,15 +653,8 @@ package STM32.Registers.RCC is
      with Object_Size => 32, Bit_Order => System.Low_Order_First;
 
    for APB1ENR_Register use record
-      TIM2EN         at 0 range 0 .. 0;
-      TIM3EN         at 0 range 1 .. 1;
-      TIM4EN         at 0 range 2 .. 2;
-      TIM5EN         at 0 range 3 .. 3;
-      TIM6EN         at 0 range 4 .. 4;
-      TIM7EN         at 0 range 5 .. 5;
-      TIM12EN        at 0 range 6 .. 6;
-      TIM13EN        at 0 range 7 .. 7;
-      TIM14EN        at 0 range 8 .. 8;
+      TIM_EN_2_7     at 0 range 0 .. 5;
+      TIM_EN_12_14   at 0 range 6 .. 8;
       Reserved_9_10  at 0 range 9 .. 10;
       WWDGEN         at 0 range 11 .. 11;
       Reserved_12_13 at 0 range 12 .. 13;

@@ -11,8 +11,10 @@
 --  returns. When settings are applied, it triggers a callback provided as
 --  a parameter.
 
-private with Interfaces.STM32.GPIO;
-private with Interfaces.STM32.TIM;
+private with Interfaces;
+
+private with STM32.Registers.GPIO;
+private with STM32.Registers.TIM;
 
 private with A0B.Callbacks;
 
@@ -20,14 +22,15 @@ package STM32.Timer is
 
 private
 
-   procedure Init_GPIO (Item : Pin);
+   procedure Init_GPIO (Item : Pin; Fun : Interfaces.Unsigned_32);
 
-   procedure Init_GPIO
-     (Periph : in out Interfaces.STM32.GPIO.GPIO_Peripheral;
-      Pin  : Pin_Index);
+   subtype Channel_Index is Positive range 1 .. 4;
+
+   AF_TIM3_CH3 : constant := 2;
 
    generic
-      Periph : in out Interfaces.STM32.TIM.TIM3_Peripheral;
+      Periph  : in out STM32.Registers.TIM.TIM_Peripheral;
+      Channel : Channel_Index;
    package TIM_Implementation is
       --  Generic implementation for timer initializaion, operations and
       --  interrupt handling procedure
@@ -36,8 +39,9 @@ private
 
       procedure Configure
         (Pin   : STM32.Pin;
+         Fun   : Interfaces.Unsigned_32;
          Speed : Interfaces.Unsigned_32;
-         Clock : Interfaces.STM32.UInt32);
+         Clock : Interfaces.Unsigned_32);
 
       procedure On_Interrupt (Self : in out Internal_Data);
 
@@ -50,8 +54,8 @@ private
    private
 
       type Internal_Data is limited record
-         ARR  : Interfaces.STM32.TIM.ARR_ARR_L_Field;
-         CCR  : Interfaces.STM32.TIM.CCR3_CCR3_L_Field;
+         ARR  : Interfaces.Unsigned_32;
+         CCR  : Interfaces.Unsigned_32;
          Done : A0B.Callbacks.Callback;
       end record;
 
