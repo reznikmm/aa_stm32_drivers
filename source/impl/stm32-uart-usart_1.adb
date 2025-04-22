@@ -4,7 +4,7 @@
 ----------------------------------------------------------------
 
 with STM32.Registers.RCC;
-with System.STM32;
+with STM32.System_Clocks;
 
 package body STM32.UART.USART_1 is
 
@@ -60,7 +60,7 @@ package body STM32.UART.USART_1 is
 
       Implementation.Configure
         (TX, RX, Speed,
-         Clock => Interfaces.Unsigned_32 (System.STM32.System_Clocks.PCLK2));
+         Clock => STM32.System_Clocks.PCLK2);
    end Configure;
 
    ---------------
@@ -73,7 +73,7 @@ package body STM32.UART.USART_1 is
    begin
       Self.Set_Speed
         (Speed,
-         Clock => Interfaces.Unsigned_32 (System.STM32.System_Clocks.PCLK2));
+         Clock => STM32.System_Clocks.PCLK2);
    end Set_Speed;
 
    -------------------

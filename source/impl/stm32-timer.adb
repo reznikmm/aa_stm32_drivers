@@ -3,8 +3,6 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ----------------------------------------------------------------
 
-with System.STM32;
-
 with STM32.GPIO;
 
 package body STM32.Timer is

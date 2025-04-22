@@ -4,7 +4,7 @@
 ----------------------------------------------------------------
 
 with STM32.Registers.RCC;
-with System.STM32;
+with STM32.System_Clocks;
 
 package body STM32.Timer.TIM_3 is
 
@@ -27,7 +27,7 @@ package body STM32.Timer.TIM_3 is
         (Pin,
          AF_TIM3_CH3,
          Speed,
-         Clock => Interfaces.Unsigned_32 (System.STM32.System_Clocks.TIMCLK1));
+         Clock => STM32.System_Clocks.TIMCLK1);
    end Configure;
 
    ------------
