@@ -49,12 +49,9 @@ package body STM32.UART.USART_2 is
    ---------------
 
    procedure Configure
-     (Self  : in out Device;
-      TX    : Pin;
+     (TX    : Pin;
       RX    : Pin;
-      Speed : Interfaces.Unsigned_32)
-   is
-      pragma Unreferenced (Self);
+      Speed : Interfaces.Unsigned_32) is
    begin
       STM32.Registers.RCC.RCC_Periph.APB1ENR.USART2EN := True;
 
@@ -67,11 +64,9 @@ package body STM32.UART.USART_2 is
    -- Set_Speed --
    ---------------
 
-   procedure Set_Speed
-     (Self  : in out Device;
-      Speed : Interfaces.Unsigned_32) is
+   procedure Set_Speed (Speed : Interfaces.Unsigned_32) is
    begin
-      Self.Set_Speed
+      Device.Set_Speed
         (Speed,
          Clock => STM32.System_Clocks.PCLK1);
    end Set_Speed;
@@ -81,12 +76,11 @@ package body STM32.UART.USART_2 is
    -------------------
 
    procedure Start_Reading
-     (Self   : in out Device;
-      Buffer : System.Address;
+     (Buffer : System.Address;
       Length : Positive;
       Done   : A0B.Callbacks.Callback) is
    begin
-      Self.Start_Reading (Buffer, Length, Done);
+      Device.Start_Reading (Buffer, Length, Done);
    end Start_Reading;
 
    -------------------
@@ -94,12 +88,11 @@ package body STM32.UART.USART_2 is
    -------------------
 
    procedure Start_Writing
-     (Self   : in out Device;
-      Buffer : System.Address;
+     (Buffer : System.Address;
       Length : Positive;
       Done   : A0B.Callbacks.Callback) is
    begin
-      Self.Start_Writing (Buffer, Length, Done);
+      Device.Start_Writing (Buffer, Length, Done);
    end Start_Writing;
 
 end STM32.UART.USART_2;

@@ -5,12 +5,12 @@
 
 --  Common code for I2C STM32.
 --
---  Child packages provide a type and operations for a particular I2C device.
---  The type is a protected type with priority descriminant. Its Start_Reading
---  and Start_Writing operations initialise the IO operation and return. When
---  the operation is completed, it triggers a callback provided as a parameter.
---  Read and write operations use a common wire and cannot be performed at the
---  same time.
+--  Child packages provide generics with operations for a particular I2C
+--  device. The device generic package is instantinated with the priority. Its
+--  Start_Reading and Start_Writing operations initialise the IO operation and
+--  return. When the operation is completed, it triggers a callback provided
+--  as a parameter. Read and write operations use a common wire and cannot be
+--  performed at the same time.
 
 with System;
 
@@ -23,6 +23,7 @@ package STM32.I2C is
    pragma Preelaborate;
 
    type I2C_Slave_Address is mod 2**7;
+   --  I2C 7-bit slave address
 
 private
 

@@ -5,8 +5,8 @@
 
 --  Common code for SPI STM32.
 --
---  Child packages provide a type and operations for a particular SPI device.
---  The type is a protected type with priority descriminant. Its
+--  Child packages provide generics with operations for a particular SPI
+--  device. The device generic package is instantinated with the priority. Its
 --  Start_Data_Exchange operation initialises the IO operation and returns.
 --  When the operation is completed, it triggers a callback provided as a
 --  parameter.

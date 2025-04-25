@@ -12,12 +12,9 @@ package body STM32.I2C.I2C_1 is
    ---------------
 
    procedure Configure
-     (Self  : in out Device;
-      SCL   : Pin;
+     (SCL   : Pin;
       SDA   : Pin;
-      Speed : Interfaces.Unsigned_32)
-   is
-      pragma Unreferenced (Self);
+      Speed : Interfaces.Unsigned_32) is
    begin
       STM32.Registers.RCC.RCC_Periph.APB1ENR.I2C1EN := True;
       Implementation.Configure (SCL, SDA, Speed);
@@ -74,22 +71,20 @@ package body STM32.I2C.I2C_1 is
    -- Has_Error --
    ---------------
 
-   function Has_Error (Self : Device) return Boolean is
-     (Self.Has_Error);
+   function Has_Error return Boolean is (Device.Has_Error);
 
    -------------------------
    -- Start_Data_Exchange --
    -------------------------
 
    procedure Start_Data_Exchange
-     (Self   : in out Device;
-      Slave  : I2C_Slave_Address;
+     (Slave  : I2C_Slave_Address;
       Buffer : System.Address;
       Write  : Natural;
       Read   : Natural;
       Done   : A0B.Callbacks.Callback) is
    begin
-      Self.Start_Data_Exchange (Slave, Buffer, Write, Read, Done);
+      Device.Start_Data_Exchange (Slave, Buffer, Write, Read, Done);
    end Start_Data_Exchange;
 
 end STM32.I2C.I2C_1;

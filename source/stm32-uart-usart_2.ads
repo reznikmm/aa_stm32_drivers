@@ -3,7 +3,7 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ----------------------------------------------------------------
 
---  Driver for USART_2.
+--  USART_2 device.
 
 with Interfaces;
 with System;
@@ -13,14 +13,13 @@ with A0B.Callbacks;
 private with Ada.Interrupts.Names;
 private with STM32.Registers.USART;
 
+generic
+   Priority : System.Any_Priority;
+   --  Priority is used for underlying protected object.
 package STM32.UART.USART_2 is
 
-   type Device (Priority : System.Any_Priority) is limited private;
-   --  USART_2 device. Priority is used for underlying protected object.
-
    procedure Configure
-     (Self  : in out Device;
-      TX    : Pin;
+     (TX    : Pin;
       RX    : Pin;
       Speed : Interfaces.Unsigned_32)
      with Pre =>
@@ -29,14 +28,11 @@ package STM32.UART.USART_2 is
    --
    --  Configure USART_2 on given pins and speed
 
-   procedure Set_Speed
-     (Self  : in out Device;
-      Speed : Interfaces.Unsigned_32);
+   procedure Set_Speed (Speed : Interfaces.Unsigned_32);
    --  Reconfigure USART_2 speed (baud rate)
 
    procedure Start_Reading
-     (Self   : in out Device;
-      Buffer : System.Address;
+     (Buffer : System.Address;
       Length : Positive;
       Done   : A0B.Callbacks.Callback);
    --  Start reading into given Buffer of provided Length. When Buffer is
@@ -44,8 +40,7 @@ package STM32.UART.USART_2 is
    --  Start_Reading is allowed until Done is triggered.
 
    procedure Start_Writing
-     (Self   : in out Device;
-      Buffer : System.Address;
+     (Buffer : System.Address;
       Length : Positive;
       Done   : A0B.Callbacks.Callback);
    --  Start writing given Buffer of provided Length. When Buffer is
@@ -57,8 +52,8 @@ private
    package Implementation is new UART_Implementation
      (STM32.Registers.USART.USART2_Periph, UART_1_3);
 
-   protected type Device (Priority : System.Any_Priority)
-     with Priority => Priority
+   protected Device
+     with Interrupt_Priority => Priority
    is
       procedure Set_Speed
         (Speed : Interfaces.Unsigned_32;

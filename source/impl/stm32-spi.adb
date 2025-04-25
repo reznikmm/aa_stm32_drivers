@@ -52,8 +52,8 @@ package body STM32.SPI is
          use type Interfaces.Unsigned_32;
          BR : Interfaces.Unsigned_32 := 0;
 
-         CPHA : Boolean := Mode in 1 | 3;
-         CPOL : Boolean := Mode in 2 | 3;
+         CPHA : constant Boolean := Mode in 1 | 3;
+         CPOL : constant Boolean := Mode in 2 | 3;
       begin
          Init_GPIO (SCK);
          Init_GPIO (MISO);

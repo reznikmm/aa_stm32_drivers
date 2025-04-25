@@ -43,14 +43,11 @@ package body STM32.SPI.SPI_1 is
    ---------------
 
    procedure Configure
-     (Self  : in out Device;
-      SCK   : Pin;
+     (SCK   : Pin;
       MISO  : Pin;
       MOSI  : Pin;
       Speed : Interfaces.Unsigned_32;
-      Mode  : SPI_Mode)
-   is
-      pragma Unreferenced (Self);
+      Mode  : SPI_Mode) is
    begin
       STM32.Registers.RCC.RCC_Periph.APB2ENR.SPI1EN := True;
 
@@ -68,13 +65,12 @@ package body STM32.SPI.SPI_1 is
    -------------------------
 
    procedure Start_Data_Exchange
-     (Self   : in out Device;
-      CS     : Pin;
+     (CS     : Pin;
       Buffer : System.Address;
       Length : Positive;
       Done   : A0B.Callbacks.Callback) is
    begin
-      Self.Start_Data_Exchange (CS, Buffer, Length, Done);
+      Device.Start_Data_Exchange (CS, Buffer, Length, Done);
    end Start_Data_Exchange;
 
 end STM32.SPI.SPI_1;

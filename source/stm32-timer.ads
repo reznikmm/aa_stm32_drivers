@@ -5,8 +5,8 @@
 
 --  Common code for timer STM32.
 --
---  Child packages provide a type and operations for a particular timer device.
---  The type is a protected type with priority descriminant. Its
+--  Child packages provide generics with operations for a particular timer
+--  device. The device generic package is instantinated with the priority. Its
 --  Start_PWM operation sets PWM setting to by applied on the next cycle and
 --  returns. When settings are applied, it triggers a callback provided as
 --  a parameter.
