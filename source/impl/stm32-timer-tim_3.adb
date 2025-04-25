@@ -13,11 +13,8 @@ package body STM32.Timer.TIM_3 is
    ---------------
 
    procedure Configure
-     (Self  : in out Device;
-      Pin   : STM32.Pin;
-      Speed : Interfaces.Unsigned_32)
-   is
-      pragma Unreferenced (Self);
+     (Pin   : STM32.Pin;
+      Speed : Interfaces.Unsigned_32) is
    begin
       STM32.Registers.RCC.RCC_Periph.APB1ENR.TIM_EN_2_7 (3) := True;
       STM32.Registers.RCC.RCC_Periph.APB1RSTR.TIM_EN_2_7 (3) := True;
@@ -64,12 +61,11 @@ package body STM32.Timer.TIM_3 is
    ---------------
 
    procedure Start_PWM
-     (Self   : in out Device;
-      Period : Interfaces.Unsigned_16;
+     (Period : Interfaces.Unsigned_16;
       Duty   : Interfaces.Unsigned_16;
       Done   : A0B.Callbacks.Callback) is
    begin
-      Self.Start_PWM (Period, Duty, Done);
+      Device.Start_PWM (Period, Duty, Done);
    end Start_PWM;
 
 end STM32.Timer.TIM_3;

@@ -7,6 +7,6 @@ with STM32.UART.USART_1;
 
 package Devices is
 
-   USART_1 : STM32.UART.USART_1.Device (Priority => 241);
+   package USART_1 is new STM32.UART.USART_1 (Priority => 241);
 
 end Devices;

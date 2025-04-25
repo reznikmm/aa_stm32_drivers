@@ -3,7 +3,7 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ----------------------------------------------------------------
 
---  Driver for SPI_1.
+--  SPI_1 device.
 
 with Interfaces;
 with System;
@@ -13,14 +13,13 @@ with A0B.Callbacks;
 private with Ada.Interrupts.Names;
 private with STM32.Registers.SPI;
 
+generic
+   Priority : System.Any_Priority;
+   --  Priority is used for underlying protected object.
 package STM32.SPI.SPI_1 is
 
-   type Device (Priority : System.Any_Priority) is limited private;
-   --  SPI_1 device. Priority is used for underlying protected object.
-
    procedure Configure
-     (Self  : in out Device;
-      SCK   : Pin;
+     (SCK   : Pin;
       MISO  : Pin;
       MOSI  : Pin;
       Speed : Interfaces.Unsigned_32;
@@ -33,8 +32,7 @@ package STM32.SPI.SPI_1 is
    --  (Re-)configure SPI_1 on given pins and speed
 
    procedure Start_Data_Exchange
-     (Self   : in out Device;
-      CS     : Pin;
+     (CS     : Pin;
       Buffer : System.Address;
       Length : Positive;
       Done   : A0B.Callbacks.Callback);
@@ -49,8 +47,8 @@ private
    package Implementation is new SPI_Implementation
      (STM32.Registers.SPI.SPI1_Periph);
 
-   protected type Device (Priority : System.Any_Priority)
-     with Priority => Priority
+   protected Device
+     with Interrupt_Priority => Priority
    is
       procedure Start_Data_Exchange
         (CS     : Pin;

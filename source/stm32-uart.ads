@@ -5,12 +5,12 @@
 
 --  Common code for UART STM32.
 --
---  Child packages provide a type and operations for a particular UART device.
---  The type is a protected type with priority descriminant. Its Start_Reading
---  and Start_Writing operations initialise the IO operation and return. When
---  the operation is completed, it triggers a callback provided as a parameter.
---  Read and write operations use separate wires and can be performed
---  independently (in parallel or overlapping in time).
+--  Child packages provide generics with operations for a particular UART device.
+--  The device generic package is instantinated with the priority. Its
+--  Start_Reading and Start_Writing operations initialise the IO operation and
+--  return. When the operation is completed, it triggers a callback provided
+--  as a parameter. Read and write operations use separate wires and can be
+--  performed independently (in parallel or time overlap).
 
 private with System;
 with Interfaces;
