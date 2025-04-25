@@ -25,7 +25,8 @@ package Drivers.GPIO is
    procedure Clear_Interrupt (Pin : Drivers.Pin);
    --  Clear pending interrupt
 
-   type Pending_Interrupt_Set is array (Pin_Index) of Boolean;
+   type Pending_Interrupt_Set is array (Pin_Index) of Boolean
+     with Component_Size => 1, Object_Size => 16;
 
    function Pending_Interrupts return Pending_Interrupt_Set;
 
