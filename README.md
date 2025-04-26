@@ -45,36 +45,36 @@ alr with aa_stm32_drivers --use=https://github.com/reznikmm/aa_stm32_drivers
 ## Usage
 
 STM32 devices use pins grouped into ports. To specify a pin, provide a port
-name (a single letter starting from `A`) and a pin number (0 to 15).
+name (enumeration literals `PA`, `PB`, etc) and a pin number (0 to 15).
 
 ### GPIO
 
 To configure a GPIO pin for output, use the `Configure_Output` procedure:
 
 ```ada
-Drivers.GPIO.Configure_Output (Pin => ('A', 1));
+STM32.GPIO.Configure_Output (Pin => (STM32.PA, 1));
 ```
 
 Set the pin state using:
 
 ```ada
-Drivers.GPIO.Set_Output (Pin => ('A', 1), Value => 0);  -- Clear pin
-Drivers.GPIO.Set_Output (Pin => ('A', 1), Value => 1);  -- Set pin
+STM32.GPIO.Set_Output (Pin => (STM32.PA, 1), Value => 0);  -- Clear pin
+STM32.GPIO.Set_Output (Pin => (STM32.PA, 1), Value => 1);  -- Set pin
 ```
 
 For input pins, configure them as interrupt sources and optionally
 enable pull-up or pull-down resistors:
 
 ```ada
-Drivers.GPIO.Configure_Interrupt (Pin => ('A', 1));  -- No pull-up/down resistors
-Drivers.GPIO.Configure_Interrupt (Pin => ('A', 1), Pull_Up => True);
-Drivers.GPIO.Configure_Interrupt (Pin => ('A', 1), Pull_Down => True);
+STM32.GPIO.Configure_Interrupt (Pin => (STM32.PA, 1));  -- No pull-up/down resistors
+STM32.GPIO.Configure_Interrupt (Pin => (STM32.PA, 1), Pull_Up => True);
+STM32.GPIO.Configure_Interrupt (Pin => (STM32.PA, 1), Pull_Down => True);
 ```
 
 Don't forget to clear the interrupt flag when handling an interrupt:
 
 ```ada
-Drivers.GPIO.Clear_Interrupt (Pin => ('A', 1));
+STM32.GPIO.Clear_Interrupt (Pin => (STM32.PA, 1));
 ```
 
 ### UART/USART
@@ -85,15 +85,14 @@ it with TX/RX pins and a baud rate. Define an interrupt priority for
 the protected object.
 
 ```ada
-with Drivers.UART.USART_1;
+with STM32.UART.USART_1;
 
 procedure Main is
-   USART_1 : Drivers.UART.USART_1.Device (Priority => 241);
+   package USART_1 is new STM32.UART.USART_1 (Priority => 241);
 begin
-   Drivers.UART.USART_1.Configure
-     (USART_1,
-      TX    => ('A', 9),
-      RX    => ('A', 10),
+   USART_1.Configure
+     (TX    => (STM32.PA, 9),
+      RX    => (STM32.PA, 10),
       Speed => 115_200);
 end Main;
 ```
@@ -106,7 +105,7 @@ for callbacks.
 ```ada
 with Ada.Synchronous_Task_Control;
 with A0B.Callbacks.Generic_Subprogram;
-with Drivers.UART.USART_1;
+with STM32.UART.USART_1;
 
 procedure Main is
    package Suspension_Object_Callbacks is new
@@ -114,21 +113,21 @@ procedure Main is
        (Ada.Synchronous_Task_Control.Suspension_Object,
         Ada.Synchronous_Task_Control.Set_True);
 
-   USART_1 : Drivers.UART.USART_1.Device (Priority => 241);
+   package USART_1 is new STM32.UART.USART_1 (Priority => 241);
+
    Buffer  : String (1 .. 8);
    Signal  : aliased Ada.Synchronous_Task_Control.Suspension_Object;
    Done    : constant A0B.Callbacks.Callback :=
      Suspension_Object_Callbacks.Create_Callback (Signal);
 begin
-   Drivers.UART.USART_1.Configure
-     (USART_1,
-      TX    => ('A', 9),
-      RX    => ('A', 10),
+   USART_1.Configure
+     (TX    => (STM32.PA, 9),
+      RX    => (STM32.PA, 10),
       Speed => 115_200);
 
    loop
-      Drivers.UART.USART_1.Start_Reading
-        (USART_1, Buffer'Address, Buffer'Length, Done);
+      USART_1.Start_Reading
+        (Buffer'Address, Buffer'Length, Done);
 
       Ada.Synchronous_Task_Control.Suspend_Until_True (Signal);
 
@@ -142,15 +141,14 @@ end Main;
 Configure an I2C device by providing SDA, SCL pins, and the speed:
 
 ```ada
-with Drivers.I2C.I2C_1;
+with STM32.I2C.I2C_1;
 
 procedure Main is
-   I2C_1 : Drivers.I2C.I2C_1.I2C_Device (Priority => 241);
+   package I2C_1 is new STM32.I2C.I2C_1 (Priority => 241);
 begin
-   Drivers.I2C.I2C_1.Configure
-     (I2C_1,
-      SDA => ('B', 7),
-      SCL => ('B', 8),
+   I2C_1.Configure
+     (SDA => (STM32.PB, 7),
+      SCL => (STM32.PB, 8),
       Speed => 400_000);
 end Main;
 ```
@@ -159,9 +157,8 @@ Use `Start_Data_Exchange` to initiate transfers. The transfer can read data
 from the slave, write data to the slave or write some data and then read
 as a single transaction enclosed in start/stop condition signals.
 ```ada
-Drivers.I2C.I2C_1.Start_Data_Exchange
-  (I2C_1,
-   Slave    => 16#1E#,         --  Slave address 0 .. 0x7F
+I2C_1.Start_Data_Exchange
+  (Slave    => 16#1E#,         --  Slave address 0 .. 0x7F
    Buffer   => Buffer'Address, --  Buffer to read/write
    Write    => 1,              --  Number of bytes to write
    Read     => Buffer'Length,  --  Number of bytes to read
@@ -175,11 +172,10 @@ The callback is called when the transfer is complete.
 Configure an SPI device by specifying SCK, MISO, MOSI pins, and the speed:
 
 ```ada
-Drivers.SPI.SPI_1.Configure
-  (SPI_1,
-   SCK   => ('B', 3),
-   MISO  => ('B', 4),
-   MOSI  => ('B', 5),
+SPI_1.Configure
+  (SCK   => (STM32.PB, 3),
+   MISO  => (STM32.PB, 4),
+   MOSI  => (STM32.PB, 5),
    Speed => 2_800_000);  --  2.8 MHz
 ```
 
@@ -191,9 +187,8 @@ When the transfer is complete the buffer is filled with read data.
 Initiate transfers using `Start_Data_Exchange`:
 
 ```ada
-Drivers.SPI.SPI_1.Start_Data_Exchange
-  (SPI_1,
-   CS       => ('B', 6),
+SPI_1.Start_Data_Exchange
+  (CS       => (STM32.PB, 6),
    Buffer   => Buffer'Address,
    Size     => Buffer'Length,
    Callback => Done);
@@ -207,9 +202,8 @@ A timer can be configured to generate a PWM (pulse width modulation) signal.
 To configure a timer provide a pin to which the PWM signal will be output and a frequency.
 
 ```ada
-Drivers.Timer.TIM_3.Configure_PWM
-  (TIM_3,
-   Pin   => ('C', 8),
+TIM_3.Configure_PWM
+  (Pin   => (STM32.PC, 8),
    Speed => 1_000_000);  -- 1 MHz
 ```
 
@@ -219,9 +213,8 @@ Start PWM signal generation with `Start_PWM` providing
 - a callback to be called when next PWM parameters could be set.
 
 ```ada
-Drivers.Timer.TIM_3.Start_PWM
-  (TIM_3,
-   Period => 30_000,  -- 30 ms
+TIM_3.Start_PWM
+  (Period => 30_000,  -- 30 ms
    Duty   => 600,     -- 600 µs
    Done   => Done);
 ```
@@ -233,7 +226,7 @@ functions. They return the same value, but use different types
 (`Unsigned_64` and `String (1 .. 8)`).
 
 ```ada
-Put_Line (Drivers.UIDs.UID_Image);
+Put_Line (STM32.UIDs.UID_Image);
 ```
 
 ### Flash
@@ -248,20 +241,20 @@ flash is being written/erased. On STM32F429 the code can be executed
 from one flash memory bank while another is being written/erased.
 
 ```ada
-Drivers.Flash.Unlock;
+STM32.Flash.Unlock;
 
-Drivers.Flash.Erase_Sector
+STM32.Flash.Erase_Sector
   (Address => System'To_Address (16#0800_0000#),
    Size    => Sector_Size,
    Done    => Done);
 
 -- Wait for the sector to erase, then write:
 for J in 1 .. Sector_Size loop
-   Drivers.Flash.Programming;
+   STM32.Flash.Programming;
    -- Write a word to 0x800_0000 + J - 1
 end loop;
 
-Drivers.Flash.Lock;
+STM32.Flash.Lock;
 ```
 
 ## Maintainer
