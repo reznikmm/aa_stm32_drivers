@@ -4,8 +4,212 @@
 ----------------------------------------------------------------
 
 with STM32.GPIO;
+with A0B.Callbacks.Generic_Subprogram;
 
 package body STM32.UART is
+
+   procedure Configure
+     (TX     : Pin;
+      RX     : Pin;
+      Speed  : Interfaces.Unsigned_32;
+      Clock  : Interfaces.Unsigned_32;
+      Periph : in out STM32.Registers.USART.USART_Peripheral;
+      Fun    : GPIO_Function)
+     with Inline;
+
+   ---------------
+   -- Configure --
+   ---------------
+
+   procedure Configure
+     (TX     : Pin;
+      RX     : Pin;
+      Speed  : Interfaces.Unsigned_32;
+      Clock  : Interfaces.Unsigned_32;
+      Periph : in out STM32.Registers.USART.USART_Peripheral;
+      Fun    : GPIO_Function)
+   is
+      use type Interfaces.Unsigned_32;
+
+      Divider  : constant Interfaces.Unsigned_32 :=
+        25 * Clock / (4 * Interfaces.Unsigned_32 (Speed));
+
+      Fraction : constant Interfaces.Unsigned_32 := Divider rem 100;
+
+   begin
+      Init_GPIO (TX, Fun);
+      Init_GPIO (RX, Fun);
+
+      Periph.BRR.DIV_Fraction := (Fraction * 16 + 50) / 100;
+      Periph.BRR.DIV_Mantissa := Divider / 100;
+
+      Periph.CR1 :=
+        (SBK      => False,
+         RWU      => False,
+         RE       => True,  --  Receiver enable
+         TE       => True,  --  Transmitter enable
+         IDLEIE   => False,  --  IDLE interrupt enable
+         RXNEIE   => False,
+         TCIE     => False,  --  Transmission complete interrupt enable
+         TXEIE    => False,
+         PEIE     => False,  --  Parity Error
+         PS       => False,  --  is Odd parity
+         PCE      => False,  --  Parity control enable
+         WAKE     => False,
+         M        => False,  --  9 bits
+         UE       => True,  --  USART enable
+         Reserved => 0,
+         OVER8    => False);
+   end Configure;
+
+   package body DMA_Implementation is
+
+      procedure RX_Done (Buffer : in out Buffer_Record);
+
+      package RX_Callback is new A0B.Callbacks.Generic_Subprogram
+        (Buffer_Record, RX_Done);
+
+      procedure TX_Done (Buffer : in out Buffer_Record);
+
+      package TX_Callback is new A0B.Callbacks.Generic_Subprogram
+        (Buffer_Record, TX_Done);
+
+      procedure RX_Done (Buffer : in out Buffer_Record) is
+      begin
+         Periph.CR3.DMAR := False;
+         A0B.Callbacks.Emit (Buffer.Done);
+      end RX_Done;
+
+      procedure TX_Done (Buffer : in out Buffer_Record) is
+      begin
+         Periph.CR3.DMAT := False;
+         A0B.Callbacks.Emit (Buffer.Done);
+      end TX_Done;
+
+      ---------------
+      -- Configure --
+      ---------------
+
+      procedure Configure
+        (TX    : Pin;
+         RX    : Pin;
+         Speed : Interfaces.Unsigned_32;
+         Clock : Interfaces.Unsigned_32) is
+      begin
+         Configure (TX, RX, Speed, Clock, Periph, Fun);
+      end Configure;
+
+      ------------------
+      -- On_Interrupt --
+      ------------------
+
+      procedure On_Interrupt (Self : in out Internal_Data) is
+         use type Interfaces.Unsigned_32;
+
+         SR : constant STM32.Registers.USART.SR_Register := Periph.SR;
+         --  Keep SR copy to avoid losing clear-on-read bits
+      begin
+         if Periph.CR1.TCIE and then SR.TC then
+            --  Change UART speed on transmission complete
+            Periph.CR1.TE := False;  --  Transmitter disable
+            Periph.CR1.RE := False;  --  Receiver disable
+
+            Periph.BRR.DIV_Fraction := (Self.Divider mod 100 * 16 + 50) / 100;
+            Periph.BRR.DIV_Mantissa := Self.Divider / 100;
+
+            Periph.CR1.TCIE := False;  --  disable transmission complete irq
+            Periph.CR1.TE := True;  --  Transmitter enable
+            Periph.CR1.RE := True;  --  Receiver enable
+         end if;
+      end On_Interrupt;
+
+      ---------------
+      -- Set_Speed --
+      ---------------
+
+      procedure Set_Speed
+        (Self  : in out Internal_Data;
+         Speed : Interfaces.Unsigned_32;
+         Clock : Interfaces.Unsigned_32)
+      is
+         use type Interfaces.Unsigned_32;
+      begin
+         Self.Divider :=
+           25 * Clock / (4 * Interfaces.Unsigned_32 (Speed));
+
+         Periph.CR1.TCIE := True;  --  enable transmission complete interrupt
+      end Set_Speed;
+
+      -------------------
+      -- Start_Reading --
+      -------------------
+
+      procedure Start_Reading
+        (Self   : in out Internal_Data;
+         Buffer : System.Address;
+         Length : Positive;
+         Done   : A0B.Callbacks.Callback) is
+      begin
+         Periph.CR3.DMAR := True;
+
+         RX_Start_Transfer
+           (Channel,
+            Source =>
+              (Address     => Periph.DR'Address,
+               Item_Length => 1,  --  8 bit
+               Increment   => 0,
+               Burst       => 1),
+            Target =>
+              (Address => Buffer,
+               Item_Length => 1,
+               Increment   => 1,
+               Burst       => 1),
+            Count => Interfaces.Unsigned_16 (Length),
+            FIFO => 4,
+            Prio => STM32.DMA.Low,
+            Done => RX_Callback.Create_Callback (Self.Input));
+      end Start_Reading;
+
+      -------------------
+      -- Start_Writing --
+      -------------------
+
+      procedure Start_Writing
+        (Self   : in out Internal_Data;
+         Buffer : System.Address;
+         Length : Positive;
+         Done   : A0B.Callbacks.Callback) is
+      begin
+         Periph.CR3.DMAT := True;
+
+         --  Clear SR.TC
+         Periph.SR :=
+           (TC             => False,  --  clear TC
+            RXNE           => True,   --  don't clear RXNE
+            LBD            => True,   --  don't clear LBD
+            CTS            => True,   --  don't clear CTS
+            Reserved_10_31 => 0,      --  all others are read-only
+            others         => False);
+
+         TX_Start_Transfer
+           (Channel,
+            Source =>
+              (Address => Buffer,
+               Item_Length => 1,
+               Increment   => 1,
+               Burst       => 1),
+            Target =>
+              (Address     => Periph.DR'Address,
+               Item_Length => 1,  --  16 bit access???
+               Increment   => 0,
+               Burst       => 1),
+            Count => Interfaces.Unsigned_16 (Length),
+            FIFO => 4,
+            Prio => STM32.DMA.Low,
+            Done => TX_Callback.Create_Callback (Self.Output));
+      end Start_Writing;
+
+   end DMA_Implementation;
 
    ---------------
    -- Init_GPIO --
@@ -55,25 +259,9 @@ package body STM32.UART is
         (TX    : Pin;
          RX    : Pin;
          Speed : Interfaces.Unsigned_32;
-         Clock : Interfaces.Unsigned_32)
-      is
-         use type Interfaces.Unsigned_32;
-
-         Divider  : constant Interfaces.Unsigned_32 :=
-           25 * Clock / (4 * Interfaces.Unsigned_32 (Speed));
-
-         Fraction : constant Interfaces.Unsigned_32 := Divider rem 100;
-
+         Clock : Interfaces.Unsigned_32) is
       begin
-         Init_GPIO (TX, Fun);
-         Init_GPIO (RX, Fun);
-
-         Periph.BRR.DIV_Fraction := (Fraction * 16 + 50) / 100;
-         Periph.BRR.DIV_Mantissa := Divider / 100;
-
-         Periph.CR1.UE := True;  --  USART enable
-         Periph.CR1.TE := True;  --  Transmitter enable
-         Periph.CR1.RE := True;  --  Receiver enable
+         Configure (TX, RX, Speed, Clock, Periph, Fun);
       end Configure;
 
       ------------------
@@ -127,7 +315,7 @@ package body STM32.UART is
             Periph.BRR.DIV_Fraction := (Self.Divider mod 100 * 16 + 50) / 100;
             Periph.BRR.DIV_Mantissa := Self.Divider / 100;
 
-            Periph.CR1.TCIE := False;  --  disable transmission complete interrupt
+            Periph.CR1.TCIE := False;  --  disable transmission complete irq
             Periph.CR1.TE := True;  --  Transmitter enable
             Periph.CR1.RE := True;  --  Receiver enable
          end if;
