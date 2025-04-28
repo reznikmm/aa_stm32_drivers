@@ -24,7 +24,13 @@ package STM32.DMA.Stream_1_7 is
      with Pre =>
         not (Is_Memory (Source.Address) and Is_Memory (Target.Address));
 
+   procedure Stop_Transfer (Count : out Interfaces.Unsigned_16);
+
    function Has_Error return Boolean;
+
+   package Stream is new STM32.DMA.Generic_DMA_Stream
+     (Index   => 7,
+      Is_DMA1 => True);
 
 private
 
@@ -44,6 +50,8 @@ private
          FIFO    : FIFO_Bytes;
          Prio    : Priority_Level;
          Done    : A0B.Callbacks.Callback);
+
+      procedure Stop_Transfer (Count : out Interfaces.Unsigned_16);
 
       function Has_Error return Boolean;
 

@@ -150,9 +150,10 @@ package body STM32.UART is
          Length : Positive;
          Done   : A0B.Callbacks.Callback) is
       begin
+         Self.Input.Done := Done;
          Periph.CR3.DMAR := True;
 
-         RX_Start_Transfer
+         RX_Stream.Start_Transfer
            (Channel,
             Source =>
               (Address     => Periph.DR'Address,
@@ -180,6 +181,7 @@ package body STM32.UART is
          Length : Positive;
          Done   : A0B.Callbacks.Callback) is
       begin
+         Self.Output.Done := Done;
          Periph.CR3.DMAT := True;
 
          --  Clear SR.TC
@@ -191,7 +193,7 @@ package body STM32.UART is
             Reserved_10_31 => 0,      --  all others are read-only
             others         => False);
 
-         TX_Start_Transfer
+         TX_Stream.Start_Transfer
            (Channel,
             Source =>
               (Address => Buffer,
