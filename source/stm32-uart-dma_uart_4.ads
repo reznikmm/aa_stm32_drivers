@@ -6,12 +6,15 @@
 --  UART_4 device with DMA.
 
 with Interfaces;
+with STM32.DMA;
 with System;
 
 with A0B.Callbacks;
 
 private with Ada.Interrupts.Names;
 private with STM32.Registers.USART;
+private with STM32.DMA.Stream_1_2;
+private with STM32.DMA.Stream_1_4;
 
 generic
    Priority : System.Any_Priority;
@@ -49,8 +52,15 @@ package STM32.UART.DMA_UART_4 is
 
 private
 
-   package Implementation is new UART_Implementation
-     (STM32.Registers.USART.UART4_Periph, UART_4_8);
+   package Stream_1_2 is new STM32.DMA.Stream_1_2 (Priority);
+   package Stream_1_4 is new STM32.DMA.Stream_1_4 (Priority);
+
+   package Implementation is new DMA_Implementation
+     (STM32.Registers.USART.UART4_Periph,
+      UART_4_8,
+      Channel   => 4,
+      RX_Stream => Stream_1_2.Stream,
+      TX_Stream => Stream_1_4.Stream);
 
    protected Device
      with Interrupt_Priority => Priority

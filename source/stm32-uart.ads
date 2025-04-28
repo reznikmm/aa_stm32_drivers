@@ -90,23 +90,8 @@ private
       Fun     : GPIO_Function;
       Channel : STM32.DMA.Channel_Id;
 
-      with procedure RX_Start_Transfer
-        (Channel : STM32.DMA.Channel_Id;
-         Source  : STM32.DMA.Location;
-         Target  : STM32.DMA.Location;
-         Count   : Interfaces.Unsigned_16;
-         FIFO    : STM32.DMA.FIFO_Bytes;
-         Prio    : STM32.DMA.Priority_Level;
-         Done    : A0B.Callbacks.Callback);
-
-      with procedure TX_Start_Transfer
-        (Channel : STM32.DMA.Channel_Id;
-         Source  : STM32.DMA.Location;
-         Target  : STM32.DMA.Location;
-         Count   : Interfaces.Unsigned_16;
-         FIFO    : STM32.DMA.FIFO_Bytes;
-         Prio    : STM32.DMA.Priority_Level;
-         Done    : A0B.Callbacks.Callback);
+      with package RX_Stream is new STM32.DMA.Generic_DMA_Stream (<>);
+      with package TX_Stream is new STM32.DMA.Generic_DMA_Stream (<>);
 
    package DMA_Implementation is
       --  Generic DMA based implementation for UART initializaion, operations

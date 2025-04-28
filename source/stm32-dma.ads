@@ -11,11 +11,11 @@
 --  return. When the operation is completed, it triggers a callback provided
 --  as a parameter.
 
+with Interfaces;
 with System;
 
 with A0B.Callbacks;
 
-private with Interfaces;
 private with STM32.Registers.DMA;
 
 package STM32.DMA is
@@ -41,15 +41,41 @@ package STM32.DMA is
          or Location.Item_Length = Location.Increment;
 
    type Channel_Id is range 0 .. 7;
+   subtype Stream_Index is Natural range 0 .. 7;
 
    type Priority_Level is (Low, Medium, High, Very_High);
 
    function Is_Memory (Value : System.Address) return Boolean is
      (System."<" (Value, System'To_Address (16#4000_0000#)));
 
-private
+   function Is_Peripheral (Value : System.Address) return Boolean is
+     (not Is_Memory (Value));
 
-   subtype Stream_Index is Natural range 0 .. 7;
+   generic
+      Index  : Stream_Index;
+
+      Is_DMA1 : Boolean;
+
+      with procedure Start_Transfer
+        (Channel : Channel_Id;
+         Source  : Location;
+         Target  : Location;
+         Count   : Interfaces.Unsigned_16;
+         FIFO    : FIFO_Bytes;
+         Prio    : Priority_Level;
+         Done    : A0B.Callbacks.Callback) is <>;
+
+      with procedure Stop_Transfer (Count : out Interfaces.Unsigned_16) is <>;
+
+      with function Has_Error return Boolean is <>;
+
+   package Generic_DMA_Stream is
+
+      Is_DMA2 : constant Boolean := not Is_DMA1;
+
+   end Generic_DMA_Stream;
+
+private
 
    generic
       Index  : Stream_Index;
@@ -72,6 +98,10 @@ private
          Prio    : Priority_Level;
          Done    : A0B.Callbacks.Callback);
 
+      procedure Stop_Transfer
+        (Self  : in out Internal_Data;
+         Count : out Interfaces.Unsigned_16);
+
       --  How to stop circular?
       --  How to provide next buffer?
       --  How to return transfered bytes in periph contr flow?
@@ -86,5 +116,8 @@ private
          (Self.Error);
 
    end Stream_Implementation;
+
+   procedure Enable_DMA1;
+   procedure Enable_DMA2;
 
 end STM32.DMA;

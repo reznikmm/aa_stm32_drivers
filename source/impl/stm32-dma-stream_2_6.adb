@@ -26,6 +26,15 @@ package body STM32.DMA.Stream_2_6 is
            (Data, Channel, Source, Target, Count, FIFO, Prio, Done);
       end Start_Transfer;
 
+      -------------------
+      -- Stop_Transfer --
+      -------------------
+
+      procedure Stop_Transfer (Count : out Interfaces.Unsigned_16) is
+      begin
+         Implementation.Stop_Transfer (Data, Count);
+      end Stop_Transfer;
+
       ---------------
       -- Has_Error --
       ---------------
@@ -61,4 +70,15 @@ package body STM32.DMA.Stream_2_6 is
         (Channel, Source, Target, Count, FIFO, Prio, Done);
    end Start_Transfer;
 
+   -------------------
+   -- Stop_Transfer --
+   -------------------
+
+   procedure Stop_Transfer (Count : out Interfaces.Unsigned_16) is
+   begin
+      Device.Stop_Transfer (Count);
+   end Stop_Transfer;
+
+begin
+   Enable_DMA2;
 end STM32.DMA.Stream_2_6;
