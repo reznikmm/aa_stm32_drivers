@@ -11,6 +11,7 @@
 --  When the operation is completed, it triggers a callback provided as a
 --  parameter.
 
+private with STM32.DMA;
 private with STM32.Registers.GPIO;
 private with STM32.Registers.SPI;
 private with Interfaces;
@@ -77,5 +78,50 @@ private
       end record;
 
    end SPI_Implementation;
+
+   generic
+      Periph  : in out STM32.Registers.SPI.SPI_Peripheral;
+      Channel : STM32.DMA.Channel_Id;
+
+      with package RX_Stream is new STM32.DMA.Generic_DMA_Stream (<>);
+      with package TX_Stream is new STM32.DMA.Generic_DMA_Stream (<>);
+   package DMA_Implementation is
+      --  Generic implementation for SPI initializaion, operations and
+      --  interrupt handling procedure
+
+      type Internal_Data is limited private;
+
+      procedure Configure
+        (SCK   : Pin;
+         MISO  : Pin;
+         MOSI  : Pin;
+         Speed : Interfaces.Unsigned_32;
+         Mode  : SPI_Mode;
+         Clock : Interfaces.Unsigned_32);
+
+      procedure On_Interrupt (Self : in out Internal_Data);
+
+      procedure Start_Data_Exchange
+        (Self   : in out Internal_Data;
+         CS     : Pin;
+         Buffer : System.Address;
+         Length : Positive;
+         Done   : A0B.Callbacks.Callback);
+
+      function Has_Error (Self : Internal_Data) return Boolean;
+
+   private
+
+      type Data_Record is limited record
+         Done  : A0B.Callbacks.Callback;
+         CS    : Pin;
+      end record;
+
+      type Internal_Data is limited record
+         Data  : aliased Data_Record;
+         Error : Boolean;
+      end record;
+
+   end DMA_Implementation;
 
 end STM32.SPI;
