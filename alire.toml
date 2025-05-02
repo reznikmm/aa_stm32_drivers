@@ -15,6 +15,7 @@ project-files = ["gnat/aa_stm32_drivers.gpr"]
 development.optimization = ["-O2"]
 development.style_checks = ["-gnaty"]
 development.contracts = "Yes"
+"*".debug_info = "Yes"
 
 [[depends-on]]
 gnat_arm_elf = "*"

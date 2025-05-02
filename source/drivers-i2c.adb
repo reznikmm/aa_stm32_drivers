@@ -179,7 +179,7 @@ package body Drivers.I2C is
             elsif SR1.RxNE then
                Buffer (Self.Next) := Character'Val (Periph.DR.DR);
                Self.Next := Self.Next + 1;
-               Periph.CR1.STOP := not ACK;
+               Periph.CR1.STOP := Self.Next = Self.Last;
 
                if Self.Next > Self.Last then
                   A0B.Callbacks.Emit (Self.Done);
@@ -245,7 +245,10 @@ package body Drivers.I2C is
          Self.Slave  := 2 * Interfaces.STM32.I2C.DR_DR_Field (Slave) + Reading;
          Self.Error  := False;
 
-         Periph.CR1.START := True;
+         Periph.CR1 :=
+           (PE     => True,
+            START  => True,
+            others => <>);
       end Start_Data_Exchange;
 
    end I2C_Implementation;
