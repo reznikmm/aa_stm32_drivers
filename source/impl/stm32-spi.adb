@@ -248,6 +248,17 @@ package body STM32.SPI is
             null;
          end loop;
 
+         Periph.CR2 :=
+           (RXDMAEN       => False,
+            TXDMAEN       => False,
+            SSOE          => False,
+            Reserved_3_3  => 0,
+            FRF           => False,
+            ERRIE         => False,
+            RXNEIE        => False,
+            TXEIE         => False,
+            Reserved_8_31 => 0);
+
          if A0B.Callbacks.Is_Set (Data.Done) then
             STM32.GPIO.Set_Output (Data.CS, 1);
             A0B.Callbacks.Emit_Once (Data.Done);
