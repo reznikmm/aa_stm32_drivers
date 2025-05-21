@@ -6,7 +6,6 @@
 --  USART_6 device.
 
 with Interfaces;
-with STM32.UART.UART_4;
 with System;
 
 with A0B.Callbacks;

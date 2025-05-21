@@ -149,9 +149,7 @@ package body STM32.GPIO is
         (Periph : in out STM32.Registers.GPIO.GPIO_Peripheral;
          Pin    : Pin_Index;
          Value  : STM32.Bit)
-      is
-         use type STM32.Bit;
-      begin
+      is begin
          if Value = 0 then
             Periph.BSRR.BR (Pin) := True;
          else

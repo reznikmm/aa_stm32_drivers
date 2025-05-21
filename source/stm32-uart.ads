@@ -5,8 +5,8 @@
 
 --  Common code for UART STM32.
 --
---  Child packages provide generics with operations for a particular UART device.
---  The device generic package is instantinated with the priority. Its
+--  Child packages provide generics with operations for a particular UART
+--  device. The device generic package is instantinated with the priority. Its
 --  Start_Reading and Start_Writing operations initialise the IO operation and
 --  return. When the operation is completed, it triggers a callback provided
 --  as a parameter. Read and write operations use separate wires and can be
@@ -16,7 +16,6 @@ private with System;
 with Interfaces;
 
 private with A0B.Callbacks;
-private with STM32.Registers.GPIO;
 private with STM32.Registers.USART;
 private with STM32.DMA;
 

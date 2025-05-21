@@ -18,6 +18,9 @@ generate_c = false
 [[depends-on]]
 aa_stm32_drivers = "~0.1.0"
 
+[build-profiles]
+aa_stm32_drivers = "development"
+
 [[pins]]
 aa_stm32_drivers = { path='..' }
 

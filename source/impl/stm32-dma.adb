@@ -179,7 +179,7 @@ package body STM32.DMA is
             CHSEL  => Channel_Id'Pos (Channel),
             others => 0);
 
-         Stream.SxCR.En := True;
+         Stream.SxCR.EN := True;
       end Start_Transfer;
 
       -------------------
@@ -190,6 +190,7 @@ package body STM32.DMA is
         (Self  : in out Internal_Data;
          Count : out Interfaces.Unsigned_16)
       is
+         pragma Unreferenced (Self);
          Stream : STM32.Registers.DMA.Stream renames Periph.List (Index);
       begin
          while Stream.SxCR.EN loop

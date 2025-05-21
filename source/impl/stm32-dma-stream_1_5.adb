@@ -3,8 +3,6 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ----------------------------------------------------------------
 
-with Ada.Interrupts.Names;
-
 package body STM32.DMA.Stream_1_5 is
 
    protected body Device is

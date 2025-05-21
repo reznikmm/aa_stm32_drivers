@@ -4,6 +4,7 @@
 ----------------------------------------------------------------
 
 with STM32.GPIO;
+with STM32.Registers.GPIO;
 
 package body STM32.Timer is
 

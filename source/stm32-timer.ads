@@ -13,7 +13,6 @@
 
 private with Interfaces;
 
-private with STM32.Registers.GPIO;
 private with STM32.Registers.TIM;
 
 private with A0B.Callbacks;

@@ -8,9 +8,6 @@
 
 pragma Restrictions (No_Elaboration_Code);
 
-with Interfaces;
-with System;
-
 package STM32.Registers.EXTI is
    pragma Preelaborate;
 

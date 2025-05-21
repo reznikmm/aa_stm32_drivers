@@ -4,6 +4,8 @@
 ----------------------------------------------------------------
 
 with STM32.GPIO;
+with STM32.Registers.GPIO;
+
 with A0B.Callbacks.Generic_Subprogram;
 
 package body STM32.UART is
@@ -31,9 +33,7 @@ package body STM32.UART is
    is
       use type Interfaces.Unsigned_32;
 
-      Divider  : constant Interfaces.Unsigned_32 :=
-        25 * Clock / (4 * Interfaces.Unsigned_32 (Speed));
-
+      Divider  : constant Interfaces.Unsigned_32 := 25 * Clock / (4 * Speed);
       Fraction : constant Interfaces.Unsigned_32 := Divider rem 100;
 
    begin
@@ -134,9 +134,7 @@ package body STM32.UART is
       is
          use type Interfaces.Unsigned_32;
       begin
-         Self.Divider :=
-           25 * Clock / (4 * Interfaces.Unsigned_32 (Speed));
-
+         Self.Divider := 25 * Clock / (4 * Speed);
          Periph.CR1.TCIE := True;  --  enable transmission complete interrupt
       end Set_Speed;
 
@@ -334,9 +332,7 @@ package body STM32.UART is
       is
          use type Interfaces.Unsigned_32;
       begin
-         Self.Divider :=
-           25 * Clock / (4 * Interfaces.Unsigned_32 (Speed));
-
+         Self.Divider := 25 * Clock / (4 * Speed);
          Periph.CR1.TCIE := True;  --  enable transmission complete interrupt
       end Set_Speed;
 

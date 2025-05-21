@@ -12,7 +12,6 @@
 --  parameter.
 
 private with STM32.DMA;
-private with STM32.Registers.GPIO;
 private with STM32.Registers.SPI;
 private with Interfaces;
 private with System;
