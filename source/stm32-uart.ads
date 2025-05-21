@@ -12,6 +12,7 @@
 --  as a parameter. Read and write operations use separate wires and can be
 --  performed independently (in parallel or time overlap).
 
+private with Ada.Interrupts;
 private with System;
 with Interfaces;
 
@@ -20,7 +21,6 @@ private with STM32.Registers.USART;
 private with STM32.DMA;
 
 package STM32.UART is
-   pragma Preelaborate;
 
 private
 
@@ -33,14 +33,21 @@ private
      (TX  : Pin;
       Fun : GPIO_Function);
 
+   type Buffer_Record is record
+      Buffer : System.Address;
+      Last   : Positive;
+      Next   : Positive;
+      Done   : A0B.Callbacks.Callback;
+   end record;
+
    generic
-      Periph : in out STM32.Registers.USART.USART_Peripheral;
-      Fun    : GPIO_Function;
+      Periph    : in out STM32.Registers.USART.USART_Peripheral;
+      Fun       : GPIO_Function;
+      Interrupt : Ada.Interrupts.Interrupt_ID;
+      Priority  : System.Interrupt_Priority;
    package UART_Implementation is
       --  Generic implementation for UART initializaion, operations and
       --  interrupt handling procedure.
-
-      type Internal_Data is limited private;
 
       procedure Configure
         (TX    : Pin;
@@ -48,46 +55,41 @@ private
          Speed : Interfaces.Unsigned_32;
          Clock : Interfaces.Unsigned_32);
 
-      procedure Set_Speed
-        (Self  : in out Internal_Data;
-         Speed : Interfaces.Unsigned_32;
-         Clock : Interfaces.Unsigned_32);
+      protected Device
+        with Interrupt_Priority => Priority
+      is
+         procedure Set_Speed
+           (Speed : Interfaces.Unsigned_32;
+            Clock : Interfaces.Unsigned_32);
 
-      procedure On_Interrupt (Self : in out Internal_Data);
+         procedure Start_Reading
+           (Buffer : System.Address;
+            Length : Positive;
+            Done   : A0B.Callbacks.Callback);
 
-      procedure Start_Reading
-        (Self   : in out Internal_Data;
-         Buffer : System.Address;
-         Length : Positive;
-         Done   : A0B.Callbacks.Callback);
+         procedure Start_Writing
+           (Buffer : System.Address;
+            Length : Positive;
+            Done   : A0B.Callbacks.Callback);
 
-      procedure Start_Writing
-        (Self   : in out Internal_Data;
-         Buffer : System.Address;
-         Length : Positive;
-         Done   : A0B.Callbacks.Callback);
+      private
+         procedure Interrupt_Handler;
 
-   private
+         pragma Attach_Handler (Interrupt_Handler, Interrupt);
 
-      type Buffer_Record is record
-         Buffer : System.Address;
-         Last   : Positive;
-         Next   : Positive;
-         Done   : A0B.Callbacks.Callback;
-      end record;
-
-      type Internal_Data is limited record
          Divider : Interfaces.Unsigned_32;
          Input   : Buffer_Record;
          Output  : Buffer_Record;
-      end record;
+      end Device;
 
    end UART_Implementation;
 
    generic
-      Periph  : in out STM32.Registers.USART.USART_Peripheral;
-      Fun     : GPIO_Function;
-      Channel : STM32.DMA.Channel_Id;
+      Periph    : in out STM32.Registers.USART.USART_Peripheral;
+      Fun       : GPIO_Function;
+      Channel   : STM32.DMA.Channel_Id;
+      Interrupt : Ada.Interrupts.Interrupt_ID;
+      Priority  : System.Interrupt_Priority;
 
       with package RX_Stream is new STM32.DMA.Generic_DMA_Stream (<>);
       with package TX_Stream is new STM32.DMA.Generic_DMA_Stream (<>);
@@ -96,44 +98,38 @@ private
       --  Generic DMA based implementation for UART initializaion, operations
       --  and interrupt handling procedure.
 
-      type Internal_Data is limited private;
-
       procedure Configure
         (TX    : Pin;
          RX    : Pin;
          Speed : Interfaces.Unsigned_32;
          Clock : Interfaces.Unsigned_32);
 
-      procedure Set_Speed
-        (Self  : in out Internal_Data;
-         Speed : Interfaces.Unsigned_32;
-         Clock : Interfaces.Unsigned_32);
+      protected Device
+        with Interrupt_Priority => Priority
+      is
+         procedure Set_Speed
+           (Speed : Interfaces.Unsigned_32;
+            Clock : Interfaces.Unsigned_32);
 
-      procedure On_Interrupt (Self : in out Internal_Data);
+         procedure Start_Reading
+           (Buffer : System.Address;
+            Length : Positive;
+            Done   : A0B.Callbacks.Callback);
 
-      procedure Start_Reading
-        (Self   : in out Internal_Data;
-         Buffer : System.Address;
-         Length : Positive;
-         Done   : A0B.Callbacks.Callback);
+         procedure Start_Writing
+           (Buffer : System.Address;
+            Length : Positive;
+            Done   : A0B.Callbacks.Callback);
 
-      procedure Start_Writing
-        (Self   : in out Internal_Data;
-         Buffer : System.Address;
-         Length : Positive;
-         Done   : A0B.Callbacks.Callback);
+      private
+         procedure Interrupt_Handler;
 
-   private
+         pragma Attach_Handler (Interrupt_Handler, Interrupt);
 
-      type Buffer_Record is record
-         Done : A0B.Callbacks.Callback;
-      end record;
-
-      type Internal_Data is limited record
-         Divider : Interfaces.Unsigned_32;
-         Input   : aliased Buffer_Record;
-         Output  : aliased Buffer_Record;
-      end record;
+         Divider     : Interfaces.Unsigned_32;
+         Input_Done  : aliased A0B.Callbacks.Callback;
+         Output_Done : aliased A0B.Callbacks.Callback;
+      end Device;
 
    end DMA_Implementation;
 

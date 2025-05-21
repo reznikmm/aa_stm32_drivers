@@ -59,32 +59,9 @@ private
      (STM32.Registers.USART.UART4_Periph,
       UART_4_8,
       Channel   => 4,
+      Interrupt => Ada.Interrupts.Names.UART4_Interrupt,
+      Priority  => Priority,
       RX_Stream => Stream_1_2.Stream,
       TX_Stream => Stream_1_4.Stream);
-
-   protected Device
-     with Interrupt_Priority => Priority
-   is
-      procedure Set_Speed
-        (Speed : Interfaces.Unsigned_32;
-         Clock : Interfaces.Unsigned_32);
-
-      procedure Start_Reading
-        (Buffer : System.Address;
-         Length : Positive;
-         Done   : A0B.Callbacks.Callback);
-
-      procedure Start_Writing
-        (Buffer : System.Address;
-         Length : Positive;
-         Done   : A0B.Callbacks.Callback);
-
-   private
-      procedure Interrupt;
-
-      pragma Attach_Handler (Interrupt, Ada.Interrupts.Names.UART4_Interrupt);
-
-      Data : Implementation.Internal_Data;
-   end Device;
 
 end STM32.UART.DMA_UART_4;

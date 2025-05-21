@@ -14,7 +14,7 @@ private with Ada.Interrupts.Names;
 private with STM32.Registers.USART;
 
 generic
-   Priority : System.Any_Priority;
+   Priority : System.Interrupt_Priority;
    --  Priority is used for underlying protected object.
 package STM32.UART.UART_5 is
 
@@ -50,31 +50,9 @@ package STM32.UART.UART_5 is
 private
 
    package Implementation is new UART_Implementation
-     (STM32.Registers.USART.UART5_Periph, UART_4_8);
-
-   protected Device
-     with Interrupt_Priority => Priority
-   is
-      procedure Set_Speed
-        (Speed : Interfaces.Unsigned_32;
-         Clock : Interfaces.Unsigned_32);
-
-      procedure Start_Reading
-        (Buffer : System.Address;
-         Length : Positive;
-         Done   : A0B.Callbacks.Callback);
-
-      procedure Start_Writing
-        (Buffer : System.Address;
-         Length : Positive;
-         Done   : A0B.Callbacks.Callback);
-
-   private
-      procedure Interrupt;
-
-      pragma Attach_Handler (Interrupt, Ada.Interrupts.Names.UART5_Interrupt);
-
-      Data : Implementation.Internal_Data;
-   end Device;
+     (STM32.Registers.USART.UART5_Periph,
+      UART_4_8,
+      Ada.Interrupts.Names.UART5_Interrupt,
+      Priority);
 
 end STM32.UART.UART_5;

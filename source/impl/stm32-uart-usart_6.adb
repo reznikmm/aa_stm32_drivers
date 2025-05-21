@@ -8,42 +8,6 @@ with STM32.System_Clocks;
 
 package body STM32.UART.USART_6 is
 
-   ------------
-   -- Device --
-   ------------
-
-   protected body Device is
-
-      procedure Set_Speed
-        (Speed : Interfaces.Unsigned_32;
-         Clock : Interfaces.Unsigned_32) is
-      begin
-         Implementation.Set_Speed (Data, Speed, Clock);
-      end Set_Speed;
-
-      procedure Start_Reading
-        (Buffer : System.Address;
-         Length : Positive;
-         Done   : A0B.Callbacks.Callback) is
-      begin
-         Implementation.Start_Reading (Data, Buffer, Length, Done);
-      end Start_Reading;
-
-      procedure Start_Writing
-        (Buffer : System.Address;
-         Length : Positive;
-         Done   : A0B.Callbacks.Callback) is
-      begin
-         Implementation.Start_Writing (Data, Buffer, Length, Done);
-      end Start_Writing;
-
-      procedure Interrupt is
-      begin
-         Implementation.On_Interrupt (Data);
-      end Interrupt;
-
-   end Device;
-
    ---------------
    -- Configure --
    ---------------
@@ -66,7 +30,7 @@ package body STM32.UART.USART_6 is
 
    procedure Set_Speed (Speed : Interfaces.Unsigned_32) is
    begin
-      Device.Set_Speed
+      Implementation.Device.Set_Speed
         (Speed,
          Clock => STM32.System_Clocks.PCLK2);
    end Set_Speed;
@@ -80,7 +44,7 @@ package body STM32.UART.USART_6 is
       Length : Positive;
       Done   : A0B.Callbacks.Callback) is
    begin
-      Device.Start_Reading (Buffer, Length, Done);
+      Implementation.Device.Start_Reading (Buffer, Length, Done);
    end Start_Reading;
 
    -------------------
@@ -92,7 +56,7 @@ package body STM32.UART.USART_6 is
       Length : Positive;
       Done   : A0B.Callbacks.Callback) is
    begin
-      Device.Start_Writing (Buffer, Length, Done);
+      Implementation.Device.Start_Writing (Buffer, Length, Done);
    end Start_Writing;
 
 end STM32.UART.USART_6;
