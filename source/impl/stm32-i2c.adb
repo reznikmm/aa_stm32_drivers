@@ -47,6 +47,10 @@ package body STM32.I2C is
 
    package body I2C_Implementation is
 
+      ---------------
+      -- Configure --
+      ---------------
+
       procedure Configure
         (SCL   : Pin;
          SDA   : Pin;
@@ -103,139 +107,147 @@ package body STM32.I2C is
          Periph.CR1.PE := True;
       end Configure;
 
-      --------------
-      -- On_Error --
-      --------------
+      protected body Device is
 
-      procedure On_Error (Self : in out Internal_Data) is
-         SR1   : constant STM32.Registers.I2C.SR1_Register := Periph.SR1;
-      begin
+         --------------
+         -- On_Error --
+         --------------
 
-         if SR1.BERR or SR1.AF or SR1.ARLO then
-            --  Bus error, Acknowledge failure, Arbitration lost
-            Periph.SR1.BERR := False;
-            Periph.SR1.AF   := False;
-            Periph.SR1.ARLO := False;
+         procedure On_Error is
+            SR1   : constant STM32.Registers.I2C.SR1_Register := Periph.SR1;
+         begin
 
-            Periph.CR1.STOP := Periph.SR2.MSL;
-            --  If we in Master mode then do STOP condition
+            if SR1.BERR or SR1.AF or SR1.ARLO then
+               --  Bus error, Acknowledge failure, Arbitration lost
+               Periph.SR1.BERR := False;
+               Periph.SR1.AF   := False;
+               Periph.SR1.ARLO := False;
 
-            Self.Error := True;
-            A0B.Callbacks.Emit (Self.Done);
-            A0B.Callbacks.Unset (Self.Done);
+               Periph.CR1.STOP := Periph.SR2.MSL;
+               --  If we in Master mode then do STOP condition
 
-         else
-            raise Program_Error;
-         end if;
-      end On_Error;
+               Error := True;
+               A0B.Callbacks.Emit (Done);
+               A0B.Callbacks.Unset (Done);
 
-      --------------
-      -- On_Event --
-      --------------
+            else
+               raise Program_Error;
+            end if;
+         end On_Error;
 
-      procedure On_Event (Self : in out Internal_Data) is
-         use type Interfaces.Unsigned_8;
+         --------------
+         -- On_Event --
+         --------------
 
-         Buffer : String (1 .. Positive'Last)
-           with Import, Address => Self.Buffer;
+         procedure On_Event is
+            use type Interfaces.Unsigned_8;
 
-         RX    : constant Boolean := (Self.Slave and 1) /= 0;
-         SR1   : constant STM32.Registers.I2C.SR1_Register := Periph.SR1;
-         ACK   : constant Boolean := Self.Next < Self.Last - 1;
-         Dummy : STM32.Registers.I2C.SR2_Register;
-         None  : constant STM32.Registers.I2C.SR2_Register :=
-           (Reserved_3_3   => 0,
-            Reserved_16_31 => 0,
-            PEC            => 0,
-            others         => False);
-      begin
-         Periph.CR1.ACK := ACK;
+            Buffer : String (1 .. Positive'Last)
+              with Import, Address => Device.Buffer;
 
-         Dummy := (if SR1.ADDR then Periph.SR2 else None);
-         --  Clear ADDR in EV6
+            RX    : constant Boolean := (Slave and 1) /= 0;
+            SR1   : constant STM32.Registers.I2C.SR1_Register := Periph.SR1;
+            ACK   : constant Boolean := Next < Last - 1;
+            Dummy : STM32.Registers.I2C.SR2_Register;
+            None  : constant STM32.Registers.I2C.SR2_Register :=
+              (Reserved_3_3   => 0,
+               Reserved_16_31 => 0,
+               PEC            => 0,
+               others         => False);
+         begin
+            Periph.CR1.ACK := ACK;
 
-         if SR1.SB then
-            Periph.DR.DR := Interfaces.Unsigned_32 (Self.Slave);
+            Dummy := (if SR1.ADDR then Periph.SR2 else None);
+            --  Clear ADDR in EV6
 
-         elsif RX then
+            if SR1.SB then
+               Periph.DR.DR := Interfaces.Unsigned_32 (Slave);
 
-            if SR1.ADDR then
-               Periph.CR1.STOP := Self.Last = 1;
+            elsif RX then
 
-            elsif SR1.RxNE then
-               Buffer (Self.Next) := Character'Val (Periph.DR.DR);
-               Self.Next := Self.Next + 1;
-               Periph.CR1.STOP := Self.Next = Self.Last;
+               if SR1.ADDR then
+                  Periph.CR1.STOP := Last = 1;
 
-               if Self.Next > Self.Last then
-                  A0B.Callbacks.Emit (Self.Done);
-                  A0B.Callbacks.Unset (Self.Done);
+               elsif SR1.RxNE then
+                  Buffer (Next) := Character'Val (Periph.DR.DR);
+                  Next := Next + 1;
+                  Periph.CR1.STOP := Next = Last;
+
+                  if Next > Last then
+                     A0B.Callbacks.Emit (Done);
+                     A0B.Callbacks.Unset (Done);
+
+                  end if;
+               end if;
+
+            elsif SR1.ADDR or SR1.TxE then
+               --  Address or prev byte has been sent
+
+               if Next <= Last then
+                  Periph.DR.DR := Character'Pos (Buffer (Next));
+                  Next := Next + 1;
+
+               elsif Read > 0 then
+                  Periph.CR1.STOP := True;
+                  Last   := Read;
+                  Next   := 1;
+                  Read   := 0;
+                  Slave  := Slave + 1;
+
+                  while Periph.CR1.STOP loop
+                     null;  --  It takes about 7 cycles on my board
+                  end loop;
+
+                  Periph.CR1.START := True;
+
+               else
+                  Periph.CR1.STOP := True;
+                  A0B.Callbacks.Emit (Done);
+                  A0B.Callbacks.Unset (Done);
 
                end if;
             end if;
+         end On_Event;
 
-         elsif SR1.ADDR or SR1.TxE then
-            --  Address or prev byte has been sent
+         ---------------
+         -- Has_Error --
+         ---------------
 
-            if Self.Next <= Self.Last then
-               Periph.DR.DR := Character'Pos (Buffer (Self.Next));
-               Self.Next := Self.Next + 1;
+         function Has_Error return Boolean is (Error);
 
-            elsif Self.Read > 0 then
-               Periph.CR1.STOP := True;
-               Self.Last   := Self.Read;
-               Self.Next   := 1;
-               Self.Read   := 0;
-               Self.Slave  := Self.Slave + 1;
+         -------------------------
+         -- Start_Data_Exchange --
+         -------------------------
 
-               while Periph.CR1.STOP loop
-                  null;  --  It takes about 7 cycles on my board
-               end loop;
+         procedure Start_Data_Exchange
+           (Slave  : I2C_Slave_Address;
+            Buffer : System.Address;
+            Write  : Natural;
+            Read   : Natural;
+            Done   : A0B.Callbacks.Callback)
+         is
+            use type Interfaces.Unsigned_8;
 
-               Periph.CR1.START := True;
+            Reading : constant Interfaces.Unsigned_8 range 0 .. 1 :=
+              (if Write = 0 and Read > 0 then 1 else 0);
+         begin
+            pragma Assert (not A0B.Callbacks.Is_Set (Device.Done));
 
-            else
-               Periph.CR1.STOP := True;
-               A0B.Callbacks.Emit (Self.Done);
-               A0B.Callbacks.Unset (Self.Done);
+            Device.Buffer := Buffer;
+            Device.Last   := (if Write > 0 then Write else Read);
+            Device.Next   := 1;
+            Device.Read   := (if Write > 0 then Read else 0);
+            Device.Done   := Done;
+            Device.Slave  := 2 * Interfaces.Unsigned_8 (Slave) + Reading;
+            Device.Error  := False;
 
-            end if;
-         end if;
+            Periph.CR1 :=
+              (PE     => True,
+               START  => True,
+               others => <>);
+         end Start_Data_Exchange;
 
-      end On_Event;
-
-      -------------------------
-      -- Start_Data_Exchange --
-      -------------------------
-
-      procedure Start_Data_Exchange
-        (Self   : in out Internal_Data;
-         Slave  : I2C_Slave_Address;
-         Buffer : System.Address;
-         Write  : Natural;
-         Read   : Natural;
-         Done   : A0B.Callbacks.Callback)
-      is
-         use type Interfaces.Unsigned_8;
-
-         Reading : constant Interfaces.Unsigned_8 range 0 .. 1 :=
-           (if Write = 0 and Read > 0 then 1 else 0);
-      begin
-         pragma Assert (not A0B.Callbacks.Is_Set (Self.Done));
-
-         Self.Buffer := Buffer;
-         Self.Last   := (if Write > 0 then Write else Read);
-         Self.Next   := 1;
-         Self.Read   := (if Write > 0 then Read else 0);
-         Self.Done   := Done;
-         Self.Slave  := 2 * Interfaces.Unsigned_8 (Slave) + Reading;
-         Self.Error  := False;
-
-         Periph.CR1 :=
-           (PE     => True,
-            START  => True,
-            others => <>);
-      end Start_Data_Exchange;
+      end Device;
 
    end I2C_Implementation;
 

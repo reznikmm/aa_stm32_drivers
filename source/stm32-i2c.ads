@@ -12,6 +12,7 @@
 --  as a parameter. Read and write operations use a common wire and cannot be
 --  performed at the same time.
 
+with Ada.Interrupts;
 with System;
 
 with A0B.Callbacks;
@@ -20,7 +21,6 @@ private with Interfaces;
 private with STM32.Registers.I2C;
 
 package STM32.I2C is
-   pragma Preelaborate;
 
    type I2C_Slave_Address is mod 2**7;
    --  I2C 7-bit slave address
@@ -30,12 +30,13 @@ private
    procedure Init_GPIO (Item : Pin);
 
    generic
-      Periph : in out STM32.Registers.I2C.I2C_Peripheral;
+      Periph          : in out STM32.Registers.I2C.I2C_Peripheral;
+      Event_Interrupt : Ada.Interrupts.Interrupt_ID;
+      Error_Interrupt : Ada.Interrupts.Interrupt_ID;
+      Priority        : System.Interrupt_Priority;
    package I2C_Implementation is
       --  Generic implementation for I2C initializaion, operations and
       --  interrupt handling procedure
-
-      type Internal_Data is limited private;
 
       procedure Configure
         (SCL   : Pin;
@@ -43,35 +44,37 @@ private
          Speed : Interfaces.Unsigned_32)
            with Pre => Speed in 100_001 .. 400_000;
 
-      procedure On_Event (Self : in out Internal_Data);
+      protected Device
+        with Interrupt_Priority => Priority
+      is
 
-      procedure On_Error (Self : in out Internal_Data);
+         procedure Start_Data_Exchange
+           (Slave  : I2C_Slave_Address;
+            Buffer : System.Address;
+            Write  : Natural;
+            Read   : Natural;
+            Done   : A0B.Callbacks.Callback);
+         --  Start I2C a write and/or read operation.
 
-      procedure Start_Data_Exchange
-        (Self   : in out Internal_Data;
-         Slave  : I2C_Slave_Address;
+         function Has_Error return Boolean;
+
+      private
+         procedure On_Event;
+
+         pragma Attach_Handler (On_Event, Event_Interrupt);
+
+         procedure On_Error;
+
+         pragma Attach_Handler (On_Error, Error_Interrupt);
+
          Buffer : System.Address;
-         Write  : Natural;
+         Last   : Natural;
+         Next   : Positive;
          Read   : Natural;
-         Done   : A0B.Callbacks.Callback);
-      --  Start I2C a write and/or read operation.
-
-      function Has_Error (Self : Internal_Data) return Boolean;
-
-   private
-
-      type Internal_Data is limited record
-         Buffer   : System.Address;
-         Last     : Natural;
-         Next     : Positive;
-         Read     : Natural;
-         Done     : A0B.Callbacks.Callback;
-         Slave    : Interfaces.Unsigned_8;  --  Slave + Dir bit
-         Error    : Boolean;
-      end record;
-      --  If Read > 0 then don't call Done, but start reading instead
-
-      function Has_Error (Self : Internal_Data) return Boolean is (Self.Error);
+         Done   : A0B.Callbacks.Callback;
+         Slave  : Interfaces.Unsigned_8;  --  Slave + Dir bit
+         Error  : Boolean;
+      end Device;
 
    end I2C_Implementation;
 

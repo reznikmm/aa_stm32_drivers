@@ -40,31 +40,11 @@ package STM32.I2C.I2C_1 is
 private
 
    package Implementation is new I2C_Implementation
-     (STM32.Registers.I2C.I2C1_Periph);
+     (STM32.Registers.I2C.I2C1_Periph,
+      Event_Interrupt => Ada.Interrupts.Names.I2C1_EV_Interrupt,
+      Error_Interrupt => Ada.Interrupts.Names.I2C1_ER_Interrupt,
+      Priority        => Priority);
 
-   protected Device
-     with Interrupt_Priority => Priority
-   is
-
-      procedure Start_Data_Exchange
-        (Slave  : I2C_Slave_Address;
-         Buffer : System.Address;
-         Write  : Natural;
-         Read   : Natural;
-         Done   : A0B.Callbacks.Callback);
-
-      function Has_Error return Boolean;
-
-   private
-      procedure On_Event;
-
-      pragma Attach_Handler (On_Event, Ada.Interrupts.Names.I2C1_EV_Interrupt);
-
-      procedure On_Error;
-
-      pragma Attach_Handler (On_Error, Ada.Interrupts.Names.I2C1_ER_Interrupt);
-
-      Data : Implementation.Internal_Data;
-   end Device;
+   function Has_Error return Boolean is (Implementation.Device.Has_Error);
 
 end STM32.I2C.I2C_1;
