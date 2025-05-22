@@ -139,105 +139,107 @@ package body STM32.SPI is
             Clock => Clock);
       end Configure;
 
-      ---------------
-      -- Has_Error --
-      ---------------
+      protected body Device is
 
-      function Has_Error (Self : Internal_Data) return Boolean is
-      begin
-         return Self.Error or else
-           RX_Stream.Has_Error or else TX_Stream.Has_Error;
-      end Has_Error;
+         -----------------------
+         -- Interrupt_Handler --
+         -----------------------
 
-      ------------------
-      -- On_Interrupt --
-      ------------------
+         procedure Interrupt_Handler is
+            Ignore : Interfaces.Unsigned_16;
+         begin
+            --  Overrun error
+            Error := True;
+            TX_Stream.Stop_Transfer (Ignore);
+            RX_Stream.Stop_Transfer (Ignore);
 
-      procedure On_Interrupt (Self : in out Internal_Data) is
-         Ignore : Interfaces.Unsigned_16;
-      begin
-         --  Overrun error
-         Self.Error := True;
-         TX_Stream.Stop_Transfer (Ignore);
-         RX_Stream.Stop_Transfer (Ignore);
+            --  Clear overrun error flag
+            Ignore := Interfaces.Unsigned_16 (Periph.DR.DR);
 
-         --  Clear overrun error flag
-         Ignore := Interfaces.Unsigned_16 (Periph.DR.DR);
+            while not (Periph.SR.TXE and not Periph.SR.BSY) loop
+               null;
+            end loop;
 
-         while not (Periph.SR.TXE and not Periph.SR.BSY) loop
-            null;
-         end loop;
+            if A0B.Callbacks.Is_Set (Data.Done) then
+               STM32.GPIO.Set_Output (Data.CS, 1);
+               A0B.Callbacks.Emit_Once (Data.Done);
+            end if;
+         end Interrupt_Handler;
 
-         if A0B.Callbacks.Is_Set (Self.Data.Done) then
-            STM32.GPIO.Set_Output (Self.Data.CS, 1);
-            A0B.Callbacks.Emit_Once (Self.Data.Done);
-         end if;
-      end On_Interrupt;
+         ---------------
+         -- Has_Error --
+         ---------------
 
-      -------------------------
-      -- Start_Data_Exchange --
-      -------------------------
+         function Has_Error return Boolean is
+            (Error or else
+             RX_Stream.Has_Error or else
+             TX_Stream.Has_Error);
 
-      procedure Start_Data_Exchange
-        (Self   : in out Internal_Data;
-         CS     : Pin;
-         Buffer : System.Address;
-         Length : Positive;
-         Done   : A0B.Callbacks.Callback) is
-      begin
-         pragma Assert (not A0B.Callbacks.Is_Set (Self.Data.Done));
+         -------------------------
+         -- Start_Data_Exchange --
+         -------------------------
 
-         Self.Error := False;
-         Self.Data.Done := Done;
-         Self.Data.CS := CS;
+         procedure Start_Data_Exchange
+           (CS     : Pin;
+            Buffer : System.Address;
+            Length : Positive;
+            Done   : A0B.Callbacks.Callback) is
+         begin
+            pragma Assert (not A0B.Callbacks.Is_Set (Data.Done));
 
-         RX_Stream.Start_Transfer
-           (Channel => Channel,
-            Source  =>
-              (Address     => Periph.DR'Address,
-               Item_Length => 1,  --  8 bit
-               Increment   => 0,
-               Burst       => 1),
-            Target =>
-              (Address => Buffer,
-               Item_Length => 1,
-               Increment   => 1,
-               Burst       => 1),
-            Count   => Interfaces.Unsigned_16 (Length),
-            FIFO    => 4,
-            Prio    => STM32.DMA.Low,
-            Done    => RX_Callback.Create_Callback (Self.Data));
+            Error := False;
+            Data.Done := Done;
+            Data.CS := CS;
 
-         TX_Stream.Start_Transfer
-           (Channel => Channel,
-            Source  =>
-              (Address => Buffer,
-               Item_Length => 1,
-               Increment   => 1,
-               Burst       => 1),
-            Target =>
-              (Address     => Periph.DR'Address,
-               Item_Length => 1,  --  8 bit
-               Increment   => 0,
-               Burst       => 1),
-            Count   => Interfaces.Unsigned_16 (Length),
-            FIFO    => 4,
-            Prio    => STM32.DMA.Low,
-            Done    => TX_Callback.Create_Callback (Self.Data));
+            RX_Stream.Start_Transfer
+              (Channel => Channel,
+               Source  =>
+                 (Address     => Periph.DR'Address,
+                  Item_Length => 1,  --  8 bit
+                  Increment   => 0,
+                  Burst       => 1),
+               Target  =>
+                 (Address     => Buffer,
+                  Item_Length => 1,
+                  Increment   => 1,
+                  Burst       => 1),
+               Count   => Interfaces.Unsigned_16 (Length),
+               FIFO    => 4,
+               Prio    => STM32.DMA.Low,
+               Done    => RX_Callback.Create_Callback (Data));
 
-         STM32.GPIO.Set_Output (CS, 0);
+            TX_Stream.Start_Transfer
+              (Channel => Channel,
+               Source  =>
+                 (Address     => Buffer,
+                  Item_Length => 1,
+                  Increment   => 1,
+                  Burst       => 1),
+               Target  =>
+                 (Address     => Periph.DR'Address,
+                  Item_Length => 1,  --  8 bit
+                  Increment   => 0,
+                  Burst       => 1),
+               Count   => Interfaces.Unsigned_16 (Length),
+               FIFO    => 4,
+               Prio    => STM32.DMA.Low,
+               Done    => TX_Callback.Create_Callback (Data));
 
-         Periph.CR2 :=
-           (RXDMAEN       => True,
-            TXDMAEN       => True,
-            SSOE          => False,
-            Reserved_3_3  => 0,
-            FRF           => False,  --  Frame format
-            ERRIE         => True,
-            RXNEIE        => False,  --  RXNE (RX not empty) interrupt enable
-            TXEIE         => False,  --  TXE interrupt enable
-            Reserved_8_31 => 0);
-      end Start_Data_Exchange;
+            STM32.GPIO.Set_Output (CS, 0);
+
+            Periph.CR2 :=
+              (RXDMAEN       => True,
+               TXDMAEN       => True,
+               SSOE          => False,
+               Reserved_3_3  => 0,
+               FRF           => False,  --  Frame format
+               ERRIE         => True,
+               RXNEIE        => False,  --  RXNE (RX not empty) IRQ enable
+               TXEIE         => False,  --  TXE interrupt enable
+               Reserved_8_31 => 0);
+         end Start_Data_Exchange;
+
+      end Device;
 
       -------------
       -- RX_Done --
@@ -305,65 +307,68 @@ package body STM32.SPI is
             Clock => Clock);
       end Configure;
 
-      ------------------
-      -- On_Interrupt --
-      ------------------
+      protected body Device is
 
-      procedure On_Interrupt (Self : in out Internal_Data) is
+         -----------------------
+         -- Interrupt_Handler --
+         -----------------------
 
-         Buffer : String (1 .. Positive'Last)
-           with Import, Address => Self.Buffer;
+         procedure Interrupt_Handler is
 
-         SR : constant STM32.Registers.SPI.SR_Register := Periph.SR;
-      begin
-         if Periph.CR2.TXEIE and then SR.TXE then
+            Buffer : String (1 .. Positive'Last)
+              with Import, Address => Device.Buffer;
 
-            Periph.DR.DR := Character'Pos (Buffer (Self.Next_Out));
-            Self.Next_Out := Self.Next_Out + 1;
+            SR : constant STM32.Registers.SPI.SR_Register := Periph.SR;
+         begin
+            if Periph.CR2.TXEIE and then SR.TXE then
 
-            if Self.Next_Out > Self.Last then
-               Periph.CR2.TXEIE := False;
+               Periph.DR.DR := Character'Pos (Buffer (Next_Out));
+               Next_Out := Next_Out + 1;
+
+               if Next_Out > Last then
+                  Periph.CR2.TXEIE := False;
+               end if;
             end if;
-         end if;
 
-         if Periph.CR2.RXNEIE and then SR.RXNE then
+            if Periph.CR2.RXNEIE and then SR.RXNE then
 
-            Buffer (Self.Next_In) := Character'Val (Periph.DR.DR);
-            Self.Next_In := Self.Next_In + 1;
+               Buffer (Next_In) := Character'Val (Periph.DR.DR);
+               Next_In := Next_In + 1;
 
-            if Self.Next_In > Self.Last then
-               STM32.GPIO.Set_Output (Self.CS, 1);
-               Periph.CR2.RXNEIE := False;
-               A0B.Callbacks.Emit (Self.Done);
-               A0B.Callbacks.Unset (Self.Done);
+               if Next_In > Last then
+                  STM32.GPIO.Set_Output (CS, 1);
+                  Periph.CR2.RXNEIE := False;
+                  A0B.Callbacks.Emit (Done);
+                  A0B.Callbacks.Unset (Done);
+               end if;
             end if;
-         end if;
-      end On_Interrupt;
+         end Interrupt_Handler;
 
-      -------------------------
-      -- Start_Data_Exchange --
-      -------------------------
+         -------------------------
+         -- Start_Data_Exchange --
+         -------------------------
 
-      procedure Start_Data_Exchange
-        (Self   : in out Internal_Data;
-         CS     : Pin;
-         Buffer : System.Address;
-         Length : Positive;
-         Done   : A0B.Callbacks.Callback) is
-      begin
-         pragma Assert (not A0B.Callbacks.Is_Set (Self.Done));
+         procedure Start_Data_Exchange
+           (CS     : Pin;
+            Buffer : System.Address;
+            Length : Positive;
+            Done   : A0B.Callbacks.Callback) is
+         begin
+            pragma Assert (not A0B.Callbacks.Is_Set (Device.Done));
 
-         Self.Buffer   := Buffer;
-         Self.Last     := Length;
-         Self.Next_In  := 1;
-         Self.Next_Out := 1;
-         Self.Done     := Done;
-         Self.CS       := CS;
+            Device.Buffer   := Buffer;
+            Device.Last     := Length;
+            Device.Next_In  := 1;
+            Device.Next_Out := 1;
+            Device.Done     := Done;
+            Device.CS       := CS;
 
-         STM32.GPIO.Set_Output (CS, 0);
-         Periph.CR2.RXNEIE := True;  --  RXNE (RX not empty) interrupt enable
-         Periph.CR2.TXEIE := True;  --  TXE interrupt enable
-      end Start_Data_Exchange;
+            STM32.GPIO.Set_Output (CS, 0);
+            Periph.CR2.RXNEIE := True;  --  RXNE (RX not empty) IRQ enable
+            Periph.CR2.TXEIE := True;  --  TXE interrupt enable
+         end Start_Data_Exchange;
+
+      end Device;
 
    end SPI_Implementation;
 

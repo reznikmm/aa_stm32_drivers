@@ -45,23 +45,8 @@ package STM32.SPI.SPI_1 is
 private
 
    package Implementation is new SPI_Implementation
-     (STM32.Registers.SPI.SPI1_Periph);
-
-   protected Device
-     with Interrupt_Priority => Priority
-   is
-      procedure Start_Data_Exchange
-        (CS     : Pin;
-         Buffer : System.Address;
-         Length : Positive;
-         Done   : A0B.Callbacks.Callback);
-
-   private
-      procedure Interrupt;
-
-      pragma Attach_Handler (Interrupt, Ada.Interrupts.Names.SPI1_Interrupt);
-
-      Data : Implementation.Internal_Data;
-   end Device;
+     (STM32.Registers.SPI.SPI1_Periph,
+      Interrupt => Ada.Interrupts.Names.SPI1_Interrupt,
+      Priority  => Priority);
 
 end STM32.SPI.SPI_1;

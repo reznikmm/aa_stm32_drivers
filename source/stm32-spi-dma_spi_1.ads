@@ -52,24 +52,9 @@ private
    package Implementation is new DMA_Implementation
      (STM32.Registers.SPI.SPI1_Periph,
       Channel   => 3,
+      Interrupt => Ada.Interrupts.Names.SPI1_Interrupt,
+      Priority  => Priority,
       RX_Stream => Stream_2_0.Stream,
       TX_Stream => Stream_2_3.Stream);
-
-   protected Device
-     with Interrupt_Priority => Priority
-   is
-      procedure Start_Data_Exchange
-        (CS     : Pin;
-         Buffer : System.Address;
-         Length : Positive;
-         Done   : A0B.Callbacks.Callback);
-
-   private
-      procedure Interrupt;
-
-      pragma Attach_Handler (Interrupt, Ada.Interrupts.Names.SPI1_Interrupt);
-
-      Data : Implementation.Internal_Data;
-   end Device;
 
 end STM32.SPI.DMA_SPI_1;

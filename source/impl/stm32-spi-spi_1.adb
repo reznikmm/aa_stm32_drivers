@@ -8,36 +8,6 @@ with STM32.System_Clocks;
 
 package body STM32.SPI.SPI_1 is
 
-   ------------
-   -- Device --
-   ------------
-
-   protected body Device is
-
-      ---------------
-      -- Interrupt --
-      ---------------
-
-      procedure Interrupt is
-      begin
-         Implementation.On_Interrupt (Data);
-      end Interrupt;
-
-      -------------------------
-      -- Start_Data_Exchange --
-      -------------------------
-
-      procedure Start_Data_Exchange
-        (CS     : Pin;
-         Buffer : System.Address;
-         Length : Positive;
-         Done   : A0B.Callbacks.Callback) is
-      begin
-         Implementation.Start_Data_Exchange (Data, CS, Buffer, Length, Done);
-      end Start_Data_Exchange;
-
-   end Device;
-
    ---------------
    -- Configure --
    ---------------
@@ -70,7 +40,7 @@ package body STM32.SPI.SPI_1 is
       Length : Positive;
       Done   : A0B.Callbacks.Callback) is
    begin
-      Device.Start_Data_Exchange (CS, Buffer, Length, Done);
+      Implementation.Device.Start_Data_Exchange (CS, Buffer, Length, Done);
    end Start_Data_Exchange;
 
 end STM32.SPI.SPI_1;

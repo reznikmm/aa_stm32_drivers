@@ -11,12 +11,13 @@
 --  When the operation is completed, it triggers a callback provided as a
 --  parameter.
 
-private with STM32.DMA;
-private with STM32.Registers.SPI;
+private with Ada.Interrupts;
 private with Interfaces;
 private with System;
 
 private with A0B.Callbacks;
+private with STM32.DMA;
+private with STM32.Registers.SPI;
 
 package STM32.SPI is
 
@@ -40,12 +41,12 @@ private
    procedure Init_GPIO (Item : Pin);
 
    generic
-      Periph : in out STM32.Registers.SPI.SPI_Peripheral;
+      Periph    : in out STM32.Registers.SPI.SPI_Peripheral;
+      Interrupt : Ada.Interrupts.Interrupt_ID;
+      Priority  : System.Interrupt_Priority;
    package SPI_Implementation is
       --  Generic implementation for SPI initializaion, operations and
       --  interrupt handling procedure
-
-      type Internal_Data is limited private;
 
       procedure Configure
         (SCK   : Pin;
@@ -55,31 +56,35 @@ private
          Mode  : SPI_Mode;
          Clock : Interfaces.Unsigned_32);
 
-      procedure On_Interrupt (Self : in out Internal_Data);
+      protected Device
+        with Interrupt_Priority => Priority
+      is
+         procedure Start_Data_Exchange
+           (CS     : Pin;
+            Buffer : System.Address;
+            Length : Positive;
+            Done   : A0B.Callbacks.Callback);
 
-      procedure Start_Data_Exchange
-        (Self   : in out Internal_Data;
-         CS     : Pin;
-         Buffer : System.Address;
-         Length : Positive;
-         Done   : A0B.Callbacks.Callback);
+      private
+         procedure Interrupt_Handler;
 
-   private
+         pragma Attach_Handler (Interrupt_Handler, Interrupt);
 
-      type Internal_Data is limited record
          Buffer   : System.Address;
          Last     : Positive;
          Next_In  : Positive;
          Next_Out : Positive;
          Done     : A0B.Callbacks.Callback;
          CS       : Pin;
-      end record;
+      end Device;
 
    end SPI_Implementation;
 
    generic
-      Periph  : in out STM32.Registers.SPI.SPI_Peripheral;
-      Channel : STM32.DMA.Channel_Id;
+      Periph    : in out STM32.Registers.SPI.SPI_Peripheral;
+      Channel   : STM32.DMA.Channel_Id;
+      Interrupt : Ada.Interrupts.Interrupt_ID;
+      Priority  : System.Interrupt_Priority;
 
       with package RX_Stream is new STM32.DMA.Generic_DMA_Stream (<>);
       with package TX_Stream is new STM32.DMA.Generic_DMA_Stream (<>);
@@ -87,8 +92,6 @@ private
       --  Generic implementation for SPI initializaion, operations and
       --  interrupt handling procedure
 
-      type Internal_Data is limited private;
-
       procedure Configure
         (SCK   : Pin;
          MISO  : Pin;
@@ -97,28 +100,30 @@ private
          Mode  : SPI_Mode;
          Clock : Interfaces.Unsigned_32);
 
-      procedure On_Interrupt (Self : in out Internal_Data);
-
-      procedure Start_Data_Exchange
-        (Self   : in out Internal_Data;
-         CS     : Pin;
-         Buffer : System.Address;
-         Length : Positive;
-         Done   : A0B.Callbacks.Callback);
-
-      function Has_Error (Self : Internal_Data) return Boolean;
-
-   private
-
       type Data_Record is limited record
          Done  : A0B.Callbacks.Callback;
          CS    : Pin;
       end record;
 
-      type Internal_Data is limited record
+      protected Device
+        with Interrupt_Priority => Priority
+      is
+         procedure Start_Data_Exchange
+           (CS     : Pin;
+            Buffer : System.Address;
+            Length : Positive;
+            Done   : A0B.Callbacks.Callback);
+
+         function Has_Error return Boolean;
+
+      private
+         procedure Interrupt_Handler;
+
+         pragma Attach_Handler (Interrupt_Handler, Interrupt);
+
          Data  : aliased Data_Record;
          Error : Boolean;
-      end record;
+      end Device;
 
    end DMA_Implementation;
 
