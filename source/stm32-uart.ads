@@ -67,6 +67,13 @@ private
             Length : Positive;
             Done   : A0B.Callbacks.Callback);
 
+         procedure Start_Reading_Till_Idle
+           (Buffer : System.Address;
+            Length : Positive;
+            Done   : A0B.Callbacks.Callback);
+
+         function Bytes_Read return Natural;
+
          procedure Start_Writing
            (Buffer : System.Address;
             Length : Positive;
@@ -77,9 +84,10 @@ private
 
          pragma Attach_Handler (Interrupt_Handler, Interrupt);
 
-         Divider : Interfaces.Unsigned_32;
-         Input   : Buffer_Record;
-         Output  : Buffer_Record;
+         Divider  : Interfaces.Unsigned_32;
+         Input    : Buffer_Record;
+         Output   : Buffer_Record;
+         Set_Idle : Boolean;
       end Device;
 
    end UART_Implementation;

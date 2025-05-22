@@ -35,9 +35,28 @@ package STM32.UART.UART_5 is
      (Buffer : System.Address;
       Length : Positive;
       Done   : A0B.Callbacks.Callback);
-   --  Start reading into given Buffer of provided Length. When Buffer is
-   --  filled with input bytes trigger Done callback. No other call to
-   --  Start_Reading is allowed until Done is triggered.
+   --  Start reading into given Buffer of provided Length. When Buffer
+   --  is filled with input bytes trigger Done callback. No other call to
+   --  Start_Reading or Start_Reading_Till_Idle is allowed until Done is
+   --  triggered.
+
+   procedure Start_Reading_Till_Idle
+     (Buffer : System.Address;
+      Length : Positive;
+      Done   : A0B.Callbacks.Callback);
+   --  Start a read operation into the provided Buffer of given Length. The
+   --  read operation will complete and the Done callback will be triggered
+   --  either when the Buffer is completely filled, or when an idle line
+   --  condition (no new bytes received for a defined period) is detected on
+   --  the UART line after at least one byte has been received. No other call
+   --  to Start_Reading_Till_Idle or Start_Reading is allowed until Done is
+   --  triggered.
+
+   function Bytes_Read return Natural;
+   --  Returns the number of bytes actually read during the last
+   --  completed asynchronous read operation (e.g., Start_Reading or
+   --  Start_Reading_Till_Idle). This function should be called only after
+   --  the Done callback for a read operation has been triggered.
 
    procedure Start_Writing
      (Buffer : System.Address;
@@ -54,5 +73,7 @@ private
       UART_4_8,
       Ada.Interrupts.Names.UART5_Interrupt,
       Priority);
+
+   function Bytes_Read return Natural is (Implementation.Device.Bytes_Read);
 
 end STM32.UART.UART_5;

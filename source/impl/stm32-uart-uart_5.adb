@@ -48,6 +48,18 @@ package body STM32.UART.UART_5 is
       Implementation.Device.Start_Reading (Buffer, Length, Done);
    end Start_Reading;
 
+   -----------------------------
+   -- Start_Reading_Till_Idle --
+   -----------------------------
+
+   procedure Start_Reading_Till_Idle
+     (Buffer : System.Address;
+      Length : Positive;
+      Done   : A0B.Callbacks.Callback) is
+   begin
+      Implementation.Device.Start_Reading_Till_Idle (Buffer, Length, Done);
+   end Start_Reading_Till_Idle;
+
    -------------------
    -- Start_Writing --
    -------------------

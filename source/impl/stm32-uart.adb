@@ -278,6 +278,12 @@ package body STM32.UART is
 
       protected body Device is
 
+         ----------------
+         -- Bytes_Read --
+         ----------------
+
+         function Bytes_Read return Natural is (Input.Next - 1);
+
          -----------------------
          -- Interrupt_Handler --
          -----------------------
@@ -300,9 +306,20 @@ package body STM32.UART is
 
                if Input.Next > Input.Last then
                   Periph.CR1.RXNEIE := False;
+                  Periph.CR1.IDLEIE := False;
                   A0B.Callbacks.Emit (Input.Done);
                   A0B.Callbacks.Unset (Input.Done);
+               elsif Set_Idle then
+                  Set_Idle := False;
+                  Periph.CR1.IDLEIE := True;
                end if;
+            end if;
+
+            if Periph.CR1.IDLEIE and then SR.IDLE then
+               Periph.CR1.RXNEIE := False;
+               Periph.CR1.IDLEIE := False;
+               A0B.Callbacks.Emit (Input.Done);
+               A0B.Callbacks.Unset (Input.Done);
             end if;
 
             if Periph.CR1.TXEIE and then SR.TXE then
@@ -356,6 +373,8 @@ package body STM32.UART is
          begin
             pragma Assert (not A0B.Callbacks.Is_Set (Input.Done));
 
+            Set_Idle := False;
+
             Input :=
               (Buffer => Buffer,
                Last   => Length,
@@ -365,6 +384,29 @@ package body STM32.UART is
             Periph.CR1.RXNEIE := True;
             --  RXNE (RX not empty) interrupt enable. TBD: errors interrupts?
          end Start_Reading;
+
+         -----------------------------
+         -- Start_Reading_Till_Idle --
+         -----------------------------
+
+         procedure Start_Reading_Till_Idle
+           (Buffer : System.Address;
+            Length : Positive;
+            Done   : A0B.Callbacks.Callback) is
+         begin
+            pragma Assert (not A0B.Callbacks.Is_Set (Input.Done));
+
+            Set_Idle := True;
+
+            Input :=
+              (Buffer => Buffer,
+               Last   => Length,
+               Next   => 1,
+               Done   => Done);
+
+            Periph.CR1.RXNEIE := True;
+            --  RXNE (RX not empty) interrupt enable. TBD: errors interrupts?
+         end Start_Reading_Till_Idle;
 
          -------------------
          -- Start_Writing --
