@@ -74,131 +74,138 @@ package body STM32.DMA is
         (Channel : Channel_Id) return Boolean is
           (Channel = 4 and then Index in 3 | 6 and then Is_DMA2);
 
-      ------------------
-      -- On_Interrupt --
-      ------------------
+      protected body Device is
 
-      procedure On_Interrupt (Self : in out Internal_Data) is
-         Stream : STM32.Registers.DMA.Stream renames Periph.List (Index);
-         Low    : constant Natural range 0 .. 1 := Index mod 2;
-         High   : constant Natural range 0 .. 1 := Index / 4;
-         Middle : constant Natural range 0 .. 1 := Index / 2 mod 2;
-         State  : constant STM32.Registers.DMA.ISR :=
-           Periph.ISR (High).List (Middle).Item (Low);
-      begin
-         Periph.IFCR (High) := Clear_All_Interrupts (Middle, Low);
-         Self.Error := State.TEIF or State.DMEIF;  -- State.FEIF ???;
-         Stream.SxCR.EN := False;
+         ---------------
+         -- Has_Error --
+         ---------------
 
-         A0B.Callbacks.Emit (Self.Done);
-      end On_Interrupt;
+         function Has_Error return Boolean is (Error);
 
-      -----------
-      -- Start --
-      -----------
+         -----------------------
+         -- Interrupt_Handler --
+         -----------------------
 
-      procedure Start_Transfer
-        (Self     : in out Internal_Data;
-         Channel  : Channel_Id;
-         Source   : Location;
-         Target   : Location;
-         Count    : Interfaces.Unsigned_16;
-         FIFO     : FIFO_Bytes;
-         Prio     : Priority_Level;
-         Done     : A0B.Callbacks.Callback)
-      is
-         use type Interfaces.Unsigned_16;
-
-         Low    : constant Natural range 0 .. 1 := Index mod 2;
-         High   : constant Natural range 0 .. 1 := Index / 4;
-         Middle : constant Natural range 0 .. 1 := Index / 2 mod 2;
-
-         Stream : STM32.Registers.DMA.Stream renames Periph.List (Index);
-      begin
-         while Stream.SxCR.EN loop
+         procedure Interrupt_Handler is
+            Stream : STM32.Registers.DMA.Stream renames Periph.List (Index);
+            Low    : constant Natural range 0 .. 1 := Index mod 2;
+            High   : constant Natural range 0 .. 1 := Index / 4;
+            Middle : constant Natural range 0 .. 1 := Index / 2 mod 2;
+            State  : constant STM32.Registers.DMA.ISR :=
+              Periph.ISR (High).List (Middle).Item (Low);
+         begin
+            Periph.IFCR (High) := Clear_All_Interrupts (Middle, Low);
+            Error := State.TEIF or State.DMEIF;  -- State.FEIF ???;
             Stream.SxCR.EN := False;
-         end loop;
 
-         Self.Done := Done;
+            A0B.Callbacks.Emit (Callback);
+         end Interrupt_Handler;
 
-         Periph.IFCR (High) := Clear_All_Interrupts (Middle, Low);
+         --------------------
+         -- Start_Transfer --
+         --------------------
 
-         Stream.SxPAR :=
-           (if Is_Peripheral (Target.Address) then Target.Address
-            else Source.Address);
+         procedure Start_Transfer
+           (Channel : Channel_Id;
+            Source  : Location;
+            Target  : Location;
+            Count   : Interfaces.Unsigned_16;
+            FIFO    : FIFO_Bytes;
+            Prio    : Priority_Level;
+            Done    : A0B.Callbacks.Callback)
+         is
+            use type Interfaces.Unsigned_16;
 
-         Stream.SxM0AR :=
-           (if Is_Memory (Target.Address) then Target.Address
-            else Source.Address);
+            Low    : constant Natural range 0 .. 1 := Index mod 2;
+            High   : constant Natural range 0 .. 1 := Index / 4;
+            Middle : constant Natural range 0 .. 1 := Index / 2 mod 2;
 
-         Stream.SxNDTR := (Interfaces.Unsigned_32 (Count), Reserved => 0);
+            Stream : STM32.Registers.DMA.Stream renames Periph.List (Index);
+         begin
+            while Stream.SxCR.EN loop
+               Stream.SxCR.EN := False;
+            end loop;
 
-         Stream.SxFCR :=
-           (FTH    => (case FIFO is
-                       when 0 | 4 => 0,
-                       when 8     => 1,
-                       when 12    => 2,
-                       when 16    => 3),
-            DMDIS  => FIFO /= 0,
-            FS     => 0,
-            FEIE   => False,
-            others => 0);
+            Callback := Done;
 
-         Stream.SxCR :=
-           (EN     => False,
-            DMEIE  => True,
-            TEIE   => True,
-            HTIE   => False,
-            TCIE   => True,
-            PFCTRL => Count = 0 and then
-                        Has_Peripheral_Controled_Flow (Channel),
-            DIR    => (if Is_Peripheral (Source.Address) then 0
-                       elsif Is_Peripheral (Target.Address) then 1 else 2),
-            CIRC   => False,  --  Circular
-            PINC   => (if Is_Peripheral (Target.Address) then Target.Increment
-                       else Source.Increment) /= 0,
-            MINC   => (if Is_Memory (Target.Address) then Target.Increment
-                       else Source.Increment) /= 0,
-            PSIZE  => To_Size
-                        (if Is_Peripheral (Target.Address)
-                         then Target.Item_Length else Source.Item_Length),
-            MSIZE  => To_Size
-                        (if Is_Memory (Target.Address)
-                         then Target.Item_Length else Source.Item_Length),
-            PINCOS => (if Is_Peripheral (Target.Address) then Target.Increment
-                       else Source.Increment) = 4,
-            PL     => Priority_Level'Pos (Prio),
-            DBM    => False,
-            CT     => 0,  --  Current buffer
-            PBURST => To_Burst
-                        (if Is_Peripheral (Target.Address) then Target.Burst
-                         else Source.Burst),
-            MBURST => To_Burst
-                        (if Is_Memory (Target.Address) then Target.Burst
-                         else Source.Burst),
-            CHSEL  => Channel_Id'Pos (Channel),
-            others => 0);
+            Periph.IFCR (High) := Clear_All_Interrupts (Middle, Low);
 
-         Stream.SxCR.EN := True;
-      end Start_Transfer;
+            Stream.SxPAR :=
+              (if Is_Peripheral (Target.Address) then Target.Address
+               else Source.Address);
 
-      -------------------
-      -- Stop_Transfer --
-      -------------------
+            Stream.SxM0AR :=
+              (if Is_Memory (Target.Address) then Target.Address
+               else Source.Address);
 
-      procedure Stop_Transfer
-        (Self  : in out Internal_Data;
-         Count : out Interfaces.Unsigned_16)
-      is
-         pragma Unreferenced (Self);
-         Stream : STM32.Registers.DMA.Stream renames Periph.List (Index);
-      begin
-         while Stream.SxCR.EN loop
-            Stream.SxCR.EN := False;
-         end loop;
+            Stream.SxNDTR := (Interfaces.Unsigned_32 (Count), Reserved => 0);
 
-         Count := Interfaces.Unsigned_16 (Stream.SxNDTR.NDT);
-      end Stop_Transfer;
+            Stream.SxFCR :=
+              (FTH    => (case FIFO is
+                          when 0 | 4 => 0,
+                          when 8     => 1,
+                          when 12    => 2,
+                          when 16    => 3),
+               DMDIS  => FIFO /= 0,
+               FS     => 0,
+               FEIE   => False,
+               others => 0);
+
+            Stream.SxCR :=
+              (EN     => False,
+               DMEIE  => True,
+               TEIE   => True,
+               HTIE   => False,
+               TCIE   => True,
+               PFCTRL => Count = 0 and then
+                           Has_Peripheral_Controled_Flow (Channel),
+               DIR    => (if Is_Peripheral (Source.Address) then 0
+                          elsif Is_Peripheral (Target.Address) then 1 else 2),
+               CIRC   => False,  --  Circular
+               PINC   => (if Is_Peripheral (Target.Address)
+                          then Target.Increment
+                          else Source.Increment) /= 0,
+               MINC   => (if Is_Memory (Target.Address) then Target.Increment
+                          else Source.Increment) /= 0,
+               PSIZE  => To_Size
+                           (if Is_Peripheral (Target.Address)
+                            then Target.Item_Length else Source.Item_Length),
+               MSIZE  => To_Size
+                           (if Is_Memory (Target.Address)
+                            then Target.Item_Length else Source.Item_Length),
+               PINCOS => (if Is_Peripheral (Target.Address)
+                          then Target.Increment
+                          else Source.Increment) = 4,
+               PL     => Priority_Level'Pos (Prio),
+               DBM    => False,
+               CT     => 0,  --  Current buffer
+               PBURST => To_Burst
+                           (if Is_Peripheral (Target.Address) then Target.Burst
+                            else Source.Burst),
+               MBURST => To_Burst
+                           (if Is_Memory (Target.Address) then Target.Burst
+                            else Source.Burst),
+               CHSEL  => Channel_Id'Pos (Channel),
+               others => 0);
+
+            Stream.SxCR.EN := True;
+         end Start_Transfer;
+
+         -------------------
+         -- Stop_Transfer --
+         -------------------
+
+         procedure Stop_Transfer (Count : out Interfaces.Unsigned_16) is
+            Stream : STM32.Registers.DMA.Stream renames Periph.List (Index);
+         begin
+            while Stream.SxCR.EN loop
+               Stream.SxCR.EN := False;
+            end loop;
+
+            Count := Interfaces.Unsigned_16 (Stream.SxNDTR.NDT);
+         end Stop_Transfer;
+
+      end Device;
 
    end Stream_Implementation;
 

@@ -35,35 +35,11 @@ package STM32.DMA.Stream_2_4 is
 private
 
    package Implementation is new Stream_Implementation
-     (Index  => 4,
-      Periph => STM32.Registers.DMA.DMA2_Periph);
+     (Index     => 4,
+      Periph    => STM32.Registers.DMA.DMA2_Periph,
+      Interrupt => Ada.Interrupts.Names.DMA2_Stream4_Interrupt,
+      Priority  => Priority);
 
-   protected Device
-     with Interrupt_Priority => Priority
-   is
-
-      procedure Start_Transfer
-        (Channel : Channel_Id;
-         Source  : Location;
-         Target  : Location;
-         Count   : Interfaces.Unsigned_16;
-         FIFO    : FIFO_Bytes;
-         Prio    : Priority_Level;
-         Done    : A0B.Callbacks.Callback);
-
-      procedure Stop_Transfer (Count : out Interfaces.Unsigned_16);
-
-      function Has_Error return Boolean;
-
-   private
-      procedure Interrupt;
-
-      pragma Attach_Handler
-        (Interrupt, Ada.Interrupts.Names.DMA2_Stream4_Interrupt);
-
-      Data : Implementation.Internal_Data;
-   end Device;
-
-   function Has_Error return Boolean is (Device.Has_Error);
+   function Has_Error return Boolean is (Implementation.Device.Has_Error);
 
 end STM32.DMA.Stream_2_4;

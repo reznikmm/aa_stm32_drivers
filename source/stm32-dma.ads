@@ -16,10 +16,10 @@ with System;
 
 with A0B.Callbacks;
 
+private with Ada.Interrupts;
 private with STM32.Registers.DMA;
 
 package STM32.DMA is
-   pragma Preelaborate;
 
    type Length_In_Bytes is range 0 .. 4
      with Static_Predicate => Length_In_Bytes /= 3;
@@ -78,42 +78,41 @@ package STM32.DMA is
 private
 
    generic
-      Index  : Stream_Index;
-      Periph : in out STM32.Registers.DMA.DMA_Peripheral;
+      Index     : Stream_Index;
+      Periph    : in out STM32.Registers.DMA.DMA_Peripheral;
+      Interrupt : Ada.Interrupts.Interrupt_ID;
+      Priority  : System.Interrupt_Priority;
    package Stream_Implementation is
 
-      type Internal_Data is limited private;
+      protected Device
+        with Interrupt_Priority => Priority
+      is
 
-      procedure On_Interrupt (Self : in out Internal_Data);
+         procedure Start_Transfer
+           (Channel : Channel_Id;
+            Source  : Location;
+            Target  : Location;
+            Count   : Interfaces.Unsigned_16;
+            FIFO    : FIFO_Bytes;
+            Prio    : Priority_Level;
+            Done    : A0B.Callbacks.Callback);
 
-      function Has_Error (Self : Internal_Data) return Boolean;
+         procedure Stop_Transfer (Count : out Interfaces.Unsigned_16);
 
-      procedure Start_Transfer
-        (Self    : in out Internal_Data;
-         Channel : Channel_Id;
-         Source  : Location;
-         Target  : Location;
-         Count   : Interfaces.Unsigned_16;
-         FIFO    : FIFO_Bytes;
-         Prio    : Priority_Level;
-         Done    : A0B.Callbacks.Callback);
+         function Has_Error return Boolean;
 
-      procedure Stop_Transfer
-        (Self  : in out Internal_Data;
-         Count : out Interfaces.Unsigned_16);
+      private
+         procedure Interrupt_Handler;
+
+         pragma Attach_Handler (Interrupt_Handler, Interrupt);
+
+         Error    : Boolean;
+         Callback : A0B.Callbacks.Callback;
+      end Device;
 
       --  How to stop circular?
       --  How to provide next buffer?
       --  How to return transfered bytes in periph contr flow?
-   private
-
-      type Internal_Data is limited record
-         Error : Boolean;
-         Done  : A0B.Callbacks.Callback;
-      end record;
-
-      function Has_Error (Self : Internal_Data) return Boolean is
-         (Self.Error);
 
    end Stream_Implementation;
 

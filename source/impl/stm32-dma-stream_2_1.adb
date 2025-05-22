@@ -5,52 +5,6 @@
 
 package body STM32.DMA.Stream_2_1 is
 
-   protected body Device is
-
-      --------------------
-      -- Start_Transfer --
-      --------------------
-
-      procedure Start_Transfer
-        (Channel : Channel_Id;
-         Source  : Location;
-         Target  : Location;
-         Count   : Interfaces.Unsigned_16;
-         FIFO    : FIFO_Bytes;
-         Prio    : Priority_Level;
-         Done    : A0B.Callbacks.Callback) is
-      begin
-         Implementation.Start_Transfer
-           (Data, Channel, Source, Target, Count, FIFO, Prio, Done);
-      end Start_Transfer;
-
-      -------------------
-      -- Stop_Transfer --
-      -------------------
-
-      procedure Stop_Transfer (Count : out Interfaces.Unsigned_16) is
-      begin
-         Implementation.Stop_Transfer (Data, Count);
-      end Stop_Transfer;
-
-      ---------------
-      -- Has_Error --
-      ---------------
-
-      function Has_Error return Boolean is
-         (Implementation.Has_Error (Data));
-
-      ---------------
-      -- Interrupt --
-      ---------------
-
-      procedure Interrupt is
-      begin
-         Implementation.On_Interrupt (Data);
-      end Interrupt;
-
-   end Device;
-
    --------------------
    -- Start_Transfer --
    --------------------
@@ -64,7 +18,7 @@ package body STM32.DMA.Stream_2_1 is
       Prio    : Priority_Level;
       Done    : A0B.Callbacks.Callback) is
    begin
-      Device.Start_Transfer
+      Implementation.Device.Start_Transfer
         (Channel, Source, Target, Count, FIFO, Prio, Done);
    end Start_Transfer;
 
@@ -74,7 +28,7 @@ package body STM32.DMA.Stream_2_1 is
 
    procedure Stop_Transfer (Count : out Interfaces.Unsigned_16) is
    begin
-      Device.Stop_Transfer (Count);
+      Implementation.Device.Stop_Transfer (Count);
    end Stop_Transfer;
 
 begin

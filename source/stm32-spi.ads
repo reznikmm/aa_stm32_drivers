@@ -19,7 +19,6 @@ private with System;
 private with A0B.Callbacks;
 
 package STM32.SPI is
-   pragma Preelaborate;
 
    type SPI_Mode is range 0 .. 3;
    --  Clock polarity and phase mode.
