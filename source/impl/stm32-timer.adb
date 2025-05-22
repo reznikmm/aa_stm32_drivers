@@ -76,47 +76,54 @@ package body STM32.Timer is
          Periph.PSC := Clock / Speed - 1;  --  Prescaler
       end Configure;
 
-      ------------------
-      -- On_Interrupt --
-      ------------------
+      ------------
+      -- Device --
+      ------------
 
-      procedure On_Interrupt (Self : in out Internal_Data) is
-         SR : constant STM32.Registers.TIM.SR_Register := Periph.SR;
-      begin
+      protected body Device is
 
-         if SR.UIF then
-            Periph.SR.UIF := False;
-            Periph.ARR := Self.ARR;
-            Periph.CCR (Channel) := Self.CCR;
+         -----------------------
+         -- Interrupt_Handler --
+         -----------------------
 
-            if A0B.Callbacks.Is_Set (Self.Done) then
-               A0B.Callbacks.Emit (Self.Done);
-               A0B.Callbacks.Unset (Self.Done);
+         procedure Interrupt_Handler is
+            SR : constant STM32.Registers.TIM.SR_Register := Periph.SR;
+         begin
+
+            if SR.UIF then
+               Periph.SR.UIF := False;
+               Periph.ARR := ARR;
+               Periph.CCR (Channel) := CCR;
+
+               if A0B.Callbacks.Is_Set (Done) then
+                  A0B.Callbacks.Emit (Done);
+                  A0B.Callbacks.Unset (Done);
+               end if;
             end if;
-         end if;
-      end On_Interrupt;
+         end Interrupt_Handler;
 
-      ---------------
-      -- Start_PWM --
-      ---------------
+         ---------------
+         -- Start_PWM --
+         ---------------
 
-      procedure Start_PWM
-        (Self   : in out Internal_Data;
-         Period : Interfaces.Unsigned_16;
-         Duty   : Interfaces.Unsigned_16;
-         Done   : A0B.Callbacks.Callback) is
-      begin
-         Self.Done := Done;
-         Self.ARR := Interfaces.Unsigned_32 (Period);
-         Self.CCR := Interfaces.Unsigned_32 (Duty);
+         procedure Start_PWM
+           (Period : Interfaces.Unsigned_16;
+            Duty   : Interfaces.Unsigned_16;
+            Done   : A0B.Callbacks.Callback) is
+         begin
+            Device.Done := Done;
+            Device.ARR := Interfaces.Unsigned_32 (Period);
+            Device.CCR := Interfaces.Unsigned_32 (Duty);
 
-         if not Periph.CR1.CEN then
-            Periph.ARR := Self.ARR;
-            Periph.CCR (Channel) := Self.CCR;
-            Periph.EGR.UG := True;
-            Periph.CR1.CEN := True;
-         end if;
-      end Start_PWM;
+            if not Periph.CR1.CEN then
+               Periph.ARR := Device.ARR;
+               Periph.CCR (Channel) := Device.CCR;
+               Periph.EGR.UG := True;
+               Periph.CR1.CEN := True;
+            end if;
+         end Start_PWM;
+
+      end Device;
 
    end TIM_Implementation;
 

@@ -34,24 +34,9 @@ package STM32.Timer.TIM_3 is
 private
 
    package Implementation is new TIM_Implementation
-     (STM32.Registers.TIM.TIM3_Periph, Channel => 3);
-
-   protected Device
-     with Interrupt_Priority => Priority
-   is
-
-      procedure Start_PWM
-        (Period : Interfaces.Unsigned_16;
-         Duty   : Interfaces.Unsigned_16;
-         Done   : A0B.Callbacks.Callback);
-
-   private
-      procedure Interrupt;
-
-      pragma Attach_Handler (Interrupt, Ada.Interrupts.Names.TIM3_Interrupt);
-
-      Data : Implementation.Internal_Data;
-   end Device;
-
+     (STM32.Registers.TIM.TIM3_Periph,
+      Channel   => 3,
+      Interrupt => Ada.Interrupts.Names.TIM3_Interrupt,
+      Priority  => Priority);
 
 end STM32.Timer.TIM_3;

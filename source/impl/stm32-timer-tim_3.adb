@@ -27,35 +27,6 @@ package body STM32.Timer.TIM_3 is
          Clock => STM32.System_Clocks.TIMCLK1);
    end Configure;
 
-   ------------
-   -- Device --
-   ------------
-
-   protected body Device is
-
-      ---------------
-      -- Interrupt --
-      ---------------
-
-      procedure Interrupt is
-      begin
-         Implementation.On_Interrupt (Data);
-      end Interrupt;
-
-      ---------------
-      -- Start_PWM --
-      ---------------
-
-      procedure Start_PWM
-        (Period : Interfaces.Unsigned_16;
-         Duty   : Interfaces.Unsigned_16;
-         Done   : A0B.Callbacks.Callback) is
-      begin
-         Implementation.Start_PWM (Data, Period, Duty, Done);
-      end Start_PWM;
-
-   end Device;
-
    ---------------
    -- Start_PWM --
    ---------------
@@ -65,7 +36,7 @@ package body STM32.Timer.TIM_3 is
       Duty   : Interfaces.Unsigned_16;
       Done   : A0B.Callbacks.Callback) is
    begin
-      Device.Start_PWM (Period, Duty, Done);
+      Implementation.Device.Start_PWM (Period, Duty, Done);
    end Start_PWM;
 
 end STM32.Timer.TIM_3;

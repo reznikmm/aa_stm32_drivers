@@ -11,7 +11,9 @@
 --  returns. When settings are applied, it triggers a callback provided as
 --  a parameter.
 
+private with Ada.Interrupts;
 private with Interfaces;
+private with System;
 
 private with STM32.Registers.TIM;
 
@@ -28,13 +30,13 @@ private
    AF_TIM3_CH3 : constant := 2;
 
    generic
-      Periph  : in out STM32.Registers.TIM.TIM_Peripheral;
-      Channel : Channel_Index;
+      Periph    : in out STM32.Registers.TIM.TIM_Peripheral;
+      Channel   : Channel_Index;
+      Interrupt : Ada.Interrupts.Interrupt_ID;
+      Priority  : System.Interrupt_Priority;
    package TIM_Implementation is
       --  Generic implementation for timer initializaion, operations and
       --  interrupt handling procedure
-
-      type Internal_Data is limited private;
 
       procedure Configure
         (Pin   : STM32.Pin;
@@ -42,21 +44,24 @@ private
          Speed : Interfaces.Unsigned_32;
          Clock : Interfaces.Unsigned_32);
 
-      procedure On_Interrupt (Self : in out Internal_Data);
+      protected Device
+        with Interrupt_Priority => Priority
+      is
 
-      procedure Start_PWM
-        (Self   : in out Internal_Data;
-         Period : Interfaces.Unsigned_16;
-         Duty   : Interfaces.Unsigned_16;
-         Done   : A0B.Callbacks.Callback);
+         procedure Start_PWM
+           (Period : Interfaces.Unsigned_16;
+            Duty   : Interfaces.Unsigned_16;
+            Done   : A0B.Callbacks.Callback);
 
-   private
+      private
+         procedure Interrupt_Handler;
 
-      type Internal_Data is limited record
+         pragma Attach_Handler (Interrupt_Handler, Interrupt);
+
          ARR  : Interfaces.Unsigned_32;
          CCR  : Interfaces.Unsigned_32;
          Done : A0B.Callbacks.Callback;
-      end record;
+      end Device;
 
    end TIM_Implementation;
 
