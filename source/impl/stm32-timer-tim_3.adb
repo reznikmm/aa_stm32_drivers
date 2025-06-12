@@ -22,7 +22,7 @@ package body STM32.Timer.TIM_3 is
 
       Implementation.Configure
         (Pin,
-         AF_TIM3_CH3,
+         AF_TIM_3_4_5,
          Speed,
          Clock => STM32.System_Clocks.TIMCLK1);
    end Configure;

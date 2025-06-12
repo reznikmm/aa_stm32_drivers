@@ -96,7 +96,10 @@ package body STM32.DMA is
          begin
             Periph.IFCR (High) := Clear_All_Interrupts (Middle, Low);
             Error := State.TEIF or State.DMEIF;  -- State.FEIF ???;
-            Stream.SxCR.EN := False;
+
+            if Error or not Stream.SxCR.CIRC then
+               Stream.SxCR.EN := False;
+            end if;
 
             A0B.Callbacks.Emit (Callback);
          end Interrupt_Handler;
