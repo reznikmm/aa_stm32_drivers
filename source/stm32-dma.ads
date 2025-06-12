@@ -51,6 +51,9 @@ package STM32.DMA is
    function Is_Peripheral (Value : System.Address) return Boolean is
      (not Is_Memory (Value));
 
+   function Is_Memory_To_Memory (Left, Right : Location) return Boolean is
+     (Is_Memory (Left.Address) and Is_Memory (Right.Address));
+
    generic
       Index  : Stream_Index;
 

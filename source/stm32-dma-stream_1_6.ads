@@ -21,8 +21,7 @@ package STM32.DMA.Stream_1_6 is
       FIFO    : FIFO_Bytes;
       Prio    : Priority_Level;
       Done    : A0B.Callbacks.Callback)
-     with Pre =>
-        not (Is_Memory (Source.Address) and Is_Memory (Target.Address));
+     with Pre => not Is_Memory_To_Memory (Source, Target);
 
    procedure Stop_Transfer (Count : out Interfaces.Unsigned_16);
 
