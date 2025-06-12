@@ -106,13 +106,14 @@ package body STM32.DMA is
          --------------------
 
          procedure Start_Transfer
-           (Channel : Channel_Id;
-            Source  : Location;
-            Target  : Location;
-            Count   : Interfaces.Unsigned_16;
-            FIFO    : FIFO_Bytes;
-            Prio    : Priority_Level;
-            Done    : A0B.Callbacks.Callback)
+           (Channel  : Channel_Id;
+            Source   : Location;
+            Target   : Location;
+            Count    : Interfaces.Unsigned_16;
+            FIFO     : FIFO_Bytes;
+            Prio     : Priority_Level;
+            Circular : Boolean;
+            Done     : A0B.Callbacks.Callback)
          is
             use type Interfaces.Unsigned_16;
 
@@ -155,13 +156,13 @@ package body STM32.DMA is
               (EN     => False,
                DMEIE  => True,
                TEIE   => True,
-               HTIE   => False,
+               HTIE   => Circular,  --  Half-transfer only in Circular mode
                TCIE   => True,
                PFCTRL => Count = 0 and then
                            Has_Peripheral_Controled_Flow (Channel),
                DIR    => (if Is_Peripheral (Source.Address) then 0
                           elsif Is_Peripheral (Target.Address) then 1 else 2),
-               CIRC   => False,  --  Circular
+               CIRC   => Circular,
                PINC   => (if Is_Peripheral (Target.Address)
                           then Target.Increment
                           else Source.Increment) /= 0,

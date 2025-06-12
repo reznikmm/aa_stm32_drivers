@@ -54,6 +54,23 @@ package STM32.DMA is
    function Is_Memory_To_Memory (Left, Right : Location) return Boolean is
      (Is_Memory (Left.Address) and Is_Memory (Right.Address));
 
+   function Is_Burst_Match
+     (Count  : Interfaces.Unsigned_16;
+      Source : Location;
+      Target : Location) return Boolean is
+     (if Is_Memory (Source.Address) and Source.Burst > 1
+      then Natural (Count) mod
+          (Natural (Source.Burst) * Natural (Source.Item_Length)
+           / Natural (Target.Item_Length)) = 0
+
+      elsif Is_Memory (Target.Address) and Target.Burst > 1
+      then Natural (Count) mod
+          (Natural (Target.Burst) * Natural (Target.Item_Length)
+           / Natural (Source.Item_Length)) = 0);
+   --
+   --  In the circular mode, it is mandatory to respect the rule in case of a
+   --  burst mode configured for memory. See reference manual.
+
    generic
       Index  : Stream_Index;
 
@@ -67,6 +84,15 @@ package STM32.DMA is
          FIFO    : FIFO_Bytes;
          Prio    : Priority_Level;
          Done    : A0B.Callbacks.Callback) is <>;
+
+      with procedure Start_Circular_Transfer
+        (Channel : Channel_Id;
+         Source  : Location;
+         Target  : Location;
+         Count   : Interfaces.Unsigned_16;
+         FIFO    : FIFO_Bytes;
+         Prio    : Priority_Level;
+         On_Half : A0B.Callbacks.Callback) is <>;
 
       with procedure Stop_Transfer (Count : out Interfaces.Unsigned_16) is <>;
 
@@ -92,13 +118,14 @@ private
       is
 
          procedure Start_Transfer
-           (Channel : Channel_Id;
-            Source  : Location;
-            Target  : Location;
-            Count   : Interfaces.Unsigned_16;
-            FIFO    : FIFO_Bytes;
-            Prio    : Priority_Level;
-            Done    : A0B.Callbacks.Callback);
+           (Channel  : Channel_Id;
+            Source   : Location;
+            Target   : Location;
+            Count    : Interfaces.Unsigned_16;
+            FIFO     : FIFO_Bytes;
+            Prio     : Priority_Level;
+            Circular : Boolean;
+            Done     : A0B.Callbacks.Callback);
 
          procedure Stop_Transfer (Count : out Interfaces.Unsigned_16);
 

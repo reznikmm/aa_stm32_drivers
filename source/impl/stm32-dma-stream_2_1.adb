@@ -5,6 +5,23 @@
 
 package body STM32.DMA.Stream_2_1 is
 
+   -----------------------------
+   -- Start_Circular_Transfer --
+   -----------------------------
+
+   procedure Start_Circular_Transfer
+     (Channel : Channel_Id;
+      Source  : Location;
+      Target  : Location;
+      Count   : Interfaces.Unsigned_16;
+      FIFO    : FIFO_Bytes;
+      Prio    : Priority_Level;
+      On_Half : A0B.Callbacks.Callback) is
+   begin
+      Implementation.Device.Start_Transfer
+        (Channel, Source, Target, Count, FIFO, Prio, True, On_Half);
+   end Start_Circular_Transfer;
+
    --------------------
    -- Start_Transfer --
    --------------------
@@ -19,7 +36,7 @@ package body STM32.DMA.Stream_2_1 is
       Done    : A0B.Callbacks.Callback) is
    begin
       Implementation.Device.Start_Transfer
-        (Channel, Source, Target, Count, FIFO, Prio, Done);
+        (Channel, Source, Target, Count, FIFO, Prio, False, Done);
    end Start_Transfer;
 
    -------------------

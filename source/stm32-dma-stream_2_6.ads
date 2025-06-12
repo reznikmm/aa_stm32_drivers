@@ -22,6 +22,17 @@ package STM32.DMA.Stream_2_6 is
       Prio    : Priority_Level;
       Done    : A0B.Callbacks.Callback);
 
+   procedure Start_Circular_Transfer
+     (Channel : Channel_Id;
+      Source  : Location;
+      Target  : Location;
+      Count   : Interfaces.Unsigned_16;
+      FIFO    : FIFO_Bytes;
+      Prio    : Priority_Level;
+      On_Half : A0B.Callbacks.Callback)
+     with Pre => not Is_Memory_To_Memory (Source, Target)
+       and Is_Burst_Match (Count, Source, Target);
+
    procedure Stop_Transfer (Count : out Interfaces.Unsigned_16);
 
    function Has_Error return Boolean;
