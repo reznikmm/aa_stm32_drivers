@@ -46,7 +46,6 @@ package body STM32.Timer is
       procedure Start
         (Address : System.Address;
          Count   : Interfaces.Unsigned_16;
-         Size    : STM32.DMA.Length_In_Bytes;
          On_Half : A0B.Callbacks.Callback);
 
       ---------------
@@ -110,10 +109,11 @@ package body STM32.Timer is
       procedure Start
         (Address : System.Address;
          Count   : Interfaces.Unsigned_16;
-         Size    : STM32.DMA.Length_In_Bytes;
          On_Half : A0B.Callbacks.Callback)
       is
          use type STM32.DMA.Length_In_Bytes;
+         Size    : constant STM32.DMA.Length_In_Bytes :=
+           Register_Value'Size / 8;
       begin
          Periph.CR1.CEN := True;
 
@@ -140,7 +140,7 @@ package body STM32.Timer is
       ---------------
 
       procedure Start_PWM
-        (Data    : Unsigned_32_Array;
+        (Data    : Register_Value_Array;
          On_Half : A0B.Callbacks.Callback)
       is
          use type Interfaces.Unsigned_32;
@@ -151,7 +151,7 @@ package body STM32.Timer is
             DBL    => Periph.DCR.DBL + 1,
             others => 0);
 
-         Start (Data'Address, Data'Length, 4, On_Half);
+         Start (Data'Address, Data'Length, On_Half);
       end Start_PWM;
 
       --------------------
@@ -159,10 +159,10 @@ package body STM32.Timer is
       --------------------
 
       procedure Start_PWM_Duty
-        (Duty    : Unsigned_32_Array;
+        (Duty    : Register_Value_Array;
          On_Half : A0B.Callbacks.Callback) is
       begin
-         Start (Duty'Address, Duty'Length, 4, On_Half);
+         Start (Duty'Address, Duty'Length, On_Half);
       end Start_PWM_Duty;
 
       ----------------------
@@ -170,7 +170,7 @@ package body STM32.Timer is
       ----------------------
 
       procedure Start_PWM_Period
-        (Period  : Unsigned_32_Array;
+        (Period  : Register_Value_Array;
          On_Half : A0B.Callbacks.Callback) is
       begin
          --  Set DCR.DBA to TIMx_ARR
@@ -179,7 +179,7 @@ package body STM32.Timer is
             DBL    => 0,  --  1 transfer count
             others => 0);
 
-         Start (Period'Address, Period'Length, 4, On_Half);
+         Start (Period'Address, Period'Length, On_Half);
       end Start_PWM_Period;
 
       ----------

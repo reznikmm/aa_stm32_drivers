@@ -26,6 +26,9 @@ package STM32.Timer is
 
    type Pin_Array is array (Channel_Index range <>) of STM32.Pin;
 
+   type Unsigned_16_Array is array (Positive range <>)
+     of Interfaces.Unsigned_16;
+
    type Unsigned_32_Array is array (Positive range <>)
      of Interfaces.Unsigned_32;
 
@@ -74,8 +77,9 @@ private
    generic
       Periph    : in out STM32.Registers.TIM.TIM_Peripheral;
       Channel   : STM32.DMA.Channel_Id;
-      --  Interrupt : Ada.Interrupts.Interrupt_ID;
-      --  Priority  : System.Interrupt_Priority;
+
+      type Register_Value is mod <>;
+      type Register_Value_Array is array (Positive range <>) of Register_Value;
 
       with package Stream is new STM32.DMA.Generic_DMA_Stream (<>);
    package DMA_Implementation is
@@ -89,15 +93,15 @@ private
          Clock  : Interfaces.Unsigned_32);
 
       procedure Start_PWM_Duty
-        (Duty    : Unsigned_32_Array;
+        (Duty    : Register_Value_Array;
          On_Half : A0B.Callbacks.Callback);
 
       procedure Start_PWM_Period
-        (Period  : Unsigned_32_Array;
+        (Period  : Register_Value_Array;
          On_Half : A0B.Callbacks.Callback);
 
       procedure Start_PWM
-        (Data    : Unsigned_32_Array;
+        (Data    : Register_Value_Array;
          On_Half : A0B.Callbacks.Callback);
       --  Data: Period + N x Duty
 
