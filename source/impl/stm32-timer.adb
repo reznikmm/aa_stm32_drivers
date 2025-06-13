@@ -140,7 +140,7 @@ package body STM32.Timer is
       ---------------
 
       procedure Start_PWM
-        (Data    : Unsigned_32_Array;
+        (Data    : Register_Value_Array;
          On_Half : A0B.Callbacks.Callback)
       is
          use type Interfaces.Unsigned_32;
@@ -159,7 +159,7 @@ package body STM32.Timer is
       --------------------
 
       procedure Start_PWM_Duty
-        (Duty    : Unsigned_32_Array;
+        (Duty    : Register_Value_Array;
          On_Half : A0B.Callbacks.Callback) is
       begin
          Start (Duty'Address, Duty'Length, 4, On_Half);
@@ -170,7 +170,7 @@ package body STM32.Timer is
       ----------------------
 
       procedure Start_PWM_Period
-        (Period  : Unsigned_32_Array;
+        (Period  : Register_Value_Array;
          On_Half : A0B.Callbacks.Callback) is
       begin
          --  Set DCR.DBA to TIMx_ARR
