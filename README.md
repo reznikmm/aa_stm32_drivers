@@ -199,25 +199,101 @@ The callback is called when the transfer is complete.
 ### Timers
 
 A timer can be configured to generate a PWM (pulse width modulation) signal.
-To configure a timer provide a pin to which the PWM signal will be output and a frequency.
+To configure a timer provide a pin to which the PWM signal will be output
+and a base frequency.
 
 ```ada
 TIM_3.Configure_PWM
   (Pin   => (STM32.PC, 8),
-   Speed => 1_000_000);  -- 1 MHz
+   Speed => 1_000_000);  -- 1 MHz (1µs per tick)
 ```
 
 Start PWM signal generation with `Start_PWM` providing
-- period in cycles of given frequency
-- duty cycle in cycles of given frequency
+- period in cycles of base frequency
+- duty cycle in cycles of base frequency
 - a callback to be called when next PWM parameters could be set.
 
 ```ada
 TIM_3.Start_PWM
-  (Period => 30_000,  -- 30 ms
-   Duty   => 600,     -- 600 µs
+  (Period => 30_000,  -- 30 ms = 30_000 * 1µs
+   Duty   => 600,     -- 600 µs = 600 * 1µs
    Done   => Done);
 ```
+
+### Timers with DMA
+
+The timer with DMA support can be configured by passing it a pin for each
+active channel, the base frequency, and the period and duty values in pulses
+of this base frequency. For example
+
+```ada
+TIM_3.Configure_PWM
+  (Pins   =>
+    (1 => (STM32.PA, 6),  --  Channel 1
+     2 => (STM32.PC, 7)), --  Channel 2
+   Speed  => 1_000_000,   -- 1 MHz (1µs per tick)
+   Period => 30_000,      -- 30 ms
+   Duty   => 600);        -- 600 µs
+```
+
+Now you can start continuous generation of the PWM signal in three
+different ways.
+
+* If you need a different period for each pulse, leave the pulse
+  width constant you need to call `Start_PWM_With_Period`, passing
+  it an array filled with the values of the desired periods and
+  a callback. The callback will be called each time half of the
+  buffer is transferred to the timer, allowing the user to change
+  the values while the next half is being transferred to the timer.
+
+  ```ada
+     Buffer : STM32.Timers.Unsigned_16 (1 .. 10) :=
+      (2_000, 3_000, others => 1_000);
+  begin
+     Start_PWM_With_Period (Buffer, Done);
+     --  Wait for Done is called, change Buffer (1 .. 5)
+  ```
+
+  This will emit 2ms pulse, pause for 28ms, emit 3ms pulse, pause for
+  27ms, emit 1ms pulse, pause for 29ms, etc.
+
+* If you need a different pulse width for each pulse, leave the pulse
+  period constant you need to call `Start_PWM_With_Duty`, passing
+  it an array filled with the values of the desired widthws and
+  a callback. Each active channel can have its own pulse width,
+  so the array sequentially stores the width values for all active
+  channels. Consider next example with two active channels
+
+  ```ada
+     Buffer : STM32.Timers.Unsigned_16 (1 .. 10) :=
+      (2_000, 3_000, others => 1_000);
+  begin
+     Start_PWM_With_Duty (Buffer, Done);
+     --  Wait for Done is called, change Buffer (1 .. 5)
+  ```
+
+  This will emit 2ms pulse, pause for 28ms on `PA6`, at the same time
+  emit 3ms pulse, pause for 27ms on `PC7`, then next cyclce is started.
+
+* It is possible to change both the pulse width in each active channel
+  and the pulse period (common for all channels) with each pulse, but
+  for this, channel 1 must be the first active channel
+  (`Pins'First = 1` when calling `Configure_PWM`).
+  In this case, the buffer will contain the period and width values
+  for all active channels, the next period, and so on.
+
+  ```ada
+     Buffer : STM32.Timers.Unsigned_16 (1 .. 12) :=
+      (20_000, 2_000, 3_000, others => 1_000);
+  begin
+     Start_PWM (Buffer, Done);
+     --  Wait for Done is called, change Buffer (1 .. 6)
+  ```
+
+  This will emit 2ms pulse, pause for 18ms on `PA6`, at the same time
+  emit 3ms pulse, pause for 17ms on `PC7`, then next cyclce is started.
+
+To stop generation call `Stop`.
 
 ### UID
 
