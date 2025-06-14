@@ -11,8 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: alire-project/setup-alire@v4
+    - uses: alire-project/setup-alire@v5
       with:
         toolchain: 'gnat_arm_elf gprbuild'
     - name: Build project and demos
       run: alr test
+    - name: Dump log
+      if: ${{ failure() }}
+      run: cat alire/alr_test_local.log

@@ -1023,30 +1023,6 @@ package STM32.Registers.RCC is
       Reserved_19_31 at 0 range 19 .. 31;
    end record;
 
-   --  BDCR_RTCSEL array
-   type BDCR_RTCSEL_Field_Array is array (0 .. 1) of Boolean
-     with Component_Size => 1, Size => 2;
-
-   --  Type definition for BDCR_RTCSEL
-   type BDCR_RTCSEL_Field
-     (As_Array : Boolean := False)
-   is record
-      case As_Array is
-         when False =>
-            --  RTCSEL as a value
-            Val : Interfaces.Unsigned_32 range 0 .. 3;
-         when True =>
-            --  RTCSEL as an array
-            Arr : BDCR_RTCSEL_Field_Array;
-      end case;
-   end record
-     with Unchecked_Union, Size => 2;
-
-   for BDCR_RTCSEL_Field use record
-      Val at 0 range 0 .. 1;
-      Arr at 0 range 0 .. 1;
-   end record;
-
    --  Backup domain control register
    type BDCR_Register is record
       --  External low-speed oscillator enable
@@ -1058,7 +1034,7 @@ package STM32.Registers.RCC is
       --  unspecified
       Reserved_3_7   : Interfaces.Unsigned_32 range 0 .. 31;
       --  RTC clock source selection
-      RTCSEL         : BDCR_RTCSEL_Field;
+      RTCSEL         : Interfaces.Unsigned_32 range 0 .. 3;
       --  unspecified
       Reserved_10_14 : Interfaces.Unsigned_32 range 0 .. 31;
       --  RTC clock enable

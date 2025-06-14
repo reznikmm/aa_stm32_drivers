@@ -11,11 +11,12 @@ project Demos is
    for Runtime ("Ada") use "light-tasking-" & BOARD;
    for Target use "arm-eabi";
 
-   for Source_Dirs use ("spi", "tim", "uart");
+   for Source_Dirs use ("spi", "tim", "uart", "rtc");
    for Object_Dir use "obj/" & Demos_Config.Build_Profile;
    for Create_Missing_Dirs use "True";
    for Exec_Dir use "bin";
-   for Main use ("uart.adb", "uart_dma.adb", "spi_dma.adb", "tim_dma.adb");
+   for Main use
+     ("uart.adb", "uart_dma.adb", "spi_dma.adb", "tim_dma.adb", "rtc_main.adb");
 
    package Compiler is
       for Default_Switches ("Ada") use Demos_Config.Ada_Compiler_Switches;
@@ -28,6 +29,12 @@ project Demos is
    package Install is
       for Artifacts (".") use ("share");
    end Install;
+
+   package Linker is
+      for Default_Switches ("Ada") use
+        ("-Wl,--gc-sections",
+         "-Wl,--defsym=__stack_size=0x2000");
+   end Linker;
 
    package Ide is
       for Program_Host use "localhost:4242";
