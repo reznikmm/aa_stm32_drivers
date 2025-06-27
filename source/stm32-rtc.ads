@@ -23,10 +23,18 @@ package STM32.RTC is
       Second  : Natural range 0 .. 59;
    end record;
 
+   type Clock_Source is
+     (Low_Speed_External,
+      Low_Speed_Internal,
+      High_Speed_External);
+
    procedure Initialize
-     (Date : RTC.Date;
-      Time : RTC.Time);
-   --  Initialize RTC device and set calendar and clock.
+     (Date    : RTC.Date;
+      Time    : RTC.Time;
+      Clock   : Clock_Source := Low_Speed_External;
+      Success : out Boolean);
+   --  Initialize RTC device and set calendar and clock. Return Success = False
+   --  if MCU is unable to enter initialization mode dutu absent RTCCLK clock
 
    procedure Clock
      (Date : out RTC.Date;

@@ -7,6 +7,7 @@ with Interfaces;
 with STM32.Registers.PWR;
 with STM32.Registers.RCC;
 with STM32.Registers.RTC;
+with STM32.System_Clocks;
 
 package body STM32.RTC is
 
@@ -43,9 +44,13 @@ package body STM32.RTC is
    ----------------
 
    procedure Initialize
-     (Date : RTC.Date;
-      Time : RTC.Time)
+     (Date    : RTC.Date;
+      Time    : RTC.Time;
+      Clock   : Clock_Source := Low_Speed_External;
+      Success : out Boolean)
    is
+      use type Interfaces.Unsigned_32;
+
       RCC : STM32.Registers.RCC.RCC_Peripheral renames
         STM32.Registers.RCC.RCC_Periph;
 
@@ -57,12 +62,22 @@ package body STM32.RTC is
 
    begin
       RCC.APB1ENR.PWREN := True;
-      PWR.CR.DBP := True;
+      RCC.CFGR.RTCPRE := STM32.System_Clocks.HSE / 1_000_000;
 
-      RCC.BDCR.LSEON  := True;
-      RCC.BDCR.RTCSEL := 1;  --  LSE oscillator clock used as the RTC clock
-      --  Set RCC.CFGR.RTCPRE for HSE
-      RCC.BDCR.RTCEN := True;
+      PWR.CR.DBP := True;  --  Disable write protection on BDCR
+
+      --  Reset backup domain
+      RCC.BDCR.BDRST := True;
+      RCC.BDCR.BDRST := False;
+
+      RCC.BDCR :=
+        (LSEON  => Clock = Low_Speed_External,
+         LSERDY => False,
+         LSEBYP => False,
+         RTCSEL => 1 + Clock_Source'Pos (Clock),
+         RTCEN  => True,
+         BDRST  => False,
+         others => 0);
 
       --  Disable write protection
       RTC.WPR := (16#CA#, 0);
@@ -70,13 +85,26 @@ package body STM32.RTC is
 
       RTC.ISR.INIT := True;
 
-      while not RTC.ISR.INITF loop
-         null;
-      end loop;
+      --  Entering initialization phase mode. It takes from 1 to 2 RTCCLK clock
+      --  cycles (due to clock synch)
+      delay 2.0 / 32_768.0;
+
+      if not RTC.ISR.INITF then
+         RTC.ISR.INIT := False;
+
+         --  Enable write protection
+         RTC.WPR := (16#00#, 0);
+         PWR.CR.DBP := False;
+         Success := False;
+         return;
+      end if;
 
       --  Set prescaler to total 2**15 = 32.768kHz. Two write access REQUIRED
       RTC.PRER.PREDIV_A := 127;  --  devide by 128 2**7
-      RTC.PRER.PREDIV_S := 255;  --  devide by 256 2**8
+
+      RTC.PRER.PREDIV_S :=
+        (if Clock = High_Speed_External then 8191 else 255);
+      --  devide by 256 2**8 for LSE/LSI or by 8192 if HSE
 
       RTC.DR :=
         (DU  => Interfaces.Unsigned_32 (Date.Day mod 10),
@@ -103,6 +131,8 @@ package body STM32.RTC is
 
       --  Enable write protection
       RTC.WPR := (16#00#, 0);
+      PWR.CR.DBP := False;
+      Success := True;
    end Initialize;
 
 end STM32.RTC;

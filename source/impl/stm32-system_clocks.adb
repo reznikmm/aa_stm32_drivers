@@ -4,6 +4,7 @@
 ----------------------------------------------------------------
 
 pragma Warnings (Off, "is an internal GNAT unit");
+with System.BB.Parameters;
 with System.STM32;
 pragma Warnings (On, "is an internal GNAT unit");
 
@@ -17,5 +18,8 @@ package body STM32.System_Clocks is
 
    function TIMCLK1 return Interfaces.Unsigned_32 is
      (Interfaces.Unsigned_32 (System.STM32.System_Clocks.TIMCLK1));
+
+   function HSE return Interfaces.Unsigned_32 is
+      (System.BB.Parameters.HSE_Clock);
 
 end STM32.System_Clocks;

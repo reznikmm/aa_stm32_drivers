@@ -31,8 +31,9 @@ procedure RTC_Main is
    Done    : constant A0B.Callbacks.Callback :=
      Suspension_Object_Callbacks.Create_Callback (Signal);
 
-   Date : STM32.RTC.Date;
-   Time : STM32.RTC.Time;
+   Date   : STM32.RTC.Date;
+   Time   : STM32.RTC.Time;
+   Ignore : Boolean;
 begin
    USART_1.Configure
      (TX    => (STM32.PA, 9),
@@ -42,7 +43,8 @@ begin
    STM32.RTC.Initialize
      (Date =>
         (Year => 25, Month => 6, Day => 14, Weekday => STM32.RTC.Saturday),
-      Time => (18, 33, 00));
+      Time => (18, 33, 00),
+      Success => Ignore);
 
    loop
       USART_1.Start_Writing (Buffer'Address, Buffer'Length, Done);
