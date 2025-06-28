@@ -15,7 +15,8 @@ prioritizing simplicity and efficiency.
   - SPI
   - Timers
   - MCUs UID
-  - Flash
+  - Flash for `stm32f429`
+  - Flexible static memory controller (FSMC) for `stm32f40x`
 - Support for:
   - STM32F407 (using the `light-tasking-stm32f4` Ada runtime library)
   - STM32F429 (using the `light-tasking-stm32f429disco` Ada runtime library)
@@ -331,6 +332,44 @@ for J in 1 .. Sector_Size loop
 end loop;
 
 STM32.Flash.Lock;
+```
+
+### Flexible static memory controller (FSMC)
+
+This component of STM32F40x/41x processors allows for the management
+of static memory, flash memory, and PC Cards. Unlike the FMC in more
+advanced MCU models, dynamic memory is not supported. Each type of
+memory has its address bank. The controller offers flexible settings
+for various operating modes. For instance, extended modes can have
+different delays set for read and write operations. It is recommended
+to refer to the STM32 Reference Manual (RM0090) for a detailed description
+of possible modes and corresponding settings.
+
+**Example**: Configuring Bank_1 for ILI9341 LCD controller:
+
+* half word (16 bit access)
+* with write enabled
+* distinct read and write timings
+
+```ada
+STM32.FSMC.Configure
+  (Bank_1 =>
+     (1 =>  --  ILI9341 is connected to sub-bank 1
+        (Is_Set => True,
+         Value  =>
+           (Write_Enable  => True,
+            Bus_Width     => STM32.FSMC.Half_Word,
+            Memory_Type   => STM32.FSMC.SRAM,
+            Bus_Turn      => 15,  --  90ns
+            Data_Setup    => 57, --  342ns
+            Address_Setup => 0,
+            Extended      =>
+              (STM32.FSMC.Mode_A,
+               Write_Bus_Turn      => 3,  --  18ns
+               Write_Data_Setup    => 2,  --  12ns
+               Write_Address_Setup => 0),
+            others        => <>)),
+      others => <>));
 ```
 
 ## Maintainer
