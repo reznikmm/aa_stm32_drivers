@@ -122,7 +122,7 @@ package body STM32.FSMC is
          Pin    : Pin_Index) is
       begin
          Periph.MODER   (Pin) := STM32.Registers.GPIO.Mode_AF;
-         Periph.OSPEEDR (Pin) := STM32.Registers.GPIO.Speed_2MHz;
+         Periph.OSPEEDR (Pin) := STM32.Registers.GPIO.Speed_100MHz;
          Periph.OTYPER  (Pin) := STM32.Registers.GPIO.Push_Pull;
          Periph.PUPDR   (Pin) := STM32.Registers.GPIO.No_Pull;
          Periph.AFR     (Pin) := 12;

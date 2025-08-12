@@ -495,17 +495,13 @@ package STM32.Registers.RCC is
       Reserved_19_31 at 0 range 19 .. 31;
    end record;
 
-   type Boolean_Array_5 is array (STM32.PA .. STM32.PE) of Boolean
-     with Component_Size => 1, Size => 5;
+   type Boolean_Array_7 is array (STM32.PA .. STM32.PG) of Boolean
+     with Component_Size => 1, Size => 7;
 
    --  AHB1 peripheral clock register
    type AHB1ENR_Register is record
-      --  IO port A..E clock enable
-      GPIOxEN        : Boolean_Array_5;
-      --  IO port F clock enable
-      GPIOFEN        : Boolean;
-      --  IO port G clock enable
-      GPIOGEN        : Boolean;
+      --  IO port A..G clock enable
+      GPIOxEN        : Boolean_Array_7;
       --  IO port H clock enable
       GPIOHEN        : Boolean;
       --  IO port I clock enable
@@ -544,9 +540,7 @@ package STM32.Registers.RCC is
      with Object_Size => 32, Bit_Order => System.Low_Order_First;
 
    for AHB1ENR_Register use record
-      GPIOxEN        at 0 range 0 .. 4;
-      GPIOFEN        at 0 range 5 .. 5;
-      GPIOGEN        at 0 range 6 .. 6;
+      GPIOxEN        at 0 range 0 .. 6;
       GPIOHEN        at 0 range 7 .. 7;
       GPIOIEN        at 0 range 8 .. 8;
       Reserved_9_11  at 0 range 9 .. 11;

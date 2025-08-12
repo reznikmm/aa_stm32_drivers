@@ -8,7 +8,7 @@
 package STM32 is
    pragma Pure;
 
-   type Port is (PA, PB, PC, PD, PE);
+   type Port is (PA, PB, PC, PD, PE, PF, PG);
 
    subtype Pin_Index is Natural range 0 .. 15;
 
