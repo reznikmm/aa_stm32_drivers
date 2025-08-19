@@ -750,7 +750,7 @@ package STM32.Registers.RCC is
       --  SPI1 clock enable
       SPI1EN         : Boolean;
       --  SPI4 clock enable
-      SPI4ENR        : Boolean;
+      SPI4EN         : Boolean;
       --  System configuration controller clock enable
       SYSCFGEN       : Boolean;
       --  unspecified
@@ -790,7 +790,7 @@ package STM32.Registers.RCC is
       ADC3EN         at 0 range 10 .. 10;
       SDIOEN         at 0 range 11 .. 11;
       SPI1EN         at 0 range 12 .. 12;
-      SPI4ENR        at 0 range 13 .. 13;
+      SPI4EN         at 0 range 13 .. 13;
       SYSCFGEN       at 0 range 14 .. 14;
       Reserved_15_15 at 0 range 15 .. 15;
       TIM9EN         at 0 range 16 .. 16;
