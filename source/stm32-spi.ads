@@ -38,12 +38,19 @@ package STM32.SPI is
 
 private
 
-   procedure Init_GPIO (Item : Pin);
+   subtype SPI_AF is Interfaces.Unsigned_32 range 5 .. 6;
+
+   SPI_1_AF   : constant SPI_AF := 5;
+   SPI_2_3_AF : constant SPI_AF := 6;
+   SPI_3_6_AF : constant SPI_AF := 5;
+
+   procedure Init_GPIO (Item : Pin; AF : SPI_AF);
 
    generic
       Periph    : in out STM32.Registers.SPI.SPI_Peripheral;
       Interrupt : Ada.Interrupts.Interrupt_ID;
       Priority  : System.Interrupt_Priority;
+      AF        : SPI_AF;
    package SPI_Implementation is
       --  Generic implementation for SPI initializaion, operations and
       --  interrupt handling procedure
@@ -85,6 +92,7 @@ private
       Channel   : STM32.DMA.Channel_Id;
       Interrupt : Ada.Interrupts.Interrupt_ID;
       Priority  : System.Interrupt_Priority;
+      AF        : SPI_AF;
 
       with package RX_Stream is new STM32.DMA.Generic_DMA_Stream (<>);
       with package TX_Stream is new STM32.DMA.Generic_DMA_Stream (<>);

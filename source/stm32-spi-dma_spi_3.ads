@@ -3,7 +3,7 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ----------------------------------------------------------------
 
---  SPI_2 device.
+--  SPI_3 device.
 
 with Interfaces;
 with System;
@@ -12,11 +12,13 @@ with A0B.Callbacks;
 
 private with Ada.Interrupts.Names;
 private with STM32.Registers.SPI;
+private with STM32.DMA.Stream_1_0;
+private with STM32.DMA.Stream_1_5;
 
 generic
    Priority : System.Any_Priority;
    --  Priority is used for underlying protected object.
-package STM32.SPI.SPI_2 is
+package STM32.SPI.DMA_SPI_3 is
 
    procedure Configure
      (SCK   : Pin;
@@ -25,11 +27,11 @@ package STM32.SPI.SPI_2 is
       Speed : Interfaces.Unsigned_32;
       Mode  : SPI_Mode)
      with Pre =>
-       SCK  in (PB, 10) | (PB, 13) and then
-       MISO in (PB, 14) | (PC, 2) and then
-       MOSI in (PB, 15) | (PC, 3);
+       SCK  in (PB, 3) | (PC, 10) and then
+       MISO in (PB, 4) | (PC, 11) and then
+       MOSI in (PB, 5) | (PC, 12);
    --
-   --  (Re-)configure SPI_2 on given pins and speed
+   --  (Re-)configure SPI_3 on given pins and speed
 
    procedure Start_Data_Exchange
      (CS     : Pin;
@@ -44,10 +46,18 @@ package STM32.SPI.SPI_2 is
 
 private
 
-   package Implementation is new SPI_Implementation
-     (STM32.Registers.SPI.SPI2_Periph,
-      AF        => SPI_2_3_AF,
-      Interrupt => Ada.Interrupts.Names.SPI2_Interrupt,
-      Priority  => Priority);
+   package Stream_1_0 is new STM32.DMA.Stream_1_0 (Priority);
+   --  TBD: Should be configurable between Stream_1_0/Stream_1_2
+   package Stream_1_5 is new STM32.DMA.Stream_1_5 (Priority);
+   --  TBD: Should be configurable between Stream_1_4/Stream_1_5
 
-end STM32.SPI.SPI_2;
+   package Implementation is new DMA_Implementation
+     (STM32.Registers.SPI.SPI3_Periph,
+      Channel   => 0,
+      Interrupt => Ada.Interrupts.Names.SPI3_Interrupt,
+      Priority  => Priority,
+      AF        => SPI_3_6_AF,
+      RX_Stream => Stream_1_0.Stream,
+      TX_Stream => Stream_1_5.Stream);
+
+end STM32.SPI.DMA_SPI_3;

@@ -12,6 +12,7 @@ package body STM32.SPI is
 
    procedure Configure
      (Periph : in out STM32.Registers.SPI.SPI_Peripheral;
+      AF     : SPI_AF;
       SCK    : Pin;
       MISO   : Pin;
       MOSI   : Pin;
@@ -25,6 +26,7 @@ package body STM32.SPI is
 
    procedure Configure
      (Periph : in out STM32.Registers.SPI.SPI_Peripheral;
+      AF     : SPI_AF;
       SCK    : Pin;
       MISO   : Pin;
       MOSI   : Pin;
@@ -38,9 +40,9 @@ package body STM32.SPI is
       CPHA : constant Boolean := Mode in 1 | 3;
       CPOL : constant Boolean := Mode in 2 | 3;
    begin
-      Init_GPIO (SCK);
-      Init_GPIO (MISO);
-      Init_GPIO (MOSI);
+      Init_GPIO (SCK, AF);
+      Init_GPIO (MISO, AF);
+      Init_GPIO (MOSI, AF);
 
       for J in 1 .. 8 loop
          exit when Clock / 2 ** J <= Speed;
@@ -73,7 +75,7 @@ package body STM32.SPI is
    -- Init_GPIO --
    ---------------
 
-   procedure Init_GPIO (Item : Pin) is
+   procedure Init_GPIO (Item : Pin; AF : SPI_AF) is
 
       procedure Init_GPIO
         (Periph : in out STM32.Registers.GPIO.GPIO_Peripheral;
@@ -85,15 +87,13 @@ package body STM32.SPI is
 
       procedure Init_GPIO
         (Periph : in out STM32.Registers.GPIO.GPIO_Peripheral;
-         Pin    : Pin_Index)
-      is
-         AF_SPI1_6    : constant := 5;
+         Pin    : Pin_Index) is
       begin
          Periph.MODER   (Pin) := STM32.Registers.GPIO.Mode_AF;
          Periph.OSPEEDR (Pin) := STM32.Registers.GPIO.Speed_100MHz;
          Periph.OTYPER  (Pin) := STM32.Registers.GPIO.Push_Pull;
          Periph.PUPDR   (Pin) := STM32.Registers.GPIO.Pull_Up;
-         Periph.AFR     (Pin) := AF_SPI1_6;
+         Periph.AFR     (Pin) := AF;
       end Init_GPIO;
 
    begin
@@ -131,6 +131,7 @@ package body STM32.SPI is
       begin
          Configure
            (Periph,
+            AF    => AF,
             SCK   => SCK,
             MISO  => MISO,
             MOSI  => MOSI,
@@ -299,6 +300,7 @@ package body STM32.SPI is
       begin
          Configure
            (Periph,
+            AF    => AF,
             SCK   => SCK,
             MISO  => MISO,
             MOSI  => MOSI,
