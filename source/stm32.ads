@@ -21,4 +21,6 @@ package STM32 is
    type Bit is mod 2
      with Size => 1;
 
+   type Pin_Array is array (Positive range <>) of Pin;
+
 end STM32;

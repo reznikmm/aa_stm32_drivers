@@ -1,6 +1,10 @@
-pragma Style_Checks (Off);
+--  SPDX-FileCopyrightText: 2025 Max Reznik <reznikmm@gmail.com>
+--
+--  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+----------------------------------------------------------------
 
 --  This spec has been automatically generated from STM32F40x.svd
+--  then edited to be more handy.
 
 pragma Restrictions (No_Elaboration_Code);
 

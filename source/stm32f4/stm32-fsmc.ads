@@ -9,8 +9,6 @@ with System;
 
 package STM32.FSMC is
 
-   type Pin_Array is array (Positive range <>) of Pin;
-
    procedure Initialize (Pins : Pin_Array);
 
    subtype Clock_Cycle_Count is Natural;
