@@ -32,6 +32,9 @@ package STM32.Timer.DMA_TIM_3 is
       Period  : Interfaces.Unsigned_16;
       Duty    : Interfaces.Unsigned_16);
    --  Configure TIM3 on given pins, speed, constant period and duty.
+   --  The Speed parameter specifies in what units the Period and Duty values
+   --  are given. For example, to specify values in microseconds, set
+   --  Speed => 1_000_000 (1MHz).
 
    procedure Start_PWM_With_Period
      (Period  : Unsigned_16_Array;

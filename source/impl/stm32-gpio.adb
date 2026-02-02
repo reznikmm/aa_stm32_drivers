@@ -3,8 +3,6 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ----------------------------------------------------------------
 
-with Interfaces;
-
 with STM32.Registers.EXTI;
 with STM32.Registers.GPIO;
 with STM32.Registers.RCC;
@@ -27,6 +25,26 @@ package body STM32.GPIO is
       EXTI_Periph.PR := Value;  --  Clear pending
    end Clear_Interrupt;
 
+   ---------------------
+   -- Configure_Input --
+   ---------------------
+
+   procedure Configure_Input
+     (Pin       : STM32.Pin;
+      Pull_Up   : Boolean := False;
+      Pull_Down : Boolean := False)
+   is
+      Device : STM32.Registers.GPIO.GPIO_Peripheral renames
+        STM32.Registers.GPIO.GPIO_Periph (Pin.Port);
+   begin
+      Enable_GPIO (Pin.Port);
+      Device.MODER (Pin.Pin) := STM32.Registers.GPIO.Mode_IN;
+      Device.PUPDR (Pin.Pin) :=
+        (if Pull_Up then STM32.Registers.GPIO.Pull_Up
+         elsif Pull_Down then STM32.Registers.GPIO.Pull_Down
+         else STM32.Registers.GPIO.No_Pull);
+   end Configure_Input;
+
    -------------------------
    -- Configure_Interrupt --
    -------------------------
@@ -37,39 +55,26 @@ package body STM32.GPIO is
       Pull_Down : Boolean := False)
    is
 
-      procedure Configure_Interrupt
-        (GPIO : in out STM32.Registers.GPIO.GPIO_Peripheral;
-         Pin  : Pin_Index);
-
-      -------------------------
-      -- Configure_Interrupt --
-      -------------------------
-
-      procedure Configure_Interrupt
-        (GPIO : in out STM32.Registers.GPIO.GPIO_Peripheral;
-         Pin  : Pin_Index) is
-      begin
-         GPIO.MODER (Pin) := STM32.Registers.GPIO.Mode_IN;
-         GPIO.PUPDR (Pin) :=
-           (if Pull_Up then STM32.Registers.GPIO.Pull_Up
-            elsif Pull_Down then STM32.Registers.GPIO.Pull_Down
-            else STM32.Registers.GPIO.No_Pull);
-      end Configure_Interrupt;
-
       EXTI_Periph : STM32.Registers.EXTI.EXTI_Peripheral renames
         STM32.Registers.EXTI.EXTI_Periph;
 
       SYSCFG_Periph : STM32.Registers.SYSCFG.SYSCFG_Peripheral renames
         STM32.Registers.SYSCFG.SYSCFG_Periph;
 
-      Port : constant Interfaces.Unsigned_32 := STM32.Port'Pos (Pin.Port);
+      GPIO_Periph : STM32.Registers.GPIO.GPIO_Peripheral renames
+        STM32.Registers.GPIO.GPIO_Periph (Pin.Port);
+
    begin
       Enable_GPIO (Pin.Port);
 
-      Configure_Interrupt
-        (STM32.Registers.GPIO.GPIO_Periph (Pin.Port), Pin.Pin);
+      GPIO_Periph.MODER (Pin.Pin) := STM32.Registers.GPIO.Mode_IN;
+      GPIO_Periph.PUPDR (Pin.Pin) :=
+        (if Pull_Up then STM32.Registers.GPIO.Pull_Up
+         elsif Pull_Down then STM32.Registers.GPIO.Pull_Down
+         else STM32.Registers.GPIO.No_Pull);
 
-      SYSCFG_Periph.EXTICR (Pin.Pin / 4).EXTI (Pin.Pin mod 4) := Port;
+      SYSCFG_Periph.EXTICR (Pin.Pin / 4).EXTI (Pin.Pin mod 4) :=
+        STM32.Port'Pos (Pin.Port);
 
       EXTI_Periph.RTSR (Natural (Pin.Pin)) := True;  --  Rising trigger
       EXTI_Periph.FTSR (Natural (Pin.Pin)) := False;  --  Falling trigger
@@ -81,7 +86,11 @@ package body STM32.GPIO is
    -- Configure_Output --
    ----------------------
 
-   procedure Configure_Output (Pin : STM32.Pin) is
+   procedure Configure_Output
+     (Pin       : STM32.Pin;
+      Pull_Up   : Boolean := False;
+      Pull_Down : Boolean := False)
+   is
 
       procedure Configure_Output
         (GPIO : in out STM32.Registers.GPIO.GPIO_Peripheral;
@@ -95,10 +104,13 @@ package body STM32.GPIO is
         (GPIO : in out STM32.Registers.GPIO.GPIO_Peripheral;
          Pin  : Pin_Index) is
       begin
-         GPIO.MODER     (Pin) := STM32.Registers.GPIO.Mode_OUT;
-         GPIO.PUPDR     (Pin) := STM32.Registers.GPIO.No_Pull;
-         GPIO.OSPEEDR   (Pin) := STM32.Registers.GPIO.Speed_50MHz;
-         GPIO.OTYPER    (Pin) := STM32.Registers.GPIO.Push_Pull;
+         GPIO.MODER   (Pin) := STM32.Registers.GPIO.Mode_OUT;
+         GPIO.PUPDR   (Pin) :=
+           (if Pull_Up then STM32.Registers.GPIO.Pull_Up
+            elsif Pull_Down then STM32.Registers.GPIO.Pull_Down
+            else STM32.Registers.GPIO.No_Pull);
+         GPIO.OSPEEDR (Pin) := STM32.Registers.GPIO.Speed_50MHz;
+         GPIO.OTYPER  (Pin) := STM32.Registers.GPIO.Push_Pull;
       end Configure_Output;
 
    begin
@@ -116,6 +128,14 @@ package body STM32.GPIO is
    begin
       RCC.AHB1ENR.GPIOxEN (Port) := True;
    end Enable_GPIO;
+
+   ---------------
+   -- Get_Input --
+   ---------------
+
+   function Get_Input (Pin : STM32.Pin) return STM32.Bit is
+     (Boolean'Pos
+       (STM32.Registers.GPIO.GPIO_Periph (Pin.Port).IDR.Arr (Pin.Pin)));
 
    ------------------------
    -- Pending_Interrupts --
@@ -136,29 +156,14 @@ package body STM32.GPIO is
      (Pin   : STM32.Pin;
       Value : STM32.Bit)
    is
-      procedure Set_Output
-        (Periph : in out STM32.Registers.GPIO.GPIO_Peripheral;
-         Pin    : Pin_Index;
-         Value  : STM32.Bit);
-
-      ----------------
-      -- Set_Output --
-      ----------------
-
-      procedure Set_Output
-        (Periph : in out STM32.Registers.GPIO.GPIO_Peripheral;
-         Pin    : Pin_Index;
-         Value  : STM32.Bit)
-      is begin
-         if Value = 0 then
-            Periph.BSRR.BR (Pin) := True;
-         else
-            Periph.BSRR.BS (Pin) := True;
-         end if;
-      end Set_Output;
-
+      Device : STM32.Registers.GPIO.GPIO_Peripheral renames
+        STM32.Registers.GPIO.GPIO_Periph (Pin.Port);
    begin
-      Set_Output (STM32.Registers.GPIO.GPIO_Periph (Pin.Port), Pin.Pin, Value);
+      if Value = 0 then
+         Device.BSRR.BR (Pin.Pin) := True;
+      else
+         Device.BSRR.BS (Pin.Pin) := True;
+      end if;
    end Set_Output;
 
 end STM32.GPIO;

@@ -6,11 +6,19 @@
 package STM32.GPIO is
    pragma Preelaborate;
 
-   procedure Configure_Output (Pin : STM32.Pin);
+   procedure Configure_Output
+     (Pin       : STM32.Pin;
+      Pull_Up   : Boolean := False;
+      Pull_Down : Boolean := False)
+        with Pre => not (Pull_Up and Pull_Down);
+   --  Switch pin to output
 
-   procedure Set_Output
-     (Pin   : STM32.Pin;
-      Value : STM32.Bit);
+   procedure Configure_Input
+     (Pin       : STM32.Pin;
+      Pull_Up   : Boolean := False;
+      Pull_Down : Boolean := False)
+        with Pre => not (Pull_Up and Pull_Down);
+   --  Switch pin to input
 
    procedure Configure_Interrupt
      (Pin       : STM32.Pin;
@@ -27,6 +35,12 @@ package STM32.GPIO is
      with Component_Size => 1, Object_Size => 16;
 
    function Pending_Interrupts return Pending_Interrupt_Set;
+
+   procedure Set_Output
+     (Pin   : STM32.Pin;
+      Value : STM32.Bit);
+
+   function Get_Input (Pin : STM32.Pin) return STM32.Bit;
 
    procedure Enable_GPIO (Port : STM32.Port);
 

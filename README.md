@@ -321,13 +321,15 @@ from one flash memory bank while another is being written/erased.
 STM32.Flash.Unlock;
 
 STM32.Flash.Erase_Sector
-  (Address => System'To_Address (16#0800_0000#),
+  (Address => STM32.Flash.Second_Bank,
    Size    => Sector_Size,
    Done    => Done);
 
 -- Wait for the sector to erase, then write:
-for J in 1 .. Sector_Size loop
+for J in 1 .. Sector_Size / 4 loop
    STM32.Flash.Programming;
+   -- Enable writing into the flash.
+   Buffer (J) := 16#AABBCCDD#;
    -- Write a word to 0x800_0000 + J - 1
 end loop;
 
