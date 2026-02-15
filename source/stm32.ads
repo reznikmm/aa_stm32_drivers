@@ -1,4 +1,4 @@
---  SPDX-FileCopyrightText: 2025 Max Reznik <reznikmm@gmail.com>
+--  SPDX-FileCopyrightText: 2025-2026 Max Reznik <reznikmm@gmail.com>
 --
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ----------------------------------------------------------------
@@ -8,7 +8,7 @@
 package STM32 is
    pragma Pure;
 
-   type Port is (PA, PB, PC, PD, PE, PF, PG);
+   type Port is (PA, PB, PC, PD, PE, PF, PG, PH, PI, PJ, PK);
 
    subtype Pin_Index is Natural range 0 .. 15;
 
