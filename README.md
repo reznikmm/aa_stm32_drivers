@@ -6,6 +6,26 @@ A lightweight, generic-based driver library for STM32 microcontrollers.
 This library provides low-level drivers for common peripherals while
 prioritizing simplicity and efficiency.
 
+## Table of Contents
+
+- [Features](#features)
+- [Design Philosophy](#design-philosophy)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [GPIO](#gpio)
+  - [UART/USART](#uartusart)
+  - [I2C](#i2c)
+  - [SPI](#spi)
+  - [Timers](#timers)
+  - [Timers with DMA](#timers-with-dma)
+  - [UID](#uid)
+  - [Flash](#flash)
+  - [FSMC (Flexible static memory controller)](#flexible-static-memory-controller-fsmc)
+  - [RNG (Random Number Generator)](#rng)
+- [Maintainer](#maintainer)
+- [Contribute](#contribute)
+- [License](#license)
+
 ## Features
 
 - Simple and efficient peripheral drivers for:
@@ -372,6 +392,50 @@ STM32.FSMC.Configure
                Write_Address_Setup => 0),
             others        => <>)),
       others => <>));
+```
+
+### RNG
+
+The RNG driver supports two approaches. For a single word or a small number
+of words, use polling with `Get_Next` (and optionally `Is_Ready`).
+For a larger buffer, use the interrupt-driven generic package and
+`Start_Reading`, which fills the buffer and triggers a callback when done.
+
+**Polling example:**
+```ada
+declare
+  Value : Interfaces.Unsigned_32;
+begin
+  STM32.RNG.Configure;
+  STM32.RNG.Get_Next (Value);
+end;
+```
+
+**Interrupt-driven example:**
+```ada
+with Ada.Synchronous_Task_Control;
+with A0B.Callbacks.Generic_Subprogram;
+with STM32.RNG;
+
+procedure Main is
+   package Suspension_Object_Callbacks is new
+     A0B.Callbacks.Generic_Subprogram
+       (Ada.Synchronous_Task_Control.Suspension_Object,
+        Ada.Synchronous_Task_Control.Set_True);
+
+   package RNG is new STM32.RNG.Generic_RNG (Priority => 241);
+
+   Buffer : RNG.Unsigned_32_Array (1 .. 256);
+   Signal : aliased Ada.Synchronous_Task_Control.Suspension_Object;
+   Done   : constant A0B.Callbacks.Callback :=
+     Suspension_Object_Callbacks.Create_Callback (Signal);
+begin
+   STM32.RNG.Configure;
+   RNG.Start_Reading (Buffer, Done);
+   --  Do anything else while random numbers are being generated
+   Ada.Synchronous_Task_Control.Suspend_Until_True (Signal);
+   -- Process Buffer here
+end Main;
 ```
 
 ## Maintainer
