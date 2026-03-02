@@ -1,7 +1,7 @@
---  SPDX-FileCopyrightText: 2025 Max Reznik <reznikmm@gmail.com>
+--  SPDX-FileCopyrightText: 2025-2026 Max Reznik <reznikmm@gmail.com>
 --
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-----------------------------------------------------------------
+---------------------------------------------------------------------
 
 with STM32.GPIO;
 with STM32.Registers.GPIO;
@@ -39,6 +39,11 @@ package body STM32.UART is
    begin
       Init_GPIO (TX, Fun);
       Init_GPIO (RX, Fun);
+
+      Periph.CR1 :=
+        (UE       => True,  --  USART enable
+         Reserved => 0,
+         others   => False);
 
       Periph.BRR.DIV_Fraction := (Fraction * 16 + 50) / 100;
       Periph.BRR.DIV_Mantissa := Divider / 100;
@@ -252,6 +257,85 @@ package body STM32.UART is
       STM32.GPIO.Enable_GPIO (TX.Port);
       Init_GPIO (STM32.Registers.GPIO.GPIO_Periph (TX.Port), TX.Pin, Fun);
    end Init_GPIO;
+
+   ----------------------------
+   -- Polling_Implementation --
+   ----------------------------
+
+   package body Polling_Implementation is
+
+      ---------------
+      -- Configure --
+      ---------------
+
+      procedure Configure
+        (TX    : Pin;
+         RX    : Pin;
+         Speed : Interfaces.Unsigned_32;
+         Clock : Interfaces.Unsigned_32) is
+      begin
+         Configure (TX, RX, Speed, Clock, Periph, Fun);
+      end Configure;
+
+      ---------
+      -- Put --
+      ---------
+
+      procedure Put (Data : String) is
+      begin
+         for Item of Data loop
+            Send (Character'Pos (Item));
+         end loop;
+      end Put;
+
+      -------------
+      -- Receive --
+      -------------
+
+      procedure Receive (Data : out Interfaces.Unsigned_8) is
+      begin
+         while not Status.Data_Available loop
+            null;
+         end loop;
+
+         Data := Interfaces.Unsigned_8'Mod (Periph.DR);
+      end Receive;
+
+      ----------
+      -- Send --
+      ----------
+
+      procedure Send (Data : Interfaces.Unsigned_8) is
+      begin
+         while not Status.Ready_To_Send loop
+            null;
+         end loop;
+
+         Periph.DR := Interfaces.Unsigned_32 (Data);
+      end Send;
+
+      -------------------
+      -- Set_Baud_Rate --
+      -------------------
+
+      procedure Set_Baud_Rate
+        (Rate  : Interfaces.Unsigned_32;
+         Clock : Interfaces.Unsigned_32)
+      is
+         use type Interfaces.Unsigned_32;
+         Divider : constant Interfaces.Unsigned_32 := 25 * Clock / (4 * Rate);
+      begin
+         Periph.CR1.TE := False;  --  Transmitter disable
+         Periph.CR1.RE := False;  --  Receiver disable
+
+         Periph.BRR.DIV_Fraction := (Divider mod 100 * 16 + 50) / 100;
+         Periph.BRR.DIV_Mantissa := Divider / 100;
+
+         Periph.CR1.TE := True;  --  Transmitter enable
+         Periph.CR1.RE := True;  --  Receiver enable
+      end Set_Baud_Rate;
+
+   end Polling_Implementation;
 
    -------------------------
    -- UART_Implementation --

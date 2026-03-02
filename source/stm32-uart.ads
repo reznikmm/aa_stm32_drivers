@@ -1,7 +1,7 @@
---  SPDX-FileCopyrightText: 2025 Max Reznik <reznikmm@gmail.com>
+--  SPDX-FileCopyrightText: 2025-2026 Max Reznik <reznikmm@gmail.com>
 --
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-----------------------------------------------------------------
+---------------------------------------------------------------------
 
 --  Common code for UART STM32.
 --
@@ -22,7 +22,28 @@ private with STM32.DMA;
 
 package STM32.UART is
 
+   type Status is record
+      Parity_Error   : Boolean;
+      Framing_Error  : Boolean;
+      Noise_Detected : Boolean;
+      Overrun        : Boolean;
+      Idle_Line      : Boolean;
+      Data_Available : Boolean;
+      Send_Complete  : Boolean;
+      Ready_To_Send  : Boolean;
+   end record;
+
 private
+   for Status use record
+      Parity_Error   at 0 range 0 .. 0;
+      Framing_Error  at 0 range 1 .. 1;
+      Noise_Detected at 0 range 2 .. 2;
+      Overrun        at 0 range 3 .. 3;
+      Idle_Line      at 0 range 4 .. 4;
+      Data_Available at 0 range 5 .. 5;
+      Send_Complete  at 0 range 6 .. 6;
+      Ready_To_Send  at 0 range 7 .. 7;
+   end record;
 
    subtype GPIO_Function is Interfaces.Unsigned_32 range 7 .. 8;
 
@@ -140,5 +161,51 @@ private
       end Device;
 
    end DMA_Implementation;
+
+   generic
+      Periph : in out STM32.Registers.USART.USART_Peripheral;
+      Fun    : GPIO_Function;
+   package Polling_Implementation is
+      --  Generic polling implementation for UART initializaion and operations
+
+      procedure Configure
+        (TX    : Pin;
+         RX    : Pin;
+         Speed : Interfaces.Unsigned_32;
+         Clock : Interfaces.Unsigned_32);
+
+      procedure Set_Baud_Rate
+        (Rate  : Interfaces.Unsigned_32;
+         Clock : Interfaces.Unsigned_32);
+
+      function Status return STM32.UART.Status with Inline;
+
+      procedure Receive (Data : out Interfaces.Unsigned_8);
+
+      procedure Send (Data : Interfaces.Unsigned_8);
+
+      procedure Put (Data : String);
+
+   private
+
+      function To_Status (Raw : STM32.Registers.USART.SR_Register)
+        return STM32.UART.Status is
+          (Parity_Error   => Raw.PE,
+           Framing_Error  => Raw.FE,
+           Noise_Detected => Raw.NF,
+           Overrun        => Raw.ORE,
+           Idle_Line      => Raw.IDLE,
+           Data_Available => Raw.RXNE,
+           Send_Complete  => Raw.TC,
+           Ready_To_Send  => Raw.TXE);
+
+      pragma Warnings (Off, "volatile actual passed by copy");
+
+      function Status return STM32.UART.Status is
+        (To_Status (Periph.SR));
+
+      pragma Warnings (On, "volatile actual passed by copy");
+
+   end Polling_Implementation;
 
 end STM32.UART;

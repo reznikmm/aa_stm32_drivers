@@ -14,6 +14,9 @@ prioritizing simplicity and efficiency.
 - [Usage](#usage)
   - [GPIO](#gpio)
   - [UART/USART](#uartusart)
+    - [UART Polling](#uart-polling)
+    - [UART Interrupts](#uart-interrupts)
+    - [UART DMA](#uart-dma)
   - [I2C](#i2c)
   - [SPI](#spi)
   - [Timers](#timers)
@@ -29,13 +32,13 @@ prioritizing simplicity and efficiency.
 ## Features
 
 - Simple and efficient peripheral drivers for:
-  - GPIO
-  - UART
-  - I2C
-  - SPI
-  - Timers
+  - GPIO (Polling, Interrupts APIs)
+  - UART (Polling, Interrupts, DMA APIs)
+  - I2C (Interrupts API)
+  - SPI (Interrupts, DMA APIs)
+  - Timers (Interrupts, DMA APIs)
   - MCUs UID
-  - Flash for `stm32f429`
+  - Flash for `stm32f429` (Interrupts API)
   - Flexible static memory controller (FSMC) for `stm32f40x`
 - Support for:
   - STM32F407 (using the `light-tasking-stm32f4` Ada runtime library)
@@ -100,9 +103,39 @@ STM32.GPIO.Clear_Interrupt (Pin => (STM32.PA, 1));
 
 ### UART/USART
 
-The library supports USART 1, 2, 3, 6, and UART 4, 5. To use UART/USART,
-`with` the corresponding package, declare a device object, and configure
-it with TX/RX pins and a baud rate. Define an interrupt priority for
+#### UART Polling
+
+The polling API is the simplest way to use UART/USART. It is ideal for debug
+output (UART print), bootloaders, or simple programs where you do not want to
+deal with callbacks. It is indispensable when you need to send a small number
+of bytes.
+
+There are no device objects or package instantiations. Use the appropriate
+package, for example `STM32.UART.Polling_UART_5`, and call the procedures
+directly. Use `Configure` to set up the peripheral, `Send` to transmit a
+single byte, and `Put` to send a string (sequence of bytes).
+
+Example:
+
+```ada
+with STM32.UART.Polling_UART_5;
+
+procedure Main is
+begin
+  STM32.UART.Polling_UART_5.Configure
+    (TX   => (STM32.PC, 12),
+    RX   => (STM32.PD, 2),
+    Rate => 115_200);
+
+  STM32.UART.Polling_UART_5.Put ("Hello, world!\r\n");
+end Main;
+```
+
+#### UART Interrupts
+
+This variant supports USART 1, 2, 3, 6 and UART 4, 5. To use UART/USART with
+interrupts, `with` the corresponding package, declare a device object, and
+configure it with TX/RX pins and baud rate. Specify an interrupt priority for
 the protected object.
 
 ```ada
@@ -156,6 +189,11 @@ begin
    end loop;
 end Main;
 ```
+
+#### UART DMA
+
+The DMA variant of UART/USART allows efficient transfer of large amounts of
+data with minimal CPU load. The API is analogous to the Interrupts variant.
 
 ### I2C
 
