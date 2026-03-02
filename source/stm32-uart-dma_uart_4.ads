@@ -31,7 +31,7 @@ package STM32.UART.DMA_UART_4 is
    --
    --  Configure UART_4 on given pins and speed (baud rate)
 
-   procedure Set_Speed (Speed : Interfaces.Unsigned_32);
+   procedure Set_Baud_Rate (Rate : Interfaces.Unsigned_32);
    --  Reconfigure UART_4 speed (baud rate)
 
    procedure Start_Reading

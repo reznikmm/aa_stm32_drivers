@@ -1,7 +1,7 @@
---  SPDX-FileCopyrightText: 2025 Max Reznik <reznikmm@gmail.com>
+--  SPDX-FileCopyrightText: 2025-2026 Max Reznik <reznikmm@gmail.com>
 --
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-----------------------------------------------------------------
+---------------------------------------------------------------------
 
 with STM32.Registers.RCC;
 with STM32.System_Clocks;
@@ -24,16 +24,16 @@ package body STM32.UART.UART_4 is
          Clock => STM32.System_Clocks.PCLK1);
    end Configure;
 
-   ---------------
-   -- Set_Speed --
-   ---------------
+   -------------------
+   -- Set_Baud_Rate --
+   -------------------
 
-   procedure Set_Speed (Speed : Interfaces.Unsigned_32) is
+   procedure Set_Baud_Rate (Rate : Interfaces.Unsigned_32) is
    begin
-      Implementation.Device.Set_Speed
-        (Speed,
+      Implementation.Device.Set_Baud_Rate
+        (Rate,
          Clock => STM32.System_Clocks.PCLK1);
-   end Set_Speed;
+   end Set_Baud_Rate;
 
    -------------------
    -- Start_Reading --

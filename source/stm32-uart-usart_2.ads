@@ -28,7 +28,7 @@ package STM32.UART.USART_2 is
    --
    --  Configure USART_2 on given pins and speed
 
-   procedure Set_Speed (Speed : Interfaces.Unsigned_32);
+   procedure Set_Baud_Rate (Rate : Interfaces.Unsigned_32);
    --  Reconfigure USART_2 speed (baud rate)
 
    procedure Start_Reading

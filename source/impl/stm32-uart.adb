@@ -106,10 +106,10 @@ package body STM32.UART is
          end Interrupt_Handler;
 
          ---------------
-         -- Set_Speed --
+         -- Set_Baud_Rate --
          ---------------
 
-         procedure Set_Speed
+         procedure Set_Baud_Rate
            (Speed : Interfaces.Unsigned_32;
             Clock : Interfaces.Unsigned_32)
          is
@@ -117,7 +117,7 @@ package body STM32.UART is
          begin
             Divider := 25 * Clock / (4 * Speed);
             Periph.CR1.TCIE := True;  --  enable transmission complete IRQ
-         end Set_Speed;
+         end Set_Baud_Rate;
 
          -------------------
          -- Start_Reading --
@@ -433,10 +433,10 @@ package body STM32.UART is
          end Interrupt_Handler;
 
          ---------------
-         -- Set_Speed --
+         -- Set_Baud_Rate --
          ---------------
 
-         procedure Set_Speed
+         procedure Set_Baud_Rate
            (Speed : Interfaces.Unsigned_32;
             Clock : Interfaces.Unsigned_32)
          is
@@ -444,7 +444,7 @@ package body STM32.UART is
          begin
             Divider := 25 * Clock / (4 * Speed);
             Periph.CR1.TCIE := True;  --  enable transmission complete IRQ
-         end Set_Speed;
+         end Set_Baud_Rate;
 
          -------------------
          -- Start_Reading --

@@ -79,7 +79,7 @@ private
       protected Device
         with Interrupt_Priority => Priority
       is
-         procedure Set_Speed
+         procedure Set_Baud_Rate
            (Speed : Interfaces.Unsigned_32;
             Clock : Interfaces.Unsigned_32);
 
@@ -136,7 +136,7 @@ private
       protected Device
         with Interrupt_Priority => Priority
       is
-         procedure Set_Speed
+         procedure Set_Baud_Rate
            (Speed : Interfaces.Unsigned_32;
             Clock : Interfaces.Unsigned_32);
 
