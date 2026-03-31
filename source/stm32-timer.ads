@@ -32,6 +32,8 @@ package STM32.Timer is
    type Unsigned_32_Array is array (Positive range <>)
      of Interfaces.Unsigned_32;
 
+   type Capture_Polarity is (Rising_Edge, Falling_Edge, Both_Edges);
+
 private
 
    procedure Init_GPIO (Item : Pin; Fun : Interfaces.Unsigned_32);
@@ -108,5 +110,46 @@ private
       procedure Stop;
 
    end DMA_Implementation;
+
+   generic
+      Periph    : in out STM32.Registers.TIM.TIM_Peripheral;
+      Channel   : Channel_Index;
+      Interrupt : Ada.Interrupts.Interrupt_ID;
+      Priority  : System.Interrupt_Priority;
+   package Capture_Implementation is
+      --  Generic implementation for timer capturing initializaion, operations
+      --  and interrupt handling procedure
+
+      procedure Configure
+        (Pin      : STM32.Pin;
+         Fun      : Interfaces.Unsigned_32;
+         Speed    : Interfaces.Unsigned_32;
+         Period   : Interfaces.Unsigned_32;
+         Polarity : Capture_Polarity;
+         Clock    : Interfaces.Unsigned_32);
+
+      procedure Start (On_Signal : A0B.Callbacks.Callback);
+
+      function Captured_Value return Interfaces.Unsigned_32;
+
+      procedure Stop;
+
+      protected Device
+        with Interrupt_Priority => Priority
+      is
+
+         procedure Set_Callback (On_Signal : A0B.Callbacks.Callback);
+         function Captured_Value return Interfaces.Unsigned_32;
+
+      private
+         procedure Interrupt_Handler;
+
+         pragma Attach_Handler (Interrupt_Handler, Interrupt);
+
+         Value    : Interfaces.Unsigned_32 := 0;
+         Callback : A0B.Callbacks.Callback;
+      end Device;
+
+   end Capture_Implementation;
 
 end STM32.Timer;

@@ -285,4 +285,141 @@ package body STM32.Timer is
 
    end TIM_Implementation;
 
+   package body Capture_Implementation is
+
+      ---------------
+      -- Configure --
+      ---------------
+
+      procedure Configure
+        (Pin      : STM32.Pin;
+         Fun      : Interfaces.Unsigned_32;
+         Speed    : Interfaces.Unsigned_32;
+         Period   : Interfaces.Unsigned_32;
+         Polarity : Capture_Polarity;
+         Clock    : Interfaces.Unsigned_32)
+      is
+         use type Interfaces.Unsigned_32;
+
+         Low  : constant Natural range 0 .. 1 := (Channel - 1) mod 2;
+         High : constant Natural range 0 .. 1 := (Channel - 1) / 2;
+         CCMR : STM32.Registers.TIM.CCMR_x2;
+      begin
+         Init_GPIO (Pin, Fun);
+
+         STM32.Registers.GPIO.GPIO_Periph (Pin.Port).PUPDR (Pin.Pin) :=
+           STM32.Registers.GPIO.Pull_Up;
+
+         Periph.CR1 :=
+           (CEN    => False,  --  Counter enable
+            UDIS   => False,  --  Update event is not generated
+            URS    => False,  --  Any of events generate an update interrupt
+            OPM    => False,  --  One-pulse mode
+            DIR    => False,  --  Counter used as upcounter
+            CMS    => 0,      --  Center-aligned mode selection
+            ARPE   => False,  --  Auto-reload preload disabled
+            CKD    => 0,      --  Clock division
+            others => 0);
+
+         Periph.PSC := Clock / Speed - 1;  --  Prescaler
+         Periph.ARR := Period;             --  Maximum value
+
+         Periph.CCER (Channel).CCxE := False; -- disable the chanel
+
+         CCMR := Periph.CCMR (High);
+
+         CCMR.CCMR_Input (Low) :=
+           STM32.Registers.TIM.CCMR_Input'
+             (CCxS   => 1,  --  input, mapped on TI1
+              ICxPCS => 0,  --  no prescaler
+              ICxF   => 1); --  Filter 1 tick
+
+         Periph.CCMR (High) := CCMR;
+
+         case Polarity is
+            when Rising_Edge =>
+               Periph.CCER (Channel).CCxNP := 0;
+               Periph.CCER (Channel).CCxP  := 0;
+
+            when Falling_Edge =>
+               Periph.CCER (Channel).CCxNP := 0;
+               Periph.CCER (Channel).CCxP  := 1;
+
+            when Both_Edges =>
+               Periph.CCER (Channel).CCxNP := 1;
+               Periph.CCER (Channel).CCxP  := 1;
+         end case;
+
+         Periph.DIER.CCxIE (Channel) := True; -- enable chanel interrupt
+         Periph.CCER (Channel).CCxE  := True; -- enable the chanel
+      end Configure;
+
+      -----------
+      -- Start --
+      -----------
+
+      procedure Start (On_Signal : A0B.Callbacks.Callback) is
+      begin
+         Device.Set_Callback (On_Signal);
+         Periph.CR1.CEN := True;
+      end Start;
+
+      ----------
+      -- Stop --
+      ----------
+
+      procedure Stop is
+      begin
+         Periph.CR1.CEN := False;
+      end Stop;
+
+      --------------------
+      -- Captured_Value --
+      --------------------
+
+      function Captured_Value return Interfaces.Unsigned_32 is
+      begin
+         return Device.Captured_Value;
+      end Captured_Value;
+
+      ------------
+      -- Device --
+      ------------
+
+      protected body Device is
+
+         ------------------
+         -- Set_Callback --
+         ------------------
+
+         procedure Set_Callback (On_Signal : A0B.Callbacks.Callback) is
+         begin
+            Callback := On_Signal;
+         end Set_Callback;
+
+         --------------------
+         -- Captured_Value --
+         --------------------
+
+         function Captured_Value return Interfaces.Unsigned_32 is
+         begin
+            return Value;
+         end Captured_Value;
+
+         -----------------------
+         -- Interrupt_Handler --
+         -----------------------
+
+         procedure Interrupt_Handler is
+         begin
+            if Periph.SR.CCxIF (Channel) then
+               Value := Periph.CCR (Channel);
+               A0B.Callbacks.Emit (Callback);
+            end if;
+         end Interrupt_Handler;
+
+      end Device;
+
+   end Capture_Implementation;
+
 end STM32.Timer;
