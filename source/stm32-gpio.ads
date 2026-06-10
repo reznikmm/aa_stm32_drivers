@@ -7,9 +7,10 @@ package STM32.GPIO is
    pragma Preelaborate;
 
    procedure Configure_Output
-     (Pin       : STM32.Pin;
-      Pull_Up   : Boolean := False;
-      Pull_Down : Boolean := False)
+     (Pin        : STM32.Pin;
+      Pull_Up    : Boolean := False;
+      Pull_Down  : Boolean := False;
+      Open_Drain : Boolean := False)
         with Pre => not (Pull_Up and Pull_Down);
    --  Switch pin to output
 

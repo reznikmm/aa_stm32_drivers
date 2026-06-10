@@ -44,6 +44,22 @@ private
          Speed : Interfaces.Unsigned_32)
            with Pre => Speed in 100_001 .. 400_000;
 
+      function Is_Bus_Busy return Boolean;
+      --  Check if a communication is in progress on the bus.
+
+      procedure Recover_Bus
+        (SCL   : Pin;
+         SDA   : Pin;
+         Speed : Interfaces.Unsigned_32)
+           with Pre => Speed in 100_001 .. 400_000;
+      --  This procedure:
+      --  * resets I2C peripheral then
+      --  * tries to recover the bus by toggling SCL keeping SDA low for 8
+      --    cycles to make slave accept NACK and release the bus then
+      --  * enables the peripheral back.
+      --
+      --  This procedure takes 9.5 cycles at the given speed.
+
       protected Device
         with Interrupt_Priority => Priority
       is
@@ -75,6 +91,10 @@ private
          Slave  : Interfaces.Unsigned_8;  --  Slave + Dir bit
          Error  : Boolean;
       end Device;
+
+   private
+
+      function Is_Bus_Busy return Boolean is (Periph.SR2.BUSY);
 
    end I2C_Implementation;
 

@@ -153,7 +153,7 @@ end Main;
 ```
 
 Use `Start_Reading` to initiate reading and `Start_Writing` for writing.
-The library leverages the 
+The library leverages the
 [`A0B.Callbacks` crate](https://github.com/godunko/a0b-callbacks)
 for callbacks.
 
@@ -200,11 +200,19 @@ data with minimal CPU load. The API is analogous to the Interrupts variant.
 
 Configure an I2C device by providing SDA, SCL pins, and the speed:
 
+The driver is interrupt-driven. The interrupt handler must respond before the
+I2C hardware shifts out the next byte — in particular, it must assert NACK in
+time at the end of a read transaction. If a higher-priority interrupt preempts
+the I2C handler and causes it to miss that window, the transfer will
+malfunction. It is therefore **strongly recommended to assign the highest
+available interrupt priority** to the I2C device:
+
 ```ada
 with STM32.I2C.I2C_1;
 
 procedure Main is
-   package I2C_1 is new STM32.I2C.I2C_1 (Priority => 241);
+   package I2C_1 is new STM32.I2C.I2C_1 (Priority => 255);
+   --  Use the highest interrupt priority to ensure timely NACK handling.
 begin
    I2C_1.Configure
      (SDA => (STM32.PB, 7),
@@ -227,6 +235,37 @@ I2C_1.Start_Data_Exchange
 
 The callback is called when the transfer is complete.
 
+If the bus is locked (e.g. a slave is holding SDA or SCL low forever),
+the callback will never fire. Detecting and handling this situation -
+for example by checking `Is_Bus_Busy` before starting a transfer and
+enforcing a deadline with a watchdog or timeout — is the responsibility
+of the caller.
+
+#### Bus recovery
+
+A slave can lock up the I2C bus by holding SDA low after an interrupted
+transaction (power glitch, MCU reset mid-transfer, etc.). In that state
+`Is_Bus_Busy` returns `True` and no new transfer can start.
+
+Call `Recover_Bus` to recover. It performs next steps:
+
+1. The I2C peripheral is reset.
+2. The driver bit-bangs up to 9 SCL pulses (with SDA low) until the slave
+   accepts the implicit NACK and releases the bus.
+3. The peripheral is re-enabled.
+
+```ada
+if I2C_1.Is_Bus_Busy then
+   I2C_1.Recover_Bus
+     (SCL   => (STM32.PB, 8),
+      SDA   => (STM32.PB, 7),
+      Speed => 400_000);
+end if;
+```
+
+The procedure takes approximately 9.5 clock cycles at the requested speed.
+After it returns, check `Is_Bus_Busy` again and resume normal operation.
+
 ### SPI
 
 Configure an SPI device by specifying SCK, MISO, MOSI pins, and the speed:
@@ -239,7 +278,7 @@ SPI_1.Configure
    Speed => 2_800_000);  --  2.8 MHz
 ```
 
-Several SPI devices can be connected to the same SPI bus. 
+Several SPI devices can be connected to the same SPI bus.
 A specific device is activated by a dedicated pin usually called `CS` (Chip Select).
 SPI transfers are bidirectional. The user provides data to write in the buffer.
 When the transfer is complete the buffer is filled with read data.

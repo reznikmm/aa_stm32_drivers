@@ -7,6 +7,7 @@ with STM32.System_Clocks;
 with STM32.Registers.GPIO;
 
 with STM32.GPIO;
+with Ada.Real_Time;
 
 package body STM32.I2C is
 
@@ -72,7 +73,8 @@ package body STM32.I2C is
          Init_GPIO (SDA);
 
          Periph.CR1 :=
-           (Reserved_2_2   => 0,
+           (PE             => False,
+            Reserved_2_2   => 0,
             Reserved_14_14 => 0,
             Reserved_16_31 => 0,
             others         => False);
@@ -242,12 +244,101 @@ package body STM32.I2C is
             Device.Error  := False;
 
             Periph.CR1 :=
-              (PE     => True,
-               START  => True,
-               others => <>);
+              (PE             => True,
+               START          => True,
+               Reserved_2_2   => 0,
+               Reserved_14_14 => 0,
+               Reserved_16_31 => 0,
+               others         => False);
          end Start_Data_Exchange;
 
       end Device;
+
+      ---------------
+      -- Reset_Bus --
+      ---------------
+
+      procedure Recover_Bus
+        (SCL   : Pin;
+         SDA   : Pin;
+         Speed : Interfaces.Unsigned_32)
+      is
+         Half_Period : constant Ada.Real_Time.Time_Span :=
+           Ada.Real_Time.Nanoseconds (1E9 / 2 / Integer (Speed));
+
+         procedure Spin (Time : Ada.Real_Time.Time_Span);
+         --  Make CPU busy for given time
+
+         ----------
+         -- Spin --
+         ----------
+
+         procedure Spin (Time : Ada.Real_Time.Time_Span) is
+            use type Ada.Real_Time.Time;
+            Limit : constant Ada.Real_Time.Time := Ada.Real_Time.Clock + Time;
+         begin
+            while Ada.Real_Time.Clock < Limit loop
+               null;
+            end loop;
+         end Spin;
+
+         CR2   : constant STM32.Registers.I2C.CR2_Register   := Periph.CR2;
+         CCR   : constant STM32.Registers.I2C.CCR_Register   := Periph.CCR;
+         TRISE : constant STM32.Registers.I2C.TRISE_Register := Periph.TRISE;
+      begin
+         Periph.CR1 :=
+           (PE             => False,
+            SWRST          => True,
+            Reserved_2_2   => 0,
+            Reserved_14_14 => 0,
+            Reserved_16_31 => 0,
+            others         => False);
+
+         STM32.GPIO.Configure_Output (SDA, Open_Drain => True);
+         STM32.GPIO.Configure_Output (SCL, Open_Drain => True);
+         --  Switch SDA/SCL to GPIO mode to reser I2C bus by bit shaking
+
+         STM32.GPIO.Set_Output (SDA, 0);  --  emulate NACK
+
+         --  Now make SCL pulses: 7 data bits + NACK + STOP
+         --  SCL: `__^^__^^ ... __^^__^^__^^^^`
+         --  SDA: `_________________________^^`
+         --  Bit  `  01  02 ...   07  NA  STOP`
+         for Bit in 1 .. 9 loop
+            STM32.GPIO.Set_Output (SCL, 0);
+            Spin (Half_Period);
+            STM32.GPIO.Set_Output (SCL, 1);
+            Spin (Half_Period);
+         end loop;
+
+         STM32.GPIO.Set_Output (SDA, 1);
+         Spin (Half_Period);
+
+         Init_GPIO (SCL);
+         Init_GPIO (SDA);
+         --  Switch pins back to I2C function
+
+         Periph.CR1 :=
+           (SWRST          => False,
+            Reserved_2_2   => 0,
+            Reserved_14_14 => 0,
+            Reserved_16_31 => 0,
+            others         => False);
+         --  Finish I2C reset
+
+         Periph.CR2 := CR2;
+         Periph.CCR := CCR;
+         Periph.TRISE := TRISE;
+         --  Restore clock values
+
+         Periph.CR1 :=
+           (PE             => True,
+            Reserved_2_2   => 0,
+            Reserved_14_14 => 0,
+            Reserved_16_31 => 0,
+            others         => False);
+         --  Enable I2C
+      end Recover_Bus;
 
    end I2C_Implementation;
 

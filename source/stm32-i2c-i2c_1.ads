@@ -28,14 +28,32 @@ package STM32.I2C.I2C_1 is
    --
    --  (Re-)configure I2C_1 on given pins and speed
 
+   function Is_Bus_Busy return Boolean;
+   --  Check if a communication is in progress on the bus.
+
    procedure Start_Data_Exchange
      (Slave  : I2C_Slave_Address;
       Buffer : System.Address;
       Write  : Natural;
       Read   : Natural;
       Done   : A0B.Callbacks.Callback);
+   --  Start a write and/or read operation when the bus is free.
 
    function Has_Error return Boolean;
+   --  Check if the last operation resulted in an error.
+
+   procedure Recover_Bus
+     (SCL   : Pin;
+      SDA   : Pin;
+      Speed : Interfaces.Unsigned_32)
+        with Pre => Speed in 100_001 .. 400_000;
+   --  This procedure:
+   --  * resets I2C peripheral then
+   --  * tries to recover the bus by toggling SCL keeping SDA low for 8
+   --    cycles to make slave accept NACK and release the bus then
+   --  * enables the peripheral back.
+   --
+   --  This procedure takes 9.5 cycles at the given speed.
 
 private
 
@@ -46,5 +64,12 @@ private
       Priority        => Priority);
 
    function Has_Error return Boolean is (Implementation.Device.Has_Error);
+
+   function Is_Bus_Busy return Boolean is (Implementation.Is_Bus_Busy);
+
+   procedure Recover_Bus
+     (SCL   : Pin;
+      SDA   : Pin;
+      Speed : Interfaces.Unsigned_32) renames Implementation.Recover_Bus;
 
 end STM32.I2C.I2C_1;
