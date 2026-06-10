@@ -87,9 +87,10 @@ package body STM32.GPIO is
    ----------------------
 
    procedure Configure_Output
-     (Pin       : STM32.Pin;
-      Pull_Up   : Boolean := False;
-      Pull_Down : Boolean := False)
+     (Pin        : STM32.Pin;
+      Pull_Up    : Boolean := False;
+      Pull_Down  : Boolean := False;
+      Open_Drain : Boolean := False)
    is
 
       procedure Configure_Output
@@ -110,7 +111,7 @@ package body STM32.GPIO is
             elsif Pull_Down then STM32.Registers.GPIO.Pull_Down
             else STM32.Registers.GPIO.No_Pull);
          GPIO.OSPEEDR (Pin) := STM32.Registers.GPIO.Speed_50MHz;
-         GPIO.OTYPER  (Pin) := STM32.Registers.GPIO.Push_Pull;
+         GPIO.OTYPER  (Pin) := Open_Drain;
       end Configure_Output;
 
    begin
