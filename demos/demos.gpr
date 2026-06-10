@@ -1,4 +1,4 @@
---  SPDX-FileCopyrightText: 2025 Max Reznik <reznikmm@gmail.com>
+--  SPDX-FileCopyrightText: 2026 Max Reznik <reznikmm@gmail.com>
 --
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ----------------------------------------------------------------
@@ -11,12 +11,13 @@ project Demos is
    for Runtime ("Ada") use "light-tasking-" & BOARD;
    for Target use "arm-eabi";
 
-   for Source_Dirs use ("spi", "tim", "uart", "rtc");
+   for Source_Dirs use ("spi", "tim", "uart", "rtc", "i2c");
    for Object_Dir use "obj/" & Demos_Config.Build_Profile;
    for Create_Missing_Dirs use "True";
    for Exec_Dir use "bin";
    for Main use
-     ("uart.adb", "uart_dma.adb", "spi_dma.adb", "tim_dma.adb", "rtc_main.adb");
+     ("uart.adb", "uart_dma.adb", "spi_dma.adb", "tim_dma.adb", "rtc_main.adb",
+      "i2c.adb");
 
    package Compiler is
       for Default_Switches ("Ada") use Demos_Config.Ada_Compiler_Switches;
@@ -39,7 +40,10 @@ project Demos is
    package Ide is
       for Program_Host use "localhost:4242";
       for Communication_Protocol use "remote";
-      for Connection_Tool use "st-util";
+      --  for Connection_Tool use "st-util";
+      for Connection_Tool use "openocd";
+      for Connection_Config_Files use
+        ("interface/stlink.cfg", "target/stm32f4x.cfg");
    end Ide;
 
 end Demos;

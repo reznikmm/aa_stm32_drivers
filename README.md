@@ -25,6 +25,7 @@ prioritizing simplicity and efficiency.
   - [Flash](#flash)
   - [FSMC (Flexible static memory controller)](#flexible-static-memory-controller-fsmc)
   - [RNG (Random Number Generator)](#rng)
+- [Demos](#demos)
 - [Maintainer](#maintainer)
 - [Contribute](#contribute)
 - [License](#license)
@@ -475,6 +476,25 @@ begin
    -- Process Buffer here
 end Main;
 ```
+
+## Demos
+
+The repository includes a demo project in `demos/` for STM32F4 targets.
+
+Build all demos:
+
+```shell
+alr -C demos build
+```
+
+Available demos:
+
+- `uart/uart.adb`: UART polling send/receive example
+- `uart/uart_dma.adb`: UART transfer using DMA
+- `spi/spi_dma.adb`: SPI transfer using DMA
+- `tim/tim_dma.adb`: Timer PWM generation with DMA updates
+- `rtc/rtc_main.adb`: RTC clock/calendar example
+- `i2c/i2c.adb`: I2C bus scanner over addresses `0x08 .. 0x77` with UART output
 
 ## Maintainer
 

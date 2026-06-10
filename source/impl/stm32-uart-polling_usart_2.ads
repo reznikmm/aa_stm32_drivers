@@ -35,7 +35,7 @@ package STM32.UART.Polling_USART_2 is
    --  Wait while is TX register is empty and push Data to it
 
    procedure Put (Data : String);
-   --  Send eah character of Data using Send procedure
+   --  Send each character of Data using Send procedure
 
 private
 
