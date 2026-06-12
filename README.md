@@ -6,8 +6,23 @@ A lightweight, generic-based driver library for STM32 microcontrollers.
 This library provides low-level drivers for common peripherals while
 prioritizing simplicity and efficiency.
 
+## Driver Support Matrix
+
+| Driver| Polling | IRQ | DMA |
+| ----- | ------- | --- | --- |
+| GPIO  |   Y     |  Y  |     |
+| UART  |   Y     |  Y  |  Y  |
+| I2C   |   -     |  Y  |  Y  |
+| SPI   |   -     |  Y  |  Y  |
+| TIM   |   -     |  Y  |  Y  |
+| RNG   |   Y     |  Y  |     |
+| Flash |   -     |  Y  |     |
+| UID   |   Y     |     |     |
+| FSMC  |         |     |     |
+
 ## Table of Contents
 
+- [Driver Support Matrix](#driver-support-matrix)
 - [Features](#features)
 - [Design Philosophy](#design-philosophy)
 - [Installation](#installation)
@@ -18,6 +33,8 @@ prioritizing simplicity and efficiency.
     - [UART Interrupts](#uart-interrupts)
     - [UART DMA](#uart-dma)
   - [I2C](#i2c)
+    - [I2C Interrupts](#i2c-interrupts)
+    - [I2C DMA](#i2c-dma)
   - [SPI](#spi)
   - [Timers](#timers)
   - [Timers with DMA](#timers-with-dma)
@@ -35,7 +52,7 @@ prioritizing simplicity and efficiency.
 - Simple and efficient peripheral drivers for:
   - GPIO (Polling, Interrupts APIs)
   - UART (Polling, Interrupts, DMA APIs)
-  - I2C (Interrupts API)
+  - I2C (Interrupts, DMA APIs)
   - SPI (Interrupts, DMA APIs)
   - Timers (Interrupts, DMA APIs)
   - MCUs UID
@@ -198,6 +215,13 @@ data with minimal CPU load. The API is analogous to the Interrupts variant.
 
 ### I2C
 
+The I2C driver provides two variants with the same high-level API:
+
+- Interrupt-driven: `STM32.I2C.I2C_1`
+- DMA-assisted: `STM32.I2C.DMA_I2C_1`
+
+#### I2C Interrupts
+
 Configure an I2C device by providing SDA, SCL pins, and the speed:
 
 The driver is interrupt-driven. The interrupt handler must respond before the
@@ -241,6 +265,30 @@ for example by checking `Is_Bus_Busy` before starting a transfer and
 enforcing a deadline with a watchdog or timeout — is the responsibility
 of the caller.
 
+#### I2C DMA
+
+The DMA variant is useful for larger transfers and reduces CPU load during
+data movement. Instantiate `STM32.I2C.DMA_I2C_1`, configure the pins and bus
+speed, then use `Start_Data_Exchange` in the same way as the interrupt-driven
+variant.
+
+```ada
+with STM32.I2C.DMA_I2C_1;
+
+procedure Main is
+  package I2C_1 is new STM32.I2C.DMA_I2C_1 (Priority => 241);
+begin
+  I2C_1.Configure
+   (SDA   => (STM32.PB, 7),
+    SCL   => (STM32.PB, 8),
+    Speed => 400_000);
+end Main;
+```
+
+Transfer completion is reported through the callback passed to
+`Start_Data_Exchange`. Use `Has_Error` after completion to check whether the
+last transfer failed.
+
 #### Bus recovery
 
 A slave can lock up the I2C bus by holding SDA low after an interrupted
@@ -267,6 +315,11 @@ The procedure takes approximately 9.5 clock cycles at the requested speed.
 After it returns, check `Is_Bus_Busy` again and resume normal operation.
 
 ### SPI
+
+The SPI driver provides two variants with the same API shape:
+
+- Interrupt-driven: `STM32.SPI.SPI_1`, `STM32.SPI.SPI_2`, `STM32.SPI.SPI_3`
+- DMA-assisted: `STM32.SPI.DMA_SPI_1`, `STM32.SPI.DMA_SPI_2`, `STM32.SPI.DMA_SPI_3`
 
 Configure an SPI device by specifying SCK, MISO, MOSI pins, and the speed:
 
