@@ -1,7 +1,7 @@
---  SPDX-FileCopyrightText: 2025 Max Reznik <reznikmm@gmail.com>
+--  SPDX-FileCopyrightText: 2025-2026 Max Reznik <reznikmm@gmail.com>
 --
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-----------------------------------------------------------------
+---------------------------------------------------------------------
 
 with A0B.Callbacks;
 with Ada.Synchronous_Task_Control;
@@ -9,7 +9,7 @@ with Devices;
 with STM32;
 with Suspension_Object_Callbacks;
 
-procedure UART is
+procedure UART_IRQ is
    package USART_1 renames Devices.USART_1;
    Buffer  : String := "Hello, World!";
    Signal  : aliased Ada.Synchronous_Task_Control.Suspension_Object;
@@ -28,4 +28,4 @@ begin
 
       --  Write complete!
    end loop;
-end UART;
+end UART_IRQ;
