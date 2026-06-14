@@ -13,7 +13,7 @@ prioritizing simplicity and efficiency.
 | GPIO  |   Y     |  Y  |     |
 | UART  |   Y     |  Y  |  Y  |
 | I2C   |   -     |  Y  |  Y  |
-| SPI   |   -     |  Y  |  Y  |
+| SPI   |   Y     |  Y  |  Y  |
 | TIM   |   -     |  Y  |  Y  |
 | RNG   |   Y     |  Y  |     |
 | Flash |   -     |  Y  |     |
@@ -36,6 +36,8 @@ prioritizing simplicity and efficiency.
     - [I2C Interrupts](#i2c-interrupts)
     - [I2C DMA](#i2c-dma)
   - [SPI](#spi)
+    - [SPI Polling](#spi-polling)
+    - [SPI Interrupts and DMA](#spi-interrupts-and-dma)
   - [Timers](#timers)
   - [Timers with DMA](#timers-with-dma)
   - [UID](#uid)
@@ -53,7 +55,7 @@ prioritizing simplicity and efficiency.
   - GPIO (Polling, Interrupts APIs)
   - UART (Polling, Interrupts, DMA APIs)
   - I2C (Interrupts, DMA APIs)
-  - SPI (Interrupts, DMA APIs)
+  - SPI (Polling, Interrupts, DMA APIs)
   - Timers (Interrupts, DMA APIs)
   - MCUs UID
   - Flash for `stm32f429` (Interrupts API)
@@ -316,10 +318,53 @@ After it returns, check `Is_Bus_Busy` again and resume normal operation.
 
 ### SPI
 
-The SPI driver provides two variants with the same API shape:
+The SPI driver provides three variants:
 
-- Interrupt-driven: `STM32.SPI.SPI_1`, `STM32.SPI.SPI_2`, `STM32.SPI.SPI_3`
-- DMA-assisted: `STM32.SPI.DMA_SPI_1`, `STM32.SPI.DMA_SPI_2`, `STM32.SPI.DMA_SPI_3`
+- Polling: `STM32.Polling.SPI_1` .. `SPI_5`
+- Interrupt-driven: `STM32.SPI.SPI_1` .. `SPI_5`
+- DMA-assisted: `STM32.SPI.DMA_SPI_1` .. `DMA_SPI_5`
+
+#### SPI Polling
+
+The polling API is the simplest way to talk to SPI_1 when transfers are
+short and callbacks are not needed. Use `Configure` once, then `Send` and
+`Receive` to exchange bytes synchronously.
+
+`Receive` returns the byte that the slave shifted out during the previous
+clocked transfer initiated by the master with `Send`. To receive the next
+byte from the slave, the master must generate more SPI clocks by calling
+`Send` again (usually with a dummy byte such as `16#00#`).
+
+So if you need to send one request byte and read one response byte, do two
+`Send` + `Receive` steps: first for the request phase, second for the
+response phase.
+
+```ada
+with Interfaces;
+with STM32.Polling.SPI_1;
+
+procedure Main is
+   package SPI renames STM32.Polling.SPI_1;
+   Value : Interfaces.Unsigned_8;
+begin
+   SPI.Configure
+     (SCK   => (STM32.PB, 3),
+      MISO  => (STM32.PB, 4),
+      MOSI  => (STM32.PB, 5),
+      Speed => 3_000_000,
+      Mode  => 3);
+
+   --  Send request byte and read the simultaneously shifted byte
+   SPI.Send (16#9F#);
+   SPI.Receive (Value);
+
+   --  Clock out one more byte to receive the response byte
+   SPI.Send (16#00#);
+   SPI.Receive (Value);
+end Main;
+```
+
+#### SPI Interrupts and DMA
 
 Configure an SPI device by specifying SCK, MISO, MOSI pins, and the speed:
 
@@ -328,7 +373,8 @@ SPI_1.Configure
   (SCK   => (STM32.PB, 3),
    MISO  => (STM32.PB, 4),
    MOSI  => (STM32.PB, 5),
-   Speed => 2_800_000);  --  2.8 MHz
+   Speed => 2_800_000,  --  2.8 MHz
+   Mode  => 0);
 ```
 
 Several SPI devices can be connected to the same SPI bus.
@@ -342,8 +388,8 @@ Initiate transfers using `Start_Data_Exchange`:
 SPI_1.Start_Data_Exchange
   (CS       => (STM32.PB, 6),
    Buffer   => Buffer'Address,
-   Size     => Buffer'Length,
-   Callback => Done);
+   Length   => Buffer'Length,
+   Done     => Done);
 ```
 
 The callback is called when the transfer is complete.
@@ -583,6 +629,7 @@ Available demos:
 
 - `uart/uart.adb`: UART polling send/receive example
 - `uart/uart_dma.adb`: UART transfer using DMA
+- `spi/spi_polling.adb`: SPI transfer using polling
 - `spi/spi_dma.adb`: SPI transfer using DMA
 - `tim/tim_dma.adb`: Timer PWM generation with DMA updates
 - `rtc/rtc_main.adb`: RTC clock/calendar example

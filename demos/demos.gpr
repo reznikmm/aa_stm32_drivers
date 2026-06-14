@@ -17,7 +17,8 @@ project Demos is
    for Exec_Dir use "bin";
    for Main use
      ("uart_irq.adb", "uart_dma.adb", "uart_polling.adb",
-      "spi_dma.adb", "tim_dma.adb", "rtc_main.adb",
+      "spi_dma.adb", "spi_polling.adb",
+      "tim_dma.adb", "rtc_main.adb",
       "i2c.adb");
 
    package Compiler is

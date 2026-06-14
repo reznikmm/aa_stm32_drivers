@@ -280,6 +280,65 @@ package body STM32.SPI is
 
    end DMA_Implementation;
 
+   ----------------------------
+   -- Polling_Implementation --
+   ----------------------------
+
+   package body Polling_Implementation is
+
+      ---------------
+      -- Configure --
+      ---------------
+
+      procedure Configure
+        (SCK   : Pin;
+         MISO  : Pin;
+         MOSI  : Pin;
+         Speed : Interfaces.Unsigned_32;
+         Mode  : SPI_Mode;
+         Clock : Interfaces.Unsigned_32) is
+      begin
+         Configure
+           (Periph,
+            AF    => AF,
+            SCK   => SCK,
+            MISO  => MISO,
+            MOSI  => MOSI,
+            Speed => Speed,
+            Mode  => Mode,
+            Clock => Clock);
+      end Configure;
+
+      -------------
+      -- Receive --
+      -------------
+
+      procedure Receive (Data : out Interfaces.Unsigned_8) is
+      begin
+         while not Status.Data_Available loop
+            null;
+         end loop;
+
+         Data := Interfaces.Unsigned_8'Mod (Periph.DR.DR);
+      end Receive;
+
+      ----------
+      -- Send --
+      ----------
+
+      procedure Send (Data : Interfaces.Unsigned_8) is
+      begin
+         while not Status.Ready_To_Send loop
+            null;
+         end loop;
+
+         Periph.DR :=
+           (DR             => Interfaces.Unsigned_32 (Data),
+            Reserved_16_31 => 0);
+      end Send;
+
+   end Polling_Implementation;
+
    ------------------------
    -- SPI_Implementation --
    ------------------------

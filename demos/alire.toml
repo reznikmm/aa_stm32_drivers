@@ -9,7 +9,13 @@ licenses = "Apache-2.0 WITH LLVM-exception"
 website = ""
 tags = []
 
-executables = ["demos"]
+executables = []
+
+[build-switches]
+development.optimization = ["-O0"]
+development.style_checks = ["-gnaty"]
+development.contracts = "Yes"
+"*".debug_info = "Yes"
 
 [configuration]
 generate_ada = false

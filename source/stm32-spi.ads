@@ -36,6 +36,14 @@ package STM32.SPI is
    --  |    2 |    1 |    0 |  rising SCLK or CS | falling SCLK |
    --  |    3 |    1 |    1 | falling SCLK       |  rising SCLK |
 
+   type Status is record
+      Data_Available : Boolean;
+      Ready_To_Send  : Boolean;
+      Underrun       : Boolean;
+      Overrun        : Boolean;
+      Busy           : Boolean;
+   end record;
+
 private
 
    subtype SPI_AF is Interfaces.Unsigned_32 range 5 .. 6;
@@ -134,5 +142,45 @@ private
       end Device;
 
    end DMA_Implementation;
+
+   generic
+      Periph : in out STM32.Registers.SPI.SPI_Peripheral;
+      AF     : SPI_AF;
+   package Polling_Implementation is
+
+      procedure Configure
+        (SCK   : Pin;
+         MISO  : Pin;
+         MOSI  : Pin;
+         Speed : Interfaces.Unsigned_32;
+         Mode  : SPI_Mode;
+         Clock : Interfaces.Unsigned_32);
+
+      function Status return STM32.SPI.Status with Inline;
+      --  Return current receiver/transmitter status
+
+      procedure Receive (Data : out Interfaces.Unsigned_8);
+      --  Wait for RX data and read it into Data
+
+      procedure Send (Data : Interfaces.Unsigned_8);
+      --  Wait while is TX register is empty and push Data to it
+
+   private
+
+      function Status
+        (SR : STM32.Registers.SPI.SR_Register) return STM32.SPI.Status is
+          (Data_Available => SR.RXNE,
+           Ready_To_Send  => SR.TXE,
+           Underrun       => SR.UDR,
+           Overrun        => SR.OVR,
+           Busy           => SR.BSY);
+
+      pragma Warnings (Off, "volatile actual passed by copy");
+
+      function Status return STM32.SPI.Status is (Status (Periph.SR));
+
+      pragma Warnings (On, "volatile actual passed by copy");
+
+   end Polling_Implementation;
 
 end STM32.SPI;
