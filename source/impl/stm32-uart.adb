@@ -253,21 +253,6 @@ package body STM32.UART is
          Configure (TX, RX, Speed, Clock, Periph, Fun);
       end Configure;
 
-      ---------------
-      -- Configure --
-      ---------------
-
-      procedure Configure
-        (TX    : Pin;
-         RX    : Pin;
-         CK    : Pin;
-         Speed : Interfaces.Unsigned_32;
-         Clock : Interfaces.Unsigned_32) is
-      begin
-         Init_GPIO (CK, Fun);
-         Configure (TX, RX, Speed, Clock, Periph, Fun);
-      end Configure;
-
    end DMA_Implementation;
 
    ---------------
@@ -413,7 +398,8 @@ package body STM32.UART is
          Speed : Interfaces.Unsigned_32;
          Clock : Interfaces.Unsigned_32) is
       begin
-         Configure (TX, RX, CK, Speed, Clock, Periph, Fun);
+         Init_GPIO (CK, Fun);
+         Configure (TX, RX, Speed, Clock, Periph, Fun);
       end Configure;
 
       ------------
@@ -515,15 +501,6 @@ package body STM32.UART is
             Periph.CR2.STOP := Stop_Bits'Enum_Rep (Value);
          end Set_Stop_Bits;
 
-         ---------------------
-         -- Set_Word_Length --
-         ---------------------
-
-         procedure Set_Word_Length (Value : Word_Length) is
-         begin
-            Periph.CR1.M := Value = 9;
-         end Set_Word_Length;
-
          ----------------
          -- Set_Parity --
          ----------------
@@ -532,6 +509,7 @@ package body STM32.UART is
          begin
             Periph.CR1.PS  := Value = Odd;
             Periph.CR1.PCE := Value /= None;
+            Periph.CR1.M   := Value /= None;
          end Set_Parity;
 
          -----------------

@@ -61,15 +61,6 @@ package body STM32.UART.USART_2 is
       Implementation.Device.Set_Stop_Bits (Value);
    end Set_Stop_Bits;
 
-   ---------------------
-   -- Set_Word_Length --
-   ---------------------
-
-   procedure Set_Word_Length (Value : Word_Length) is
-   begin
-      Implementation.Device.Set_Word_Length (Value);
-   end Set_Word_Length;
-
    ----------------
    -- Set_Parity --
    ----------------

@@ -39,8 +39,6 @@ package STM32.UART is
    --  Note: The 0.5 Stop bit and 1.5 Stop bit are not available for
    --        UART4 & UART5.
 
-   type Word_Length is range 8 .. 9;
-
    type Parity is (None, Even, Odd);
 
 private
@@ -108,9 +106,9 @@ private
 
          procedure Set_Stop_Bits (Value : Stop_Bits);
 
-         procedure Set_Word_Length (Value : Word_Length);
-
          procedure Set_Parity (Value : Parity);
+         --  Also set M bit if Parity /= None to have 8bit data.
+         --  See RM0090 Table 147.
 
          procedure Set_Enabled (Value : Boolean);
 

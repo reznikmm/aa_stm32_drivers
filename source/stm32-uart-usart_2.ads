@@ -46,14 +46,11 @@ package STM32.UART.USART_2 is
    procedure Set_Stop_Bits (Value : Stop_Bits);
    --  Reconfigure STOP bits
 
-   procedure Set_Word_Length (Value : Word_Length)
+   procedure Set_Parity (Value : Parity)
      with Pre => not Is_Busy;
-   --  Reconfigure word length
-   --  Note: This must not be modified during a data transfer
-   --        (both transmission and reception)
-
-   procedure Set_Parity (Value : Parity);
    --  Reconfigure hardware parity control
+   --  Also set M bit if Parity /= None to have 8bit data.
+   --  See RM0090 Table 147.
 
    procedure Enable;
    --  Enable UART
