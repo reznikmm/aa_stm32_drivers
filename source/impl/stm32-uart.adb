@@ -19,6 +19,16 @@ package body STM32.UART is
       Fun    : GPIO_Function)
      with Inline;
 
+   procedure Configure
+     (TX     : Pin;
+      RX     : Pin;
+      CK     : Pin;
+      Speed  : Interfaces.Unsigned_32;
+      Clock  : Interfaces.Unsigned_32;
+      Periph : in out STM32.Registers.USART.USART_Peripheral;
+      Fun    : GPIO_Function)
+     with Inline;
+
    ---------------
    -- Configure --
    ---------------
@@ -66,6 +76,27 @@ package body STM32.UART is
          Reserved => 0,
          OVER8    => False);
    end Configure;
+
+   ---------------
+   -- Configure --
+   ---------------
+
+   procedure Configure
+     (TX     : Pin;
+      RX     : Pin;
+      CK     : Pin;
+      Speed  : Interfaces.Unsigned_32;
+      Clock  : Interfaces.Unsigned_32;
+      Periph : in out STM32.Registers.USART.USART_Peripheral;
+      Fun    : GPIO_Function) is
+   begin
+      Init_GPIO (CK, Fun);
+      Configure (TX, RX, Speed, Clock, Periph, Fun);
+   end Configure;
+
+   ------------------------
+   -- DMA_Implementation --
+   ------------------------
 
    package body DMA_Implementation is
 
@@ -222,6 +253,21 @@ package body STM32.UART is
          Configure (TX, RX, Speed, Clock, Periph, Fun);
       end Configure;
 
+      ---------------
+      -- Configure --
+      ---------------
+
+      procedure Configure
+        (TX    : Pin;
+         RX    : Pin;
+         CK    : Pin;
+         Speed : Interfaces.Unsigned_32;
+         Clock : Interfaces.Unsigned_32) is
+      begin
+         Init_GPIO (CK, Fun);
+         Configure (TX, RX, Speed, Clock, Periph, Fun);
+      end Configure;
+
    end DMA_Implementation;
 
    ---------------
@@ -356,6 +402,20 @@ package body STM32.UART is
          Configure (TX, RX, Speed, Clock, Periph, Fun);
       end Configure;
 
+      ---------------
+      -- Configure --
+      ---------------
+
+      procedure Configure
+        (TX    : Pin;
+         RX    : Pin;
+         CK    : Pin;
+         Speed : Interfaces.Unsigned_32;
+         Clock : Interfaces.Unsigned_32) is
+      begin
+         Configure (TX, RX, CK, Speed, Clock, Periph, Fun);
+      end Configure;
+
       ------------
       -- Device --
       ------------
@@ -447,6 +507,43 @@ package body STM32.UART is
          end Set_Baud_Rate;
 
          -------------------
+         -- Set_Stop_Bits --
+         -------------------
+
+         procedure Set_Stop_Bits (Value : Stop_Bits) is
+         begin
+            Periph.CR2.STOP := Stop_Bits'Enum_Rep (Value);
+         end Set_Stop_Bits;
+
+         ---------------------
+         -- Set_Word_Length --
+         ---------------------
+
+         procedure Set_Word_Length (Value : Word_Length) is
+         begin
+            Periph.CR1.M := Value = 9;
+         end Set_Word_Length;
+
+         ----------------
+         -- Set_Parity --
+         ----------------
+
+         procedure Set_Parity (Value : Parity) is
+         begin
+            Periph.CR1.PS  := Value = Odd;
+            Periph.CR1.PCE := Value /= None;
+         end Set_Parity;
+
+         -----------------
+         -- Set_Enabled --
+         -----------------
+
+         procedure Set_Enabled (Value : Boolean) is
+         begin
+            Periph.CR1.UE := Value;
+         end Set_Enabled;
+
+         -------------------
          -- Start_Reading --
          -------------------
 
@@ -511,6 +608,30 @@ package body STM32.UART is
 
             Periph.CR1.TXEIE := True;  --  IRQ is generated whenever TXE=1
          end Start_Writing;
+
+         ----------
+         -- Stop --
+         ----------
+
+         procedure Stop is
+         begin
+            Periph.CR1.RXNEIE := False;
+            Periph.CR1.TXEIE  := False;
+            Periph.CR1.IDLEIE := False;
+
+            A0B.Callbacks.Unset (Output.Done);
+            A0B.Callbacks.Unset (Input.Done);
+         end Stop;
+
+         -------------
+         -- Is_Busy --
+         -------------
+
+         function Is_Busy return Boolean is
+         begin
+            return A0B.Callbacks.Is_Set (Output.Done)
+              or else A0B.Callbacks.Is_Set (Input.Done);
+         end Is_Busy;
 
       end Device;
 
