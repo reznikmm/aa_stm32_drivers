@@ -24,6 +24,23 @@ package body STM32.UART.USART_2 is
          Clock => STM32.System_Clocks.PCLK1);
    end Configure;
 
+   ---------------
+   -- Configure --
+   ---------------
+
+   procedure Configure
+     (TX    : Pin;
+      RX    : Pin;
+      CK    : Pin;
+      Speed : Interfaces.Unsigned_32) is
+   begin
+      STM32.Registers.RCC.RCC_Periph.APB1ENR.USART2EN := True;
+
+      Implementation.Configure
+        (TX, RX, CK, Speed,
+         Clock => STM32.System_Clocks.PCLK1);
+   end Configure;
+
    -------------------
    -- Set_Baud_Rate --
    -------------------
@@ -34,6 +51,60 @@ package body STM32.UART.USART_2 is
         (Rate,
          Clock => STM32.System_Clocks.PCLK1);
    end Set_Baud_Rate;
+
+   -------------------
+   -- Set_Stop_Bits --
+   -------------------
+
+   procedure Set_Stop_Bits (Value : Stop_Bits) is
+   begin
+      Implementation.Device.Set_Stop_Bits (Value);
+   end Set_Stop_Bits;
+
+   ---------------------
+   -- Set_Word_Length --
+   ---------------------
+
+   procedure Set_Word_Length (Value : Word_Length) is
+   begin
+      Implementation.Device.Set_Word_Length (Value);
+   end Set_Word_Length;
+
+   ----------------
+   -- Set_Parity --
+   ----------------
+
+   procedure Set_Parity (Value : Parity) is
+   begin
+      Implementation.Device.Set_Parity (Value);
+   end Set_Parity;
+
+   ------------
+   -- Enable --
+   ------------
+
+   procedure Enable is
+   begin
+      Implementation.Device.Set_Enabled (True);
+   end Enable;
+
+   -------------
+   -- Disable --
+   -------------
+
+   procedure Disable is
+   begin
+      Implementation.Device.Set_Enabled (False);
+   end Disable;
+
+   -------------
+   -- Is_Busy --
+   -------------
+
+   function Is_Busy return Boolean is
+   begin
+      return Implementation.Device.Is_Busy;
+   end Is_Busy;
 
    -------------------
    -- Start_Reading --

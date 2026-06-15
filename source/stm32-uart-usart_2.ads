@@ -26,10 +26,40 @@ package STM32.UART.USART_2 is
        TX in (PA, 2) | (PD, 5) and then
        RX in (PA, 3) | (PD, 6);
    --
-   --  Configure USART_2 on given pins and speed
+   --  Configure USART_2 on given pins and speed as UART
+
+   procedure Configure
+     (TX    : Pin;
+      RX    : Pin;
+      CK    : Pin;
+      Speed : Interfaces.Unsigned_32)
+     with Pre =>
+       TX in (PA, 2) | (PD, 5) and then
+       RX in (PA, 3) | (PD, 6) and then
+       CK in (PA, 4) | (PD, 7);
+   --
+   --  Configure USART_2 on given pins and speed as USART
 
    procedure Set_Baud_Rate (Rate : Interfaces.Unsigned_32);
    --  Reconfigure USART_2 speed (baud rate)
+
+   procedure Set_Stop_Bits (Value : Stop_Bits);
+   --  Reconfigure STOP bits
+
+   procedure Set_Word_Length (Value : Word_Length)
+     with Pre => not Is_Busy;
+   --  Reconfigure word length
+   --  Note: This must not be modified during a data transfer
+   --        (both transmission and reception)
+
+   procedure Set_Parity (Value : Parity);
+   --  Reconfigure hardware parity control
+
+   procedure Enable;
+   --  Enable UART
+
+   procedure Disable;
+   --  Disable UART
 
    procedure Start_Reading
      (Buffer : System.Address;
@@ -65,6 +95,9 @@ package STM32.UART.USART_2 is
    --  Start writing given Buffer of provided Length. When Buffer is
    --  sent trigger Done callback. No other call to Start_Writing is allowed
    --  until Done is triggered.
+
+   function Is_Busy return Boolean;
+   --  Returns True if device is reading or writing data
 
 private
 
