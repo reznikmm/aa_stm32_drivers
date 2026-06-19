@@ -30,30 +30,6 @@ package body STM32.UART.USART_2 is
          Stop_Bits => Stop_Bits);
    end Configure;
 
-   ---------------
-   -- Configure --
-   ---------------
-
-   procedure Configure
-     (TX    : Pin;
-      RX    : Pin;
-      CK    : Pin;
-      Speed : Interfaces.Unsigned_32;
-      Parity : STM32.UART.Parity := None;
-      Stop_Bits : Extended_Stop_Bits := 1.0) is
-   begin
-      STM32.Registers.RCC.RCC_Periph.APB1ENR.USART2EN := True;
-
-      Implementation.Configure
-        (TX,
-         RX,
-         CK,
-         Speed,
-         Clock     => STM32.System_Clocks.PCLK1,
-         Parity    => Parity,
-         Stop_Bits => Stop_Bits);
-   end Configure;
-
    -------------------
    -- Set_Baud_Rate --
    -------------------

@@ -91,15 +91,6 @@ private
          Parity    : STM32.UART.Parity := None;
          Stop_Bits : Extended_Stop_Bits := 1.0);
 
-      procedure Configure
-        (TX        : Pin;
-         RX        : Pin;
-         CK        : Pin;
-         Rate      : Interfaces.Unsigned_32;
-         Clock     : Interfaces.Unsigned_32;
-         Parity    : STM32.UART.Parity := None;
-         Stop_Bits : Extended_Stop_Bits := 1.0);
-
       protected Device
         with Interrupt_Priority => Priority
       is
