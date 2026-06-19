@@ -36,9 +36,9 @@ procedure RTC_Main is
    Ignore : Boolean;
 begin
    USART_1.Configure
-     (TX    => (STM32.PA, 9),
-      RX    => (STM32.PA, 10),
-      Speed => 115_200);
+     (TX   => (STM32.PA, 9),
+      RX   => (STM32.PA, 10),
+      Rate => 115_200);
 
    STM32.RTC.Initialize
      (Date =>

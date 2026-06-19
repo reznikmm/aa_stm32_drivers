@@ -19,9 +19,11 @@ generic
 package STM32.UART.UART_4 is
 
    procedure Configure
-     (TX    : Pin;
-      RX    : Pin;
-      Speed : Interfaces.Unsigned_32)
+     (TX        : Pin;
+      RX        : Pin;
+      Rate      : Interfaces.Unsigned_32;
+      Parity    : STM32.UART.Parity := None;
+      Stop_Bits : Standard_Stop_Bits := 1)
      with Pre =>
        TX in (PA, 0) | (PC, 10) and then
        RX in (PA, 1) | (PC, 11);

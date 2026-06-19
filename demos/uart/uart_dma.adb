@@ -18,9 +18,9 @@ procedure UART_DMA is
      Suspension_Object_Callbacks.Create_Callback (Signal);
 begin
    UART.Configure
-     (TX    => (STM32.PC, 10),
-      RX    => (STM32.PC, 11),
-      Speed => 115_200);
+     (TX   => (STM32.PC, 10),
+      RX   => (STM32.PC, 11),
+      Rate => 115_200);
 
    loop
       declare

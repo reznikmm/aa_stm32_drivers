@@ -19,9 +19,11 @@ generic
 package STM32.UART.USART_2 is
 
    procedure Configure
-     (TX    : Pin;
-      RX    : Pin;
-      Speed : Interfaces.Unsigned_32)
+     (TX        : Pin;
+      RX        : Pin;
+      Rate      : Interfaces.Unsigned_32;
+      Parity    : STM32.UART.Parity := None;
+      Stop_Bits : Extended_Stop_Bits := 1.0)
      with Pre =>
        TX in (PA, 2) | (PD, 5) and then
        RX in (PA, 3) | (PD, 6);
@@ -32,7 +34,9 @@ package STM32.UART.USART_2 is
      (TX    : Pin;
       RX    : Pin;
       CK    : Pin;
-      Speed : Interfaces.Unsigned_32)
+      Speed : Interfaces.Unsigned_32;
+      Parity : STM32.UART.Parity := None;
+      Stop_Bits : Extended_Stop_Bits := 1.0)
      with Pre =>
        TX in (PA, 2) | (PD, 5) and then
        RX in (PA, 3) | (PD, 6) and then

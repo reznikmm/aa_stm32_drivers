@@ -13,15 +13,21 @@ package body STM32.UART.USART_1 is
    ---------------
 
    procedure Configure
-     (TX    : Pin;
-      RX    : Pin;
-      Speed : Interfaces.Unsigned_32) is
+     (TX        : Pin;
+      RX        : Pin;
+      Rate      : Interfaces.Unsigned_32;
+      Parity    : STM32.UART.Parity := None;
+      Stop_Bits : Extended_Stop_Bits := 1.0) is
    begin
       STM32.Registers.RCC.RCC_Periph.APB2ENR.USART1EN := True;
 
       Implementation.Configure
-        (TX, RX, Speed,
-         Clock => STM32.System_Clocks.PCLK2);
+        (TX,
+         RX,
+         Rate,
+         Clock     => STM32.System_Clocks.PCLK2,
+         Parity    => Parity,
+         Stop_Bits => Stop_Bits);
    end Configure;
 
    -------------------

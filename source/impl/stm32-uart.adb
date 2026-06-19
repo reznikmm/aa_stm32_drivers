@@ -11,12 +11,14 @@ with A0B.Callbacks.Generic_Subprogram;
 package body STM32.UART is
 
    procedure Configure
-     (TX     : Pin;
-      RX     : Pin;
-      Speed  : Interfaces.Unsigned_32;
-      Clock  : Interfaces.Unsigned_32;
-      Periph : in out STM32.Registers.USART.USART_Peripheral;
-      Fun    : GPIO_Function)
+     (TX        : Pin;
+      RX        : Pin;
+      Rate      : Interfaces.Unsigned_32;
+      Clock     : Interfaces.Unsigned_32;
+      Parity    : STM32.UART.Parity;
+      Stop_Bits : Extended_Stop_Bits;
+      Periph    : in out STM32.Registers.USART.USART_Peripheral;
+      Fun       : GPIO_Function)
      with Inline;
 
    ---------------
@@ -24,16 +26,18 @@ package body STM32.UART is
    ---------------
 
    procedure Configure
-     (TX     : Pin;
-      RX     : Pin;
-      Speed  : Interfaces.Unsigned_32;
-      Clock  : Interfaces.Unsigned_32;
-      Periph : in out STM32.Registers.USART.USART_Peripheral;
-      Fun    : GPIO_Function)
+     (TX        : Pin;
+      RX        : Pin;
+      Rate      : Interfaces.Unsigned_32;
+      Clock     : Interfaces.Unsigned_32;
+      Parity    : STM32.UART.Parity;
+      Stop_Bits : Extended_Stop_Bits;
+      Periph    : in out STM32.Registers.USART.USART_Peripheral;
+      Fun       : GPIO_Function)
    is
       use type Interfaces.Unsigned_32;
 
-      Divider  : constant Interfaces.Unsigned_32 := 25 * Clock / (4 * Speed);
+      Divider  : constant Interfaces.Unsigned_32 := 25 * Clock / (4 * Rate);
       Fraction : constant Interfaces.Unsigned_32 := Divider rem 100;
 
    begin
@@ -58,13 +62,19 @@ package body STM32.UART is
          TCIE     => False,  --  Transmission complete interrupt enable
          TXEIE    => False,
          PEIE     => False,  --  Parity Error
-         PS       => False,  --  is Odd parity
-         PCE      => False,  --  Parity control enable
+         PS       => Parity = Odd,  --  is Odd parity
+         PCE      => Parity /= None,  --  Parity control enable
          WAKE     => False,
-         M        => False,  --  9 bits
+         M        => Parity /= None,  --  9 bits
          UE       => True,  --  USART enable
          Reserved => 0,
          OVER8    => False);
+
+         Periph.CR2.STOP :=
+           (if Stop_Bits = 0.5 then 2#01#
+            elsif Stop_Bits = 1.0 then 2#00#
+            elsif Stop_Bits = 1.5 then 2#11#
+            else 2#10#);
    end Configure;
 
    ------------------------
@@ -218,12 +228,22 @@ package body STM32.UART is
       ---------------
 
       procedure Configure
-        (TX    : Pin;
-         RX    : Pin;
-         Speed : Interfaces.Unsigned_32;
-         Clock : Interfaces.Unsigned_32) is
+        (TX        : Pin;
+         RX        : Pin;
+         Rate      : Interfaces.Unsigned_32;
+         Clock     : Interfaces.Unsigned_32;
+         Parity    : STM32.UART.Parity := None;
+         Stop_Bits : Extended_Stop_Bits := 1.0) is
       begin
-         Configure (TX, RX, Speed, Clock, Periph, Fun);
+         Configure
+           (TX,
+            RX,
+            Rate,
+            Clock,
+            Parity,
+            Stop_Bits,
+            Periph,
+            Fun);
       end Configure;
 
    end DMA_Implementation;
@@ -273,12 +293,22 @@ package body STM32.UART is
       ---------------
 
       procedure Configure
-        (TX    : Pin;
-         RX    : Pin;
-         Speed : Interfaces.Unsigned_32;
-         Clock : Interfaces.Unsigned_32) is
+        (TX        : Pin;
+         RX        : Pin;
+         Rate      : Interfaces.Unsigned_32;
+         Clock     : Interfaces.Unsigned_32;
+         Parity    : STM32.UART.Parity := None;
+         Stop_Bits : Extended_Stop_Bits := 1.0) is
       begin
-         Configure (TX, RX, Speed, Clock, Periph, Fun);
+         Configure
+           (TX,
+            RX,
+            Rate,
+            Clock,
+            Parity,
+            Stop_Bits,
+            Periph,
+            Fun);
       end Configure;
 
       ---------
@@ -352,12 +382,22 @@ package body STM32.UART is
       ---------------
 
       procedure Configure
-        (TX    : Pin;
-         RX    : Pin;
-         Speed : Interfaces.Unsigned_32;
-         Clock : Interfaces.Unsigned_32) is
+        (TX        : Pin;
+         RX        : Pin;
+         Rate      : Interfaces.Unsigned_32;
+         Clock     : Interfaces.Unsigned_32;
+         Parity    : STM32.UART.Parity := None;
+         Stop_Bits : Extended_Stop_Bits := 1.0) is
       begin
-         Configure (TX, RX, Speed, Clock, Periph, Fun);
+         Configure
+           (TX,
+            RX,
+            Rate,
+            Clock,
+            Parity,
+            Stop_Bits,
+            Periph,
+            Fun);
       end Configure;
 
       ---------------
@@ -365,14 +405,24 @@ package body STM32.UART is
       ---------------
 
       procedure Configure
-        (TX    : Pin;
-         RX    : Pin;
-         CK    : Pin;
-         Speed : Interfaces.Unsigned_32;
-         Clock : Interfaces.Unsigned_32) is
+        (TX        : Pin;
+         RX        : Pin;
+         CK        : Pin;
+         Rate      : Interfaces.Unsigned_32;
+         Clock     : Interfaces.Unsigned_32;
+         Parity    : STM32.UART.Parity := None;
+         Stop_Bits : Extended_Stop_Bits := 1.0) is
       begin
          Init_GPIO (CK, Fun);
-         Configure (TX, RX, Speed, Clock, Periph, Fun);
+         Configure
+           (TX,
+            RX,
+            Rate,
+            Clock,
+            Parity,
+            Stop_Bits,
+            Periph,
+            Fun);
       end Configure;
 
       ------------
@@ -456,12 +506,12 @@ package body STM32.UART is
          ---------------
 
          procedure Set_Baud_Rate
-           (Speed : Interfaces.Unsigned_32;
+           (Rate : Interfaces.Unsigned_32;
             Clock : Interfaces.Unsigned_32)
          is
             use type Interfaces.Unsigned_32;
          begin
-            Divider := 25 * Clock / (4 * Speed);
+            Divider := 25 * Clock / (4 * Rate);
             Periph.CR1.TCIE := True;  --  enable transmission complete IRQ
          end Set_Baud_Rate;
 

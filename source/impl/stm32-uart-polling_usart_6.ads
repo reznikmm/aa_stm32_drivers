@@ -8,9 +8,11 @@ private with STM32.Registers.USART;
 package STM32.UART.Polling_USART_6 is
 
    procedure Configure
-     (TX   : Pin;
-      RX   : Pin;
-      Rate : Interfaces.Unsigned_32)
+     (TX        : Pin;
+      RX        : Pin;
+      Rate      : Interfaces.Unsigned_32;
+      Parity    : STM32.UART.Parity := None;
+      Stop_Bits : Extended_Stop_Bits := 1.0)
      with Pre =>
        TX in (PC, 6) and then
        RX in (PC, 7);

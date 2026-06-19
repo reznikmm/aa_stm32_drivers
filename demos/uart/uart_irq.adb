@@ -17,9 +17,9 @@ procedure UART_IRQ is
      Suspension_Object_Callbacks.Create_Callback (Signal);
 begin
    USART_1.Configure
-     (TX    => (STM32.PA, 9),
-      RX    => (STM32.PA, 10),
-      Speed => 115_200);
+     (TX   => (STM32.PA, 9),
+      RX   => (STM32.PA, 10),
+      Rate => 115_200);
 
    loop
       USART_1.Start_Writing (Buffer'Address, Buffer'Length, Done);

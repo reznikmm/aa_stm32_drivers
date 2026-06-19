@@ -41,6 +41,9 @@ package STM32.UART is
    --  available for UART1, UART2 and UART3. The 1 Stop bit and 2 Stop bit are
    --  available for all UARTs.
 
+   function "+" (Left : Standard_Stop_Bits) return Extended_Stop_Bits is
+     (case Left is when 1 => 1.0, when 2 => 2.0);
+
    type Parity is (None, Even, Odd);
 
 private
@@ -81,23 +84,27 @@ private
       --  interrupt handling procedure.
 
       procedure Configure
-        (TX    : Pin;
-         RX    : Pin;
-         Speed : Interfaces.Unsigned_32;
-         Clock : Interfaces.Unsigned_32);
+        (TX        : Pin;
+         RX        : Pin;
+         Rate      : Interfaces.Unsigned_32;
+         Clock     : Interfaces.Unsigned_32;
+         Parity    : STM32.UART.Parity := None;
+         Stop_Bits : Extended_Stop_Bits := 1.0);
 
       procedure Configure
-        (TX    : Pin;
-         RX    : Pin;
-         CK    : Pin;
-         Speed : Interfaces.Unsigned_32;
-         Clock : Interfaces.Unsigned_32);
+        (TX        : Pin;
+         RX        : Pin;
+         CK        : Pin;
+         Rate      : Interfaces.Unsigned_32;
+         Clock     : Interfaces.Unsigned_32;
+         Parity    : STM32.UART.Parity := None;
+         Stop_Bits : Extended_Stop_Bits := 1.0);
 
       protected Device
         with Interrupt_Priority => Priority
       is
          procedure Set_Baud_Rate
-           (Speed : Interfaces.Unsigned_32;
+           (Rate  : Interfaces.Unsigned_32;
             Clock : Interfaces.Unsigned_32);
 
          procedure Set_Stop_Bits (Value : Extended_Stop_Bits);
@@ -158,10 +165,12 @@ private
       --  and interrupt handling procedure.
 
       procedure Configure
-        (TX    : Pin;
-         RX    : Pin;
-         Speed : Interfaces.Unsigned_32;
-         Clock : Interfaces.Unsigned_32);
+        (TX        : Pin;
+         RX        : Pin;
+         Rate      : Interfaces.Unsigned_32;
+         Clock     : Interfaces.Unsigned_32;
+         Parity    : STM32.UART.Parity := None;
+         Stop_Bits : Extended_Stop_Bits := 1.0);
 
       protected Device
         with Interrupt_Priority => Priority
@@ -199,10 +208,12 @@ private
       --  Generic polling implementation for UART initializaion and operations
 
       procedure Configure
-        (TX    : Pin;
-         RX    : Pin;
-         Speed : Interfaces.Unsigned_32;
-         Clock : Interfaces.Unsigned_32);
+        (TX        : Pin;
+         RX        : Pin;
+         Rate      : Interfaces.Unsigned_32;
+         Clock     : Interfaces.Unsigned_32;
+         Parity    : STM32.UART.Parity := None;
+         Stop_Bits : Extended_Stop_Bits := 1.0);
 
       procedure Set_Baud_Rate
         (Rate  : Interfaces.Unsigned_32;
