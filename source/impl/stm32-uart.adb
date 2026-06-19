@@ -400,31 +400,6 @@ package body STM32.UART is
             Fun);
       end Configure;
 
-      ---------------
-      -- Configure --
-      ---------------
-
-      procedure Configure
-        (TX        : Pin;
-         RX        : Pin;
-         CK        : Pin;
-         Rate      : Interfaces.Unsigned_32;
-         Clock     : Interfaces.Unsigned_32;
-         Parity    : STM32.UART.Parity := None;
-         Stop_Bits : Extended_Stop_Bits := 1.0) is
-      begin
-         Init_GPIO (CK, Fun);
-         Configure
-           (TX,
-            RX,
-            Rate,
-            Clock,
-            Parity,
-            Stop_Bits,
-            Periph,
-            Fun);
-      end Configure;
-
       ------------
       -- Device --
       ------------

@@ -30,20 +30,6 @@ package STM32.UART.USART_2 is
    --
    --  Configure USART_2 on given pins and speed as UART
 
-   procedure Configure
-     (TX    : Pin;
-      RX    : Pin;
-      CK    : Pin;
-      Speed : Interfaces.Unsigned_32;
-      Parity : STM32.UART.Parity := None;
-      Stop_Bits : Extended_Stop_Bits := 1.0)
-     with Pre =>
-       TX in (PA, 2) | (PD, 5) and then
-       RX in (PA, 3) | (PD, 6) and then
-       CK in (PA, 4) | (PD, 7);
-   --
-   --  Configure USART_2 on given pins and speed as USART
-
    procedure Set_Baud_Rate (Rate : Interfaces.Unsigned_32);
    --  Reconfigure USART_2 speed (baud rate)
 
