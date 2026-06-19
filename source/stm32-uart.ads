@@ -33,11 +33,13 @@ package STM32.UART is
       Ready_To_Send  : Boolean;
    end record;
 
-   type Stop_Bits is (Stopbits_1, Stopbits_0_5, Stopbits_2, Stopbits_1_5)
-     with Size => 2;
-   --
-   --  Note: The 0.5 Stop bit and 1.5 Stop bit are not available for
-   --        UART4 & UART5.
+   type Standard_Stop_Bits is range 1 .. 2;
+   --  Number of stop bits.
+
+   type Extended_Stop_Bits is delta 0.5 range 0.5 .. 2.0;
+   --  Number of stop bits. The 0.5 Stop bit and 1.5 Stop bit are only
+   --  available for UART1, UART2 and UART3. The 1 Stop bit and 2 Stop bit are
+   --  available for all UARTs.
 
    type Parity is (None, Even, Odd);
 
@@ -52,12 +54,6 @@ private
       Send_Complete  at 0 range 6 .. 6;
       Ready_To_Send  at 0 range 7 .. 7;
    end record;
-
-   for Stop_Bits use
-     (Stopbits_1   => 0,
-      Stopbits_0_5 => 2#01#,
-      Stopbits_2   => 2#10#,
-      Stopbits_1_5 => 2#11#);
 
    subtype GPIO_Function is Interfaces.Unsigned_32 range 7 .. 8;
 
@@ -104,7 +100,7 @@ private
            (Speed : Interfaces.Unsigned_32;
             Clock : Interfaces.Unsigned_32);
 
-         procedure Set_Stop_Bits (Value : Stop_Bits);
+         procedure Set_Stop_Bits (Value : Extended_Stop_Bits);
 
          procedure Set_Parity (Value : Parity);
          --  Also set M bit if Parity /= None to have 8bit data.

@@ -19,16 +19,6 @@ package body STM32.UART is
       Fun    : GPIO_Function)
      with Inline;
 
-   procedure Configure
-     (TX     : Pin;
-      RX     : Pin;
-      CK     : Pin;
-      Speed  : Interfaces.Unsigned_32;
-      Clock  : Interfaces.Unsigned_32;
-      Periph : in out STM32.Registers.USART.USART_Peripheral;
-      Fun    : GPIO_Function)
-     with Inline;
-
    ---------------
    -- Configure --
    ---------------
@@ -75,23 +65,6 @@ package body STM32.UART is
          UE       => True,  --  USART enable
          Reserved => 0,
          OVER8    => False);
-   end Configure;
-
-   ---------------
-   -- Configure --
-   ---------------
-
-   procedure Configure
-     (TX     : Pin;
-      RX     : Pin;
-      CK     : Pin;
-      Speed  : Interfaces.Unsigned_32;
-      Clock  : Interfaces.Unsigned_32;
-      Periph : in out STM32.Registers.USART.USART_Peripheral;
-      Fun    : GPIO_Function) is
-   begin
-      Init_GPIO (CK, Fun);
-      Configure (TX, RX, Speed, Clock, Periph, Fun);
    end Configure;
 
    ------------------------
@@ -496,9 +469,13 @@ package body STM32.UART is
          -- Set_Stop_Bits --
          -------------------
 
-         procedure Set_Stop_Bits (Value : Stop_Bits) is
+         procedure Set_Stop_Bits (Value : Extended_Stop_Bits) is
          begin
-            Periph.CR2.STOP := Stop_Bits'Enum_Rep (Value);
+            Periph.CR2.STOP :=
+              (if Value = 0.5 then 2#01#
+               elsif Value = 1.0 then 2#00#
+               elsif Value = 1.5 then 2#11#
+               else 2#10#);
          end Set_Stop_Bits;
 
          ----------------

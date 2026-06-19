@@ -56,9 +56,18 @@ package body STM32.UART.USART_2 is
    -- Set_Stop_Bits --
    -------------------
 
-   procedure Set_Stop_Bits (Value : Stop_Bits) is
+   procedure Set_Stop_Bits (Value : Extended_Stop_Bits) is
    begin
       Implementation.Device.Set_Stop_Bits (Value);
+   end Set_Stop_Bits;
+
+   -------------------
+   -- Set_Stop_Bits --
+   -------------------
+
+   procedure Set_Stop_Bits (Value : Standard_Stop_Bits) is
+   begin
+      Set_Stop_Bits (case Value is when 1 => 1.0, when 2 => 2.0);
    end Set_Stop_Bits;
 
    ----------------

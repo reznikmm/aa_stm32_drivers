@@ -43,7 +43,10 @@ package STM32.UART.USART_2 is
    procedure Set_Baud_Rate (Rate : Interfaces.Unsigned_32);
    --  Reconfigure USART_2 speed (baud rate)
 
-   procedure Set_Stop_Bits (Value : Stop_Bits);
+   procedure Set_Stop_Bits (Value : Standard_Stop_Bits);
+   --  Reconfigure STOP bits
+
+   procedure Set_Stop_Bits (Value : Extended_Stop_Bits);
    --  Reconfigure STOP bits
 
    procedure Set_Parity (Value : Parity)
