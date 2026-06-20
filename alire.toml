@@ -30,4 +30,4 @@ cortex_m.core = "m4f"
 
 [[actions]]
 type = "test"
-command = ["alr", "-C", "demos", "build"]
+command = ["alr", "-C", "demos/stm32f4", "build"]

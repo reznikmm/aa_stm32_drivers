@@ -622,7 +622,7 @@ The repository includes a demo project in `demos/` for STM32F4 targets.
 Build all demos:
 
 ```shell
-alr -C demos build
+alr -C demos/stm32f4 build
 ```
 
 Available demos:
@@ -648,3 +648,10 @@ Contributions are welcome! Feel free to submit a pull request.
 This project is licensed under the Apache 2.0 License with LLVM Exceptions.
 See the [LICENSES](LICENSES) files for details.
 
+<!--- To generate stub code from SVD:
+svd2ada --use-unsigned-type=Unsigned_32 \
+ --package=STM32.Registers --boolean \
+ --no-uint-subtypes --no-vfa-on-types --no-defaults \
+ --base-types-package=Interfaces \
+ -o STM32F429/ ./CMSIS-SVD/ST/STM32F429x.svd
+--->

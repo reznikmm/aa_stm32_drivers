@@ -1,5 +1,5 @@
-name = "demos"
-description = "STM32 driver demos"
+name = "stm32f4_demos"
+description = "STM32F4 driver demos"
 version = "0.1.0-dev"
 
 authors = ["Max Reznik"]
@@ -10,6 +10,8 @@ website = ""
 tags = []
 
 executables = []
+
+project-files = ["demos.gpr"]
 
 [build-switches]
 development.optimization = ["-O0"]
@@ -28,7 +30,7 @@ aa_stm32_drivers = "~0.1.0"
 aa_stm32_drivers = "development"
 
 [[pins]]
-aa_stm32_drivers = { path='..' }
+aa_stm32_drivers = { path='../..' }
 
 [configuration.values]
 aa_stm32_drivers.aa_mcu = "stm32f4"

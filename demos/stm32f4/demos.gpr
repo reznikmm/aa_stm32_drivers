@@ -3,16 +3,19 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ----------------------------------------------------------------
 
-with "config/demos_config.gpr";
+with "config/stm32f4_demos_config.gpr";
 project Demos is
 
-   BOARD := external ("BOARD", "stm32f4");
-
-   for Runtime ("Ada") use "light-tasking-" & BOARD;
+   for Runtime ("Ada") use "light-tasking-stm32f4";
    for Target use "arm-eabi";
 
-   for Source_Dirs use ("spi", "tim", "uart", "rtc", "i2c");
-   for Object_Dir use "obj/" & Demos_Config.Build_Profile;
+   for Source_Dirs use
+    ("../shared/spi",
+     "../shared/tim",
+     "../shared/uart",
+     "../shared/rtc",
+     "../shared/i2c");
+   for Object_Dir use "obj/" & STM32F4_Demos_Config.Build_Profile;
    for Create_Missing_Dirs use "True";
    for Exec_Dir use "bin";
    for Main use
@@ -22,7 +25,7 @@ project Demos is
       "i2c.adb");
 
    package Compiler is
-      for Default_Switches ("Ada") use Demos_Config.Ada_Compiler_Switches;
+      for Default_Switches ("Ada") use STM32F4_Demos_Config.Ada_Compiler_Switches;
    end Compiler;
 
    package Binder is
