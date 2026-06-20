@@ -1,0 +1,54 @@
+--  SPDX-FileCopyrightText: 2026 Max Reznik <reznikmm@gmail.com>
+--
+--  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+----------------------------------------------------------------
+
+with "config/stm32f429_demos_config.gpr";
+project Demos is
+
+   for Runtime ("Ada") use "light-tasking-stm32f429disco";
+   for Target use "arm-eabi";
+
+   for Source_Dirs use
+    ("../shared/spi",
+     "../shared/tim",
+     "../shared/uart",
+     "../shared/rtc",
+     "../shared/i2c");
+   for Object_Dir use "obj/" & STM32F429_Demos_Config.Build_Profile;
+   for Create_Missing_Dirs use "True";
+   for Exec_Dir use "bin";
+   for Main use
+     ("uart_irq.adb", "uart_dma.adb", "uart_polling.adb",
+      "spi_dma.adb", "spi_polling.adb",
+      "tim_dma.adb", "rtc_main.adb",
+      "i2c.adb");
+
+   package Compiler is
+      for Default_Switches ("Ada") use STM32F429_Demos_Config.Ada_Compiler_Switches;
+   end Compiler;
+
+   package Binder is
+      for Switches ("Ada") use ("-Es"); --  Symbolic traceback
+   end Binder;
+
+   package Install is
+      for Artifacts (".") use ("share");
+   end Install;
+
+   package Linker is
+      for Default_Switches ("Ada") use
+        ("-Wl,--gc-sections",
+         "-Wl,--defsym=__stack_size=0x2000");
+   end Linker;
+
+   package Ide is
+      for Program_Host use "localhost:4242";
+      for Communication_Protocol use "remote";
+      --  for Connection_Tool use "st-util";
+      for Connection_Tool use "openocd";
+      for Connection_Config_Files use
+        ("interface/stlink.cfg", "target/stm32f4x.cfg");
+   end Ide;
+
+end Demos;

@@ -1,0 +1,36 @@
+name = "stm32f429_demos"
+description = "STM32F429 driver demos"
+version = "0.1.0-dev"
+
+authors = ["Max Reznik"]
+maintainers = ["Max Reznik <reznikmm@gmail.com>"]
+maintainers-logins = ["reznikmm"]
+licenses = "Apache-2.0 WITH LLVM-exception"
+website = ""
+tags = []
+
+executables = []
+
+project-files = ["demos.gpr"]
+
+[build-switches]
+development.optimization = ["-O0"]
+development.style_checks = ["-gnaty"]
+development.contracts = "Yes"
+"*".debug_info = "Yes"
+
+[configuration]
+generate_ada = false
+generate_c = false
+
+[[depends-on]]
+aa_stm32_drivers = "~0.1.0"
+
+[build-profiles]
+aa_stm32_drivers = "development"
+
+[[pins]]
+aa_stm32_drivers = { path='../..' }
+
+[configuration.values]
+aa_stm32_drivers.aa_mcu = "stm32f429disco"
