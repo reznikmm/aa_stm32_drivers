@@ -19,6 +19,7 @@ prioritizing simplicity and efficiency.
 | Flash |   -     |  Y  |     |
 | UID   |   Y     |     |     |
 | FSMC  |         |     |     |
+| SDRAM |         |     |     |
 
 ## Table of Contents
 
@@ -43,6 +44,7 @@ prioritizing simplicity and efficiency.
   - [UID](#uid)
   - [Flash](#flash)
   - [FSMC (Flexible static memory controller)](#flexible-static-memory-controller-fsmc)
+  - [SDRAM (Flexible memory controller, FMC)](#sdram-flexible-memory-controller-fmc)
   - [RNG (Random Number Generator)](#rng)
 - [Demos](#demos)
 - [Maintainer](#maintainer)
@@ -60,6 +62,7 @@ prioritizing simplicity and efficiency.
   - MCUs UID
   - Flash for `stm32f429` (Interrupts API)
   - Flexible static memory controller (FSMC) for `stm32f40x`
+  - SDRAM controller (FMC SDRAM) for `stm32f429disco`
 - Support for:
   - STM32F407 (using the `light-tasking-stm32f4` Ada runtime library)
   - STM32F429 (using the `light-tasking-stm32f429disco` Ada runtime library)
@@ -571,6 +574,53 @@ STM32.FSMC.Configure
       others => <>));
 ```
 
+### SDRAM (Flexible memory controller, FMC)
+
+The SDRAM controller in FMC is available on STM32F429. The package
+`STM32.SDRAM` provides a straightforward initialization sequence:
+
+1. Configure SDRAM GPIO pins with `Initialize`.
+2. Configure bank control and timing parameters with `Configure`.
+3. Enable clock configuration mode (`Enable_Clock_Configuration`) and wait.
+4. Load SDRAM mode register (`Load_Mode_Register`).
+5. Program refresh period (`Set_Refresh_Timer`).
+
+Example (STM32F429-DISCO, IS42S16400J on FMC Bank 2):
+
+```ada
+STM32.SDRAM.Initialize (Pins);
+
+STM32.SDRAM.Configure
+  (Banks =>
+     (2 =>
+        (Control =>
+           (Read_Pipe_Delay  => 1,
+            Burst_Read       => True,
+            SDCLK_Period     => 2,
+            Write_Protection => False,
+            CAS_Latency      => 3,
+            Banks            => 4,
+            Bus_Width        => 16,
+            Row_Bits         => 12,
+            Column_Bits      => 8),
+         Timing  =>
+           (Row_To_Column_Delay     => 2,
+            Row_Precharge_Delay     => 2,
+            Write_Recovery_Time     => 3,
+            Row_Cycle_Delay         => 7,
+            Self_Refresh_Time       => 4,
+            Exit_Self_Refresh_Delay => 7,
+            Load_To_Active_Delay    => 2))));
+
+STM32.SDRAM.Enable_Clock_Configuration (Banks => STM32.SDRAM.Second);
+delay 0.01;
+
+STM32.SDRAM.Load_Mode_Register ((2 => 16#230#), Auto_Refresh => 2);
+STM32.SDRAM.Set_Refresh_Timer (1406);
+```
+
+See `demos/shared/fcm/sdram.adb` for a complete, runnable example.
+
 ### RNG
 
 The RNG driver supports two approaches. For a single word or a small number
@@ -617,12 +667,18 @@ end Main;
 
 ## Demos
 
-The repository includes a demo project in `demos/` for STM32F4 targets.
+The repository includes board-specific demo crates in `demos/`.
 
-Build all demos:
+Build all STM32F4 demos:
 
 ```shell
 alr -C demos/stm32f4 build
+```
+
+Build all STM32F429 demos (including SDRAM):
+
+```shell
+alr -C demos/stm32f429 build
 ```
 
 Available demos:
@@ -634,6 +690,7 @@ Available demos:
 - `tim/tim_dma.adb`: Timer PWM generation with DMA updates
 - `rtc/rtc_main.adb`: RTC clock/calendar example
 - `i2c/i2c.adb`: I2C bus scanner over addresses `0x08 .. 0x77` with UART output
+- `fmc/sdram.adb` (STM32F429): FMC SDRAM initialization and memory test loop
 
 ## Maintainer
 

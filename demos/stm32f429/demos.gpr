@@ -14,7 +14,8 @@ project Demos is
      "../shared/tim",
      "../shared/uart",
      "../shared/rtc",
-     "../shared/i2c");
+     "../shared/i2c",
+     "../shared/fmc");
    for Object_Dir use "obj/" & STM32F429_Demos_Config.Build_Profile;
    for Create_Missing_Dirs use "True";
    for Exec_Dir use "bin";
@@ -22,7 +23,7 @@ project Demos is
      ("uart_irq.adb", "uart_dma.adb", "uart_polling.adb",
       "spi_dma.adb", "spi_polling.adb",
       "tim_dma.adb", "rtc_main.adb",
-      "i2c.adb");
+      "i2c.adb", "sdram.adb");
 
    package Compiler is
       for Default_Switches ("Ada") use STM32F429_Demos_Config.Ada_Compiler_Switches;
