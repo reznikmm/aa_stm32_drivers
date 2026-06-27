@@ -17,6 +17,10 @@ package body STM32.SDRAM is
    function "+" (Command : Command_Kind) return U32 is
      (Command_Kind'Pos (Command));
 
+   function Is_Busy
+     (Periph : STM32.Registers.FMC.FMC_Peripheral) return Boolean is
+        (Periph.SDSR.BUSY);
+
    procedure Init_GPIO (Item : Pin);
 
    ---------------
@@ -156,6 +160,10 @@ package body STM32.SDRAM is
       Periph : STM32.Registers.FMC.FMC_Peripheral renames
         STM32.Registers.FMC.FMC_Periph;
    begin
+      while Is_Busy (Periph) loop
+         null;
+      end loop;
+
       Periph.SDCMR :=
         (MODE   => +Clock_Configuration_Enable,
          CTB2   => Banks (2),
@@ -177,11 +185,19 @@ package body STM32.SDRAM is
       Periph : STM32.Registers.FMC.FMC_Peripheral renames
         STM32.Registers.FMC.FMC_Periph;
    begin
+      while Is_Busy (Periph) loop
+         null;
+      end loop;
+
       Periph.SDCMR :=
         (MODE   => +All_Bank_Precharge,
          CTB1   => Value'First = 1,
          CTB2   => Value'Last = 2,
          others => 0);
+
+      while Is_Busy (Periph) loop
+         null;
+      end loop;
 
       Periph.SDCMR :=
         (MODE   => +STM32.SDRAM.Auto_Refresh,
@@ -189,6 +205,10 @@ package body STM32.SDRAM is
          CTB2   => Value'Last = 2,
          NRFS   => U32 (Auto_Refresh),
          others => 0);
+
+      while Is_Busy (Periph) loop
+         null;
+      end loop;
 
       if Value'Length = 1 or First = Last then
          Periph.SDCMR :=
@@ -204,6 +224,10 @@ package body STM32.SDRAM is
             CTB2   => False,
             MRD    => U32 (First),
             others => 0);
+
+         while Is_Busy (Periph) loop
+            null;
+         end loop;
 
          Periph.SDCMR :=
            (MODE   => +Load_Mode_Register,
