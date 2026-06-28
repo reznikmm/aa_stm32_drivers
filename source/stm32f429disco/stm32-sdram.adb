@@ -59,6 +59,10 @@ package body STM32.SDRAM is
    begin
       RCC.AHB3ENR.FMCEN := True;
 
+      --  Reset
+      RCC.AHB3RSTR.FMCRST := True;
+      RCC.AHB3RSTR.FMCRST := False;
+
       for Pin of Pins loop
          Init_GPIO (Pin);
       end loop;
@@ -105,9 +109,7 @@ package body STM32.SDRAM is
             NB             => First.Control.Banks = 4,
             CAS            => U32 (First.Control.CAS_Latency),
             WP             => First.Control.Write_Protection,
-            SDCLK          =>
-              (if Banks'First = 1
-               then U32 (First.Control.SDCLK_Period) else 0),
+            SDCLK          => U32 (First.Control.SDCLK_Period),
             RBURST         => First.Control.Burst_Read,
             RPIPE => U32 (First.Control.Read_Pipe_Delay),
             Reserved_15_31 => 0);
@@ -122,7 +124,7 @@ package body STM32.SDRAM is
             SDCLK          =>
               (if Banks'Last = 2 then U32 (Last.Control.SDCLK_Period) else 0),
             RBURST         => False,  --  don't care
-            RPIPE          => 0,  --  read-only
+            RPIPE          => 0,      --  read-only
             Reserved_15_31 => 0);
 
          Periph.SDTR1 :=
@@ -136,14 +138,14 @@ package body STM32.SDRAM is
             Reserved_28_31 => 0);
 
          Periph.SDTR2 :=
-              (TMRD           => U32 (Last.Timing.Load_To_Active_Delay - 1),
-               TXSR           => U32 (Last.Timing.Exit_Self_Refresh_Delay - 1),
-               TRAS           => U32 (Last.Timing.Self_Refresh_Time - 1),
-               TRC            => 0,  --  don't care
-               TWR            => U32 (Max_Write_Recovery_Time - 1),
-               TRP            => 0,  --  don't care
-               TRCD           => U32 (Last.Timing.Row_To_Column_Delay - 1),
-               Reserved_28_31 => 0);
+           (TMRD           => U32 (Last.Timing.Load_To_Active_Delay - 1),
+            TXSR           => U32 (Last.Timing.Exit_Self_Refresh_Delay - 1),
+            TRAS           => U32 (Last.Timing.Self_Refresh_Time - 1),
+            TRC            => 0,  --  don't care
+            TWR            => U32 (Max_Write_Recovery_Time - 1),
+            TRP            => 0,  --  don't care
+            TRCD           => 0,
+            Reserved_28_31 => 0);
       end;
    end Configure;
 
