@@ -14,7 +14,7 @@ prioritizing simplicity and efficiency.
 | UART  |   Y     |  Y  |  Y  |
 | I2C   |   -     |  Y  |  Y  |
 | SPI   |   Y     |  Y  |  Y  |
-| TIM   |   -     |  Y  |  Y  |
+| TIM   |   basic |  Y  |  Y  |
 | RNG   |   Y     |  Y  |     |
 | Flash |   -     |  Y  |     |
 | UID   |   Y     |     |     |
@@ -40,6 +40,9 @@ prioritizing simplicity and efficiency.
     - [SPI Polling](#spi-polling)
     - [SPI Interrupts and DMA](#spi-interrupts-and-dma)
   - [Timers](#timers)
+    - [Basic timers (TIM6/TIM7)](#basic-timers-tim6tim7)
+    - [Basic polling timer](#basic-polling-timer)
+    - [PWM with timers](#pwm-with-timers)
   - [Timers with DMA](#timers-with-dma)
   - [UID](#uid)
   - [Flash](#flash)
@@ -399,6 +402,72 @@ The callback is called when the transfer is complete.
 
 ### Timers
 
+#### Basic timers (TIM6/TIM7)
+
+TIM6 and TIM7 are the simplest timer peripherals available on STM32. They
+have a minimal feature set:
+
+- **Internal clock only.** The clock source is always the internal APB timer
+  clock (`TIMCLK1`); there are no external trigger or encoder inputs.
+- **No I/O pins.** TIM6 and TIM7 cannot generate or capture any signals on
+  GPIO pins.
+- **Upcounting only.** The counter always counts upward from 0.
+- **Configurable prescaler.** Use `Set_Prescaler` to assign a raw 16-bit
+  prescaler value, or use the convenience procedure `Set_Frequency` to let
+  the driver calculate and apply the prescaler for a desired frequency in Hz.
+
+The central event is the **update event**, which fires automatically when the
+counter reaches the Auto-Reload value (ARR) and wraps back to zero (counter
+overflow). It can also be triggered programmatically at any time by calling
+`Update_Generation`, which re-initializes the counter and flushes the
+prescaler — useful for an immediate, deterministic restart.
+
+The update event can raise an interrupt or issue a DMA request. Two
+`Basic_Settings` fields control this behavior:
+
+- `Update_Request` — when set to `True`, only a counter overflow generates an
+  interrupt/DMA request; a software-triggered `Update_Generation` does **not**.
+  When `False` (the default), `Update_Generation` also raises the
+  interrupt/DMA request.
+- `Update_Disable` — when set to `True`, the update event itself is suppressed
+  entirely (no interrupt, no DMA, shadow registers are not reloaded), though
+  the counter and prescaler are still re-initialized by `Update_Generation`.
+
+#### Basic polling timer
+
+A simple basic polling timer example:
+
+```ada
+with Ada.Real_Time;
+with Ada.Text_IO;
+with STM32.Polling.TIM_7;
+with STM32.Timer;
+
+procedure Polling_Timer is
+   package Timer renames STM32.Polling.TIM_7;
+   use type Ada.Real_Time.Time;
+
+   Next : Ada.Real_Time.Time := Ada.Real_Time.Clock;
+begin
+   Timer.Reset;  --  Enable timer and reset it
+   Timer.Set_Frequency (10_000);  --  Set prescaler to work on 10kHz
+
+   Timer.Configure
+     ((Enable => STM32.Timer.True,
+       others => <>));
+   --  Enable clocking
+
+   loop
+      Next := Next + Ada.Real_Time.Seconds (1);
+      Ada.Text_IO.Put_Line (Timer.Counter'Image);  --  Print 10_000 each second
+      Timer.Update_Generation;  --  Reset Counter and Prescaler
+      delay until Next;
+   end loop;
+end Polling_Timer;
+```
+
+#### PWM with timers
+
 A timer can be configured to generate a PWM (pulse width modulation) signal.
 To configure a timer provide a pin to which the PWM signal will be output
 and a base frequency.
@@ -421,7 +490,7 @@ TIM_3.Start_PWM
    Done   => Done);
 ```
 
-### Timers with DMA
+#### Timers with DMA
 
 The timer with DMA support can be configured by passing it a pin for each
 active channel, the base frequency, and the period and duty values in pulses
