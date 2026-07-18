@@ -34,6 +34,48 @@ package STM32.Timer is
 
    type Capture_Polarity is (Rising_Edge, Falling_Edge, Both_Edges);
 
+   type Optional_Boolean (Is_Set : Boolean := False) is record
+      case Is_Set is
+         when True =>
+            Value : Boolean;
+         when False =>
+            null;
+      end case;
+   end record;
+
+   function True  return Optional_Boolean is (True, True);
+   function False return Optional_Boolean is (True, False);
+
+   type Basic_Settings is record
+      Auto_Reload_Buffered : Optional_Boolean;
+      --  Auto-reload register (ARR) preload enable
+      One_Pulse_Mode : Optional_Boolean;
+      --  Stop counter at the next update event
+      Update_Request : Optional_Boolean;
+      --  If True Update Generation triggers interrupt or DMA
+      Update_Disable : Optional_Boolean;
+      --  If True the Update event is not generated, shadow registers keep
+      --  their value (ARR, PSC). However the counter and the prescaler are
+      --  reinitialized
+      Enable : Optional_Boolean;
+      --  Counter enabled
+   end record;
+
+   type Basic_Configuration is record
+      Auto_Reload_Buffered : Boolean;
+      --  Auto-reload register (ARR) preload enable
+      One_Pulse_Mode : Boolean;
+      --  Stop counter at the next update event
+      Update_Request : Boolean;
+      --  If True Update Generation triggers interrupt or DMA
+      Update_Disable : Boolean;
+      --  If True the Update event is not generated, shadow registers keep
+      --  their value (ARR, PSC). However the counter and the prescaler are
+      --  reinitialized
+      Enable : Boolean;
+      --  Counter enabled
+   end record;
+
 private
 
    procedure Init_GPIO (Item : Pin; Fun : Interfaces.Unsigned_32);
