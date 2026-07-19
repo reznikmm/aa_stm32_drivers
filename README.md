@@ -466,6 +466,41 @@ begin
 end Polling_Timer;
 ```
 
+#### Basic timer with interrupt
+
+The basic timer can generate an interrupt on update event.
+To make it work use `Set_Callback`.
+
+```ada
+with Ada.Synchronous_Task_Control;
+with Ada.Text_IO;
+with STM32.Timer.TIM_7;
+with Suspension_Object_Callbacks;
+
+procedure TIM_DMA is
+   package TIM_7 is new STM32.Timer.TIM_7 (Priority => 241);
+
+   Lock : aliased Ada.Synchronous_Task_Control.Suspension_Object;
+begin
+   TIM.Reset;
+
+   TIM.Set_Frequency (10_000);  --  10kHz
+   TIM.Set_Auto_Reload_Value (10_000);  --  Update once a second
+   TIM.Update_Generation;  --  Apply settings by restarting timer
+   TIM.Set_Callback
+    (On_Update => Suspension_Object_Callbacks.Create_Callback (Lock));
+
+   TIM.Configure
+     ((Enable => STM32.Timer.True,
+       others => <>));
+
+   for J in 100 .. 1E6 loop
+      Ada.Text_IO.Put_Line (J'Image);
+      Ada.Synchronous_Task_Control.Suspend_Until_True (Lock);
+   end loop;
+end TIM_DMA;
+```
+
 #### PWM with timers
 
 A timer can be configured to generate a PWM (pulse width modulation) signal.
