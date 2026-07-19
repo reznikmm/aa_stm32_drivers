@@ -5,6 +5,16 @@
 
 package body STM32.Timer.Basic_Implementation is
 
+   procedure Configure (Setting : Basic_Settings) is
+   begin
+      Polling.Configure (Setting, (Is_Set => False));
+   end Configure;
+
+   procedure Update_Generation is
+   begin
+      Polling.Generate_Event (Update => True);
+   end Update_Generation;
+
    ----------------------------
    -- Set_Callback --
    ----------------------------
