@@ -76,11 +76,135 @@ package STM32.Timer is
       --  Counter enabled
    end record;
 
+   type Division_1_4 is range 1 .. 4
+     with Static_Predicate => Division_1_4 in 1 | 2 | 4;
+
+   type Optional_1_2_4 (Is_Set : Boolean := False) is record
+      case Is_Set is
+         when True =>
+            Value : Division_1_4;
+         when False =>
+            null;
+      end case;
+   end record;
+
+   type Compare_Mode is
+     (Frozen,
+      --  The comparison between the output compare value and the counter has
+      --  no effect on the outputs.
+      Active_On_Match,
+      --  Set channel to active level when the counter matches the compare
+      --  value.
+      Inactive_On_Match,
+      --  Set channel to inactive level when the counter matches the compare
+      --  value.
+      Toggle_On_Match,
+      --  Toggle channel when the counter matches the compare value.
+      Force_Inactive,
+      --  Force channel to inactive level
+      Force_Active,
+      --  Force channel to inactive active
+      PWM_Active,
+      --  Channel is active as long as counter less than the compare value.
+      PWM_Inactive);
+      --  Channel is inactive as long as counter less than the compare value.
+
+   type Input_Filter_Kind is (No_Filter, F_CK_INT, F_DTS);
+
+   type Division_2_32 is range 2 .. 32
+     with Static_Predicate => Division_2_32 in 2 | 4 | 8 | 16 | 32;
+
+   type Input_Capture_Filter (Kind : Input_Filter_Kind := No_Filter) is record
+      case Kind is
+         when No_Filter =>
+            null;
+         when others =>
+            Count : Positive range 2 .. 8;
+            case Kind is
+               when F_DTS =>
+                  Divider : Division_2_32;
+               when others =>
+                  null;
+            end case;
+      end case;
+   end record;
+
+   type Division_1_8 is range 1 .. 8
+     with Static_Predicate => Division_1_8 in 1 | 2 | 4 | 8;
+
+   type Compare_Input (Use_Trigger_Input : Boolean := False) is record
+      case Use_Trigger_Input is
+         when True =>
+            null;
+         when False =>
+            Channel : Channel_Index range 1 .. 2 := 1;
+      end case;
+   end record;
+   --  Define input for a compare channel
+
+   Channel_1 : constant Compare_Input :=
+     (Use_Trigger_Input => False, Channel => 1);
+
+   type Capture_Compare_Setting (Is_Input : Boolean := False) is record
+      case Is_Input is
+         when True =>
+            Rising_Edge  : Boolean := True;
+            Falling_Edge : Boolean := False;
+            Filter       : Input_Capture_Filter;
+            Prescaler    : Division_1_8 := 1;
+            Input        : Compare_Input;
+         when False =>
+            Active_Level          : Bit := 1;
+            Compare_Mode          : STM32.Timer.Compare_Mode := Frozen;
+            Compare_Value_Preload : Boolean := False;
+            Fast_PWM              : Boolean := False;  --  See OC1FE in RM090
+      end case;
+   end record
+     with Dynamic_Predicate =>
+       (if Capture_Compare_Setting.Is_Input
+        then Capture_Compare_Setting.Rising_Edge or
+          Capture_Compare_Setting.Falling_Edge);
+
+   type Capture_Compare_Setting_Array is array (Channel_Index range <>) of
+     Capture_Compare_Setting;
+
+   subtype Positive_1 is Positive range 1 .. 1;
+   subtype Positive_2 is Positive range 1 .. 2;
+
+   type Pin_1_Array is array (Positive_1 range <>) of Pin;
+   type Pin_2_Array is array (Positive_2 range <>) of Pin;
+
+   type Boolean_2_Array is array (Positive_2) of Boolean;
+
+   type Slave_Mode_Kind is
+     (Disabled,
+      Reset,
+      --  Rising edge of the selected trigger input reinitializes the counter
+      --  and generates an update of the registers
+      Gated,
+      --  The counter clock is enabled when the trigger input is high. The
+      --  counter stops (but is not reset) as soon as the trigger becomes
+      --  low. Counter starts and stops are both controlled
+      Trigger,
+      --  The counter starts on a rising edge of the trigger (but it is not
+      --  reset). Only the start of the counter is controlled
+      External_Clock
+      --  Rising edges of the selected trigger clock the counter
+   );
+
+   type Trigger_Input_Kind is
+     (Other_Timer,           --  Internal Trigger 0..3
+      Edge_Detected,         --  TI1 Edge Detector
+      Filtered_Timer_Input,  --  Filtered Timer Input 1..2
+      External_Trigger);
+
 private
 
    procedure Init_GPIO (Item : Pin; Fun : Interfaces.Unsigned_32);
 
-   AF_TIM_3_4_5 : constant := 2;
+   AF_TIM_3_4_5  : constant := 2;
+   AF_TIM_8_11  : constant := 3;
+   AF_TIM_12_14 : constant := 9;
 
    generic
       Periph    : in out STM32.Registers.TIM.TIM_Peripheral;

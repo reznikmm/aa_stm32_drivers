@@ -4,11 +4,11 @@
 ----------------------------------------------------------------
 
 with STM32.System_Clocks;
-with STM32.Timer.Basic_Polling_Implementation;
+with STM32.Timer.Generic_Polling_Implementation;
 
 package STM32.Timer.Polling_TIM_6 is
 
-   procedure Reset;
+   procedure Initialize;
    --  Enable timer and reset it.
 
    procedure Configure (Setting : Basic_Settings);
@@ -45,19 +45,13 @@ private
 
    pragma Warnings (Off, "volatile actual passed by copy");
 
-   package Implementation is new Basic_Polling_Implementation
+   package Implementation is new Generic_Polling_Implementation
      (Periph => STM32.Registers.TIM.TIM6_Periph);
 
    pragma Warnings (On, "volatile actual passed by copy");
 
-   procedure Configure (Setting : Basic_Settings) renames
-     Implementation.Configure;
-
    function Configuration return Basic_Configuration renames
      Implementation.Configuration;
-
-   procedure Update_Generation renames
-     Implementation.Update_Generation;
 
    procedure Set_Prescaler (Value : Interfaces.Unsigned_16) renames
      Implementation.Set_Prescaler;

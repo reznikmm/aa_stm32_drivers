@@ -19,6 +19,9 @@ package body STM32.System_Clocks is
    function TIMCLK1 return Interfaces.Unsigned_32 is
      (Interfaces.Unsigned_32 (System.STM32.System_Clocks.TIMCLK1));
 
+   function TIMCLK2 return Interfaces.Unsigned_32 is
+     (Interfaces.Unsigned_32 (System.STM32.System_Clocks.TIMCLK2));
+
    function HSE return Interfaces.Unsigned_32 is
       (System.BB.Parameters.HSE_Clock);
 

@@ -20,6 +20,10 @@ package STM32.System_Clocks is
      with Inline;
    --  Timer clock frequency
 
+   function TIMCLK2 return Interfaces.Unsigned_32
+     with Inline;
+   --  APB2 timer clock frequency
+
    function HSE return Interfaces.Unsigned_32
      with Inline;
    --  High speed external oscillator

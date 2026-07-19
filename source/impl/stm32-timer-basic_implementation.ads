@@ -7,7 +7,7 @@ with Ada.Interrupts;
 with System;
 with A0B.Callbacks;
 with STM32.Registers.TIM;
-with STM32.Timer.Basic_Polling_Implementation;
+with STM32.Timer.Generic_Polling_Implementation;
 
 generic
    Periph    : in out STM32.Registers.TIM.TIM_Peripheral;
@@ -54,19 +54,15 @@ private
 
    pragma Warnings (Off, "volatile actual passed by copy");
 
-   package Polling is new Basic_Polling_Implementation
+   package Polling is new Generic_Polling_Implementation
      (Periph => Periph);
 
    pragma Warnings (On, "volatile actual passed by copy");
 
    function Counter return Interfaces.Unsigned_16 renames Polling.Counter;
 
-   procedure Configure (Setting : Basic_Settings) renames Polling.Configure;
-
    function Configuration return Basic_Configuration
      renames Polling.Configuration;
-
-   procedure Update_Generation renames Polling.Update_Generation;
 
    procedure Set_Prescaler
      (Value : Interfaces.Unsigned_16) renames Polling.Set_Prescaler;
