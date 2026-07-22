@@ -137,7 +137,7 @@ package STM32.Timer is
          when True =>
             null;
          when False =>
-            Channel : Channel_Index range 1 .. 2 := 1;
+            Channel : Channel_Index := 1;
       end case;
    end record;
    --  Define input for a compare channel
@@ -166,15 +166,24 @@ package STM32.Timer is
           Capture_Compare_Setting.Falling_Edge);
 
    type Capture_Compare_Setting_Array is array (Channel_Index range <>) of
-     Capture_Compare_Setting;
+     Capture_Compare_Setting
+       with Dynamic_Predicate =>
+        (for all Channel in Capture_Compare_Setting_Array'Range =>
+           Input_Channel_Matches_Index
+             (Capture_Compare_Setting_Array (Channel), Channel));
+    --  Capture channel 1..2 can have Input.Channel 1|2 only.
+    --  Capture channel 3..4 can have Input.Channel 3|4 only.
 
    subtype Positive_1 is Positive range 1 .. 1;
    subtype Positive_2 is Positive range 1 .. 2;
+   subtype Positive_4 is Positive range 1 .. 4;
 
    type Pin_1_Array is array (Positive_1 range <>) of Pin;
    type Pin_2_Array is array (Positive_2 range <>) of Pin;
+   type Pin_4_Array is array (Positive_4 range <>) of Pin;
 
-   type Boolean_2_Array is array (Positive_2) of Boolean;
+   type Boolean_2_Array is array (Channel_Index range 1 .. 2) of Boolean;
+   type Boolean_4_Array is array (Channel_Index) of Boolean;
 
    type Slave_Mode_Kind is
      (Disabled,
@@ -202,7 +211,8 @@ private
 
    procedure Init_GPIO (Item : Pin; Fun : Interfaces.Unsigned_32);
 
-   AF_TIM_3_4_5  : constant := 2;
+   AF_TIM_1_2   : constant := 1;
+   AF_TIM_3_4_5 : constant := 2;
    AF_TIM_8_11  : constant := 3;
    AF_TIM_12_14 : constant := 9;
 
@@ -317,5 +327,12 @@ private
       end Device;
 
    end Capture_Implementation;
+
+   function Input_Channel_Matches_Index
+     (Item    : Capture_Compare_Setting;
+      Channel : Channel_Index) return Boolean is
+       (if Item.Is_Input and then not Item.Input.Use_Trigger_Input then
+         (if Channel in 1 .. 2 then Item.Input.Channel in 1 | 2
+          else Item.Input.Channel in 3 | 4));
 
 end STM32.Timer;

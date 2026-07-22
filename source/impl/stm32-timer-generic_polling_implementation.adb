@@ -161,7 +161,7 @@ package body STM32.Timer.Generic_Polling_Implementation is
    procedure Generate_Event
      (Update          : Boolean := False;
       Trigger         : Boolean := False;
-      Compare_Capture : Boolean_2_Array := (others => False)) is
+      Compare_Capture : Boolean_4_Array := (others => False)) is
    begin
       Periph.EGR :=
         (UG       => Update,
@@ -170,7 +170,8 @@ package body STM32.Timer.Generic_Polling_Implementation is
          CCxG     =>
            (1 => Compare_Capture (1),
             2 => Compare_Capture (2),
-            others => False),
+            3 => Compare_Capture (3),
+            4 => Compare_Capture (4)),
          others   => False);
    end Generate_Event;
 

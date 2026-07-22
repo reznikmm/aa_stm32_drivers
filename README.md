@@ -44,6 +44,7 @@ prioritizing simplicity and efficiency.
     - [Basic timer with no compare/capture channel (no GPIO pin)](#basic-timer-with-no-comparecapture-channel-no-gpio-pin)
     - [Generic timer with a single compare/capture channel (1 GPIO pin)](#generic-timer-with-a-single-comparecapture-channel-1-gpio-pin)
     - [Generic timer with 2 compare/capture channels](#generic-timer-with-2-comparecapture-channels)
+    - [Generic timer with 4 compare/capture channels](#generic-timer-with-4-comparecapture-channels)
     - [Basic timer with interrupt](#basic-timer-with-interrupt)
     - [PWM with timers](#pwm-with-timers)
   - [Timers with DMA](#timers-with-dma)
@@ -609,6 +610,16 @@ begin
            Compare_Value_Preload => True,
            Fast_PWM              => False)));
 ```
+
+#### Generic timer with 4 compare/capture channels
+
+> TIM2, TIM3 and 32-bit timers TIM4, TIM5
+
+These timers provide 4 compare/capture channels.
+
+New trigger input: External_Trigger.
+
+TBD
 
 #### Basic timer with interrupt
 

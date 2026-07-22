@@ -54,7 +54,7 @@ package STM32.Timer.Generic_Polling_Implementation is
    procedure Generate_Event
      (Update          : Boolean := False;
       Trigger         : Boolean := False;
-      Compare_Capture : Boolean_2_Array := (others => False));
+      Compare_Capture : Boolean_4_Array := (others => False));
    --  Generate selected events:
    --
    --  * Update -
