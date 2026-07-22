@@ -103,7 +103,7 @@ package STM32.Timer is
       Force_Inactive,
       --  Force channel to inactive level
       Force_Active,
-      --  Force channel to inactive active
+      --  Force channel to active level
       PWM_Active,
       --  Channel is active as long as counter less than the compare value.
       PWM_Inactive);
