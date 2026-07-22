@@ -12,7 +12,14 @@ package body STM32.Timer.Polling_TIM_12 is
       Trigger         : Boolean := False;
       Compare_Capture : Boolean_2_Array := (others => False)) is
    begin
-      Implementation.Generate_Event (Update, Trigger, Compare_Capture);
+         Implementation.Generate_Event
+            (Update,
+             Trigger,
+             Compare_Capture =>
+                (1 => Compare_Capture (1),
+                 2 => Compare_Capture (2),
+                 3 => False,
+                 4 => False));
    end Generate_Event;
 
    procedure Initialize (Pin : Pin_2_Array := (1 .. 0 => <>)) is

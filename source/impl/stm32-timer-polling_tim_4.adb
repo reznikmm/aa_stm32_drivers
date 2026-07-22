@@ -5,43 +5,36 @@
 
 with STM32.Registers.RCC;
 
-package body STM32.Timer.Polling_TIM_9 is
+package body STM32.Timer.Polling_TIM_4 is
 
    procedure Generate_Event
      (Update          : Boolean := False;
       Trigger         : Boolean := False;
-      Compare_Capture : Boolean_2_Array := (others => False)) is
+      Compare_Capture : Boolean_4_Array := (others => False)) is
    begin
-         Implementation.Generate_Event
-            (Update,
-             Trigger,
-             Compare_Capture =>
-                (1 => Compare_Capture (1),
-                 2 => Compare_Capture (2),
-                 3 => False,
-                 4 => False));
+      Implementation.Generate_Event (Update, Trigger, Compare_Capture);
    end Generate_Event;
 
-   procedure Initialize (Pin : Pin_2_Array := (1 .. 0 => <>)) is
+   procedure Initialize (Pin : Pin_4_Array := (1 .. 0 => <>)) is
    begin
-      STM32.Registers.RCC.RCC_Periph.APB2ENR.TIM9EN := True;
-      STM32.Registers.RCC.RCC_Periph.APB2RSTR.TIM9RST := True;
-      STM32.Registers.RCC.RCC_Periph.APB2RSTR.TIM9RST := False;
+      STM32.Registers.RCC.RCC_Periph.APB1ENR.TIM_EN_2_7 (4) := True;
+      STM32.Registers.RCC.RCC_Periph.APB1RSTR.TIM_EN_2_7 (4) := True;
+      STM32.Registers.RCC.RCC_Periph.APB1RSTR.TIM_EN_2_7 (4) := False;
 
       for Item of Pin loop
-         Init_GPIO (Item, AF_TIM_8_11);
+         Init_GPIO (Item, AF_TIM_3_4_5);
       end loop;
    end Initialize;
 
    procedure Set_Frequency (Value : Positive) is
    begin
-      Implementation.Set_Frequency (Value, STM32.System_Clocks.TIMCLK2);
+      Implementation.Set_Frequency (Value, STM32.System_Clocks.TIMCLK1);
    end Set_Frequency;
 
    procedure Setup
      (Slave_Mode    : Timer.Slave_Mode_Kind := Disabled;
-      Trigger_Input : Polling_TIM_9.Trigger_Input := (others => <>);
-      Channels      : Capture_Compare_Setting_Array := (1 .. 2 => <>);
+      Trigger_Input : Polling_TIM_4.Trigger_Input := (others => <>);
+      Channels      : Capture_Compare_Setting_Array := (1 .. 4 => <>);
       Master_Slave  : Boolean := False)
    is
       Input : constant Implementation.Trigger_Input :=
@@ -50,17 +43,19 @@ package body STM32.Timer.Polling_TIM_9 is
               (Kind => Other_Timer,
                Master =>
                  (case Trigger_Input.Timer is
-                     when 2 => 0,
-                     when 3 => 1,
-                     when 10 => 2,
-                     when 11 => 3)),
+                     when 1 => 0,
+                     when 2 => 1,
+                     when 3 => 2,
+                     when 8 => 3)),
             when Edge_Detected =>
               (Kind => Edge_Detected),
             when Filtered_Timer_Input =>
-              (Filtered_Timer_Input, Trigger_Input.Channel));
+              (Filtered_Timer_Input, Trigger_Input.Channel),
+            when External_Trigger =>
+              (Kind => External_Trigger));
    begin
       Implementation.Setup_As_Slave (Slave_Mode, Input, Master_Slave);
       Implementation.Enable_Channel (Channels);
    end Setup;
 
-end STM32.Timer.Polling_TIM_9;
+end STM32.Timer.Polling_TIM_4;
