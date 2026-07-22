@@ -161,18 +161,21 @@ package body STM32.Timer.Generic_Polling_Implementation is
    procedure Generate_Event
      (Update          : Boolean := False;
       Trigger         : Boolean := False;
-      Compare_Capture : Boolean_4_Array := (others => False)) is
+      Compare_Capture : Boolean_4_Array := (others => False);
+      Control_Update  : Boolean := False;
+      Break           : Boolean := False) is
    begin
       Periph.EGR :=
         (UG       => Update,
          TG       => Trigger,
-         Reserved => 0,
+         COMG     => Control_Update,
+         BG       => Break,
          CCxG     =>
            (1 => Compare_Capture (1),
             2 => Compare_Capture (2),
             3 => Compare_Capture (3),
             4 => Compare_Capture (4)),
-         others   => False);
+         Reserved => 0);
    end Generate_Event;
 
    procedure Set_Frequency

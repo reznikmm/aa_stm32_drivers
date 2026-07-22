@@ -40,7 +40,6 @@ prioritizing simplicity and efficiency.
     - [SPI Polling](#spi-polling)
     - [SPI Interrupts and DMA](#spi-interrupts-and-dma)
   - [Timers](#timers)
-    - [Basic timers (TIM6/TIM7)](#basic-timers-tim6tim7)
     - [Basic timer with no compare/capture channel (no GPIO pin)](#basic-timer-with-no-comparecapture-channel-no-gpio-pin)
     - [Generic timer with a single compare/capture channel (1 GPIO pin)](#generic-timer-with-a-single-comparecapture-channel-1-gpio-pin)
     - [Generic timer with 2 compare/capture channels](#generic-timer-with-2-comparecapture-channels)
@@ -406,7 +405,9 @@ The callback is called when the transfer is complete.
 
 ### Timers
 
-#### Basic timers (TIM6/TIM7)
+#### Basic timer with no compare/capture channel (no GPIO pin)
+
+> TIM6, TIM7
 
 TIM6 and TIM7 are the simplest timer peripherals available on STM32. They
 have a minimal feature set:
@@ -437,10 +438,6 @@ The update event can raise an interrupt or issue a DMA request. Two
   entirely (no interrupt, no DMA, shadow registers are not reloaded), though
   the counter and prescaler are still re-initialized by `Update_Generation`.
 
-#### Basic timer with no compare/capture channel (no GPIO pin)
-
-> TIM6, TIM7
-
 A simple basic polling timer example:
 
 ```ada
@@ -455,7 +452,7 @@ procedure Polling_Timer is
 
    Next : Ada.Real_Time.Time := Ada.Real_Time.Clock;
 begin
-   Timer.Reset;  --  Enable timer and reset it
+   Timer.Initialize;  --  Enable timer and reset it
    Timer.Set_Frequency (10_000);  --  Set prescaler to work on 10kHz
 
    Timer.Configure
@@ -611,13 +608,23 @@ begin
            Fast_PWM              => False)));
 ```
 
-#### Generic timer with 4 compare/capture channels
+#### Generic timers with 4 compare/capture channels
 
 > TIM2, TIM3 and 32-bit timers TIM4, TIM5
 
 These timers provide 4 compare/capture channels.
 
 New trigger input: External_Trigger.
+
+TBD
+
+#### Advanced timers with 4 compare/capture channels
+
+> TIM1, TIM8
+
+ They also support two additional generated events:
+- `Control_Update`  - Capture/Compare control update event
+- `Break` - a break event
 
 TBD
 
@@ -633,11 +640,11 @@ with STM32.Timer.TIM_7;
 with Suspension_Object_Callbacks;
 
 procedure TIM_DMA is
-   package TIM_7 is new STM32.Timer.TIM_7 (Priority => 241);
+   package TIM is new STM32.Timer.TIM_7 (Priority => 241);
 
    Lock : aliased Ada.Synchronous_Task_Control.Suspension_Object;
 begin
-   TIM.Reset;
+   TIM.Initialize;
 
    TIM.Set_Frequency (10_000);  --  10kHz
    TIM.Set_Auto_Reload_Value (10_000);  --  Update once a second

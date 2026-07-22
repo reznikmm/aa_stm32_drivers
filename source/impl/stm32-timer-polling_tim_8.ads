@@ -3,50 +3,56 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ----------------------------------------------------------------
 
-with STM32.Registers.TIM;
+with STM32.System_Clocks;
+with STM32.Timer.Generic_Polling_Implementation;
 
-generic
-   Periph : in out STM32.Registers.TIM.TIM_Peripheral;
-package STM32.Timer.Generic_Polling_Implementation is
+package STM32.Timer.Polling_TIM_8 is
+
+   procedure Initialize (Pin : Pin_4_Array := (1 .. 0 => <>))
+     with Pre =>
+       (for all Item of Pin => Item in
+          (PC, 6) | (PI, 5) |
+          (PC, 7) | (PI, 6) |
+          (PC, 8) | (PI, 7) |
+          (PC, 9) | (PI, 2));
+   --  Enable timer and reset it.
 
    procedure Configure
      (Setting               : Basic_Settings;
-      Filter_Clock_Division : Optional_1_2_4);
+      Filter_Clock_Division : Optional_1_2_4 := (Is_Set => False));
    --  Change timer configuration including F_DTS clock division
 
    function Configuration return Basic_Configuration with Inline;
    --  Return current timer configuration
 
-   type Trigger_Input (Kind : Trigger_Input_Kind := Edge_Detected) is record
+   subtype Master_Timer is Positive
+     with Static_Predicate => Master_Timer in 1 | 2 | 4 | 5;
+
+   type Trigger_Input (Kind : Trigger_Input_Kind := Other_Timer) is record
       case Kind is
          when Other_Timer =>
-            Master : Natural range 0 .. 3;
+            Timer : Master_Timer := 1;
          when Edge_Detected =>
-            null;
+            null;  --  TI1 Edge Detector
          when Filtered_Timer_Input =>
             Channel : Positive range 1 .. 2;
          when External_Trigger =>
-            null;
+            null;  --  ETRF
       end case;
    end record;
 
-   type Slave_Mode (Kind : Slave_Mode_Kind := Disabled) is record
-      case Kind is
-         when Disabled | External_Clock =>
-            null;
-         when others =>
-            Input : Trigger_Input;
-      end case;
-   end record;
-
-   procedure Setup_As_Slave
-     (Slave_Mode    : Slave_Mode_Kind := Disabled;
-      Trigger_Input : Generic_Polling_Implementation.Trigger_Input;
-      Master_Slave  : Boolean := False);
-   --  Configure slave mode control register (TIMx_SMCR)
-
-   procedure Enable_Channel (Setting : Capture_Compare_Setting_Array);
-   --  Configure and enable Capture or Compare channel.
+   procedure Setup
+     (Slave_Mode    : Timer.Slave_Mode_Kind := Disabled;
+      Trigger_Input : Polling_TIM_8.Trigger_Input := (others => <>);
+      Channels      : Capture_Compare_Setting_Array := (1 .. 4 => <>);
+      Master_Slave  : Boolean := False)
+     with Pre =>
+       not (Slave_Mode = Gated and Trigger_Input.Kind = Edge_Detected) and
+       (Trigger_Input.Kind in Other_Timer | Edge_Detected or else
+         (for all Channel of Channels =>
+            not (Channel.Is_Input and then Channel.Input.Use_Trigger_Input)));
+   --  Set slave mode, trigger input, configure and enable Capture/Compare
+   --  channels.
 
    procedure Enable_Channel (Channel : Channel_Index; On : Boolean);
    --  Enable or disable already configured Capture/Compare channel.
@@ -57,7 +63,6 @@ package STM32.Timer.Generic_Polling_Implementation is
       Compare_Capture : Boolean_4_Array := (others => False);
       Control_Update  : Boolean := False;
       Break           : Boolean := False);
-   --  Generate selected events:
    --
    --  * Update -
    --    Re-initializes the timer counter and generates an update of the
@@ -88,12 +93,10 @@ package STM32.Timer.Generic_Polling_Implementation is
    procedure Set_Prescaler (Value : Interfaces.Unsigned_16);
    --  Assign prescaler
 
-   procedure Set_Frequency
-     (Value : Positive;
-      Clock : Interfaces.Unsigned_32);
+   procedure Set_Frequency (Value : Positive);
    --  Assign prescaler to make timer works on given frequency (Hz).
 
-   function Frequency (Clock : Interfaces.Unsigned_32) return Positive;
+   function Frequency return Positive;
    --  Return current frequency (Hz) corresponding to the prescaler value
    --  and clock frequency.
 
@@ -107,8 +110,7 @@ package STM32.Timer.Generic_Polling_Implementation is
    --  Current counter value
 
    procedure Set_Compare_Value
-     (Channel : Channel_Index;
-      Value   : Interfaces.Unsigned_16);
+     (Channel : Channel_Index; Value : Interfaces.Unsigned_16);
    --  Assign value to CCRx register
 
    function Captured_Value
@@ -117,11 +119,45 @@ package STM32.Timer.Generic_Polling_Implementation is
 
 private
 
-   function Counter return Interfaces.Unsigned_16 is
-     (Interfaces.Unsigned_16'Mod (Periph.CNT));
+   pragma Warnings (Off, "volatile actual passed by copy");
+
+   package Implementation is new Generic_Polling_Implementation
+     (Periph => STM32.Registers.TIM.TIM8_Periph);
+
+   pragma Warnings (On, "volatile actual passed by copy");
+
+   procedure Configure
+     (Setting               : Basic_Settings;
+      Filter_Clock_Division : Optional_1_2_4 := (Is_Set => False)) renames
+     Implementation.Configure;
+
+   procedure Enable_Channel (Channel : Channel_Index; On : Boolean) renames
+     Implementation.Enable_Channel;
+
+   function Configuration return Basic_Configuration renames
+     Implementation.Configuration;
+
+   procedure Set_Prescaler (Value : Interfaces.Unsigned_16) renames
+     Implementation.Set_Prescaler;
+
+   procedure Set_Counter (Value : Interfaces.Unsigned_16) renames
+     Implementation.Set_Counter;
+
+   procedure Set_Auto_Reload_Value (Value : Interfaces.Unsigned_16) renames
+     Implementation.Set_Auto_Reload_Value;
+
+   function Counter return Interfaces.Unsigned_16 renames
+     Implementation.Counter;
+
+   procedure Set_Compare_Value
+     (Channel : Channel_Index; Value : Interfaces.Unsigned_16) renames
+       Implementation.Set_Compare_Value;
 
    function Captured_Value
-     (Channel : Channel_Index) return Interfaces.Unsigned_16 is
-       (Interfaces.Unsigned_16'Mod (Periph.CCR (Channel)));
+     (Channel : Channel_Index) return Interfaces.Unsigned_16 renames
+       Implementation.Captured_Value;
 
-end STM32.Timer.Generic_Polling_Implementation;
+   function Frequency return Positive is
+     (Implementation.Frequency (STM32.System_Clocks.TIMCLK2));
+
+end STM32.Timer.Polling_TIM_8;
