@@ -13,7 +13,7 @@ with A0B.Callbacks;
 private with Ada.Interrupts.Names;
 private with STM32.Registers.I2C;
 private with STM32.DMA.Stream_1_0;
-private with STM32.DMA.Stream_1_6;
+private with STM32.DMA.Stream_1_7;
 
 generic
    Priority : System.Any_Priority;
@@ -60,7 +60,7 @@ package STM32.I2C.DMA_I2C_1 is
 private
 
    package Stream_1_0 is new STM32.DMA.Stream_1_0 (Priority);
-   package Stream_1_6 is new STM32.DMA.Stream_1_6 (Priority);
+   package Stream_1_7 is new STM32.DMA.Stream_1_7 (Priority);
 
    package Implementation is new DMA_Implementation
      (STM32.Registers.I2C.I2C1_Periph,
@@ -69,7 +69,7 @@ private
       Event_Interrupt => Ada.Interrupts.Names.I2C1_EV_Interrupt,
       Error_Interrupt => Ada.Interrupts.Names.I2C1_ER_Interrupt,
       RX_Stream       => Stream_1_0.Stream,
-      TX_Stream       => Stream_1_6.Stream);
+      TX_Stream       => Stream_1_7.Stream);
 
    function Has_Error return Boolean is (Implementation.Device.Has_Error);
 
