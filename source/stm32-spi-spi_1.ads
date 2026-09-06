@@ -46,7 +46,7 @@ private
 
    package Implementation is new SPI_Implementation
      (STM32.Registers.SPI.SPI1_Periph,
-      AF        => SPI_1_AF,
+      AF        => STM32.SPI_AF.SPI_1_AF,
       Interrupt => Ada.Interrupts.Names.SPI1_Interrupt,
       Priority  => Priority);
 

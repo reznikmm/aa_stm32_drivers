@@ -77,4 +77,13 @@ package body STM32.UART.USART_6 is
       Implementation.Device.Start_Writing (Buffer, Length, Done);
    end Start_Writing;
 
+   ----------
+   -- Stop --
+   ----------
+
+   procedure Stop is
+   begin
+      Implementation.Device.Stop;
+   end Stop;
+
 end STM32.UART.USART_6;

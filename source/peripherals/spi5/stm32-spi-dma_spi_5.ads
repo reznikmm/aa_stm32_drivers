@@ -54,7 +54,7 @@ private
       Channel   => 2,
       Interrupt => Ada.Interrupts.Names.SPI5_Interrupt,
       Priority  => Priority,
-      AF        => SPI_3_6_AF,
+      AF        => STM32.SPI_AF.SPI_5_AF,
       RX_Stream => Stream_2_3.Stream,
       TX_Stream => Stream_2_4.Stream);
 

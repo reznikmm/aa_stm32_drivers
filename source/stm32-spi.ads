@@ -18,6 +18,7 @@ private with System;
 private with A0B.Callbacks;
 private with STM32.DMA;
 private with STM32.Registers.SPI;
+private with STM32.SPI_AF;
 
 package STM32.SPI is
 
@@ -46,19 +47,13 @@ package STM32.SPI is
 
 private
 
-   subtype SPI_AF is Interfaces.Unsigned_32 range 5 .. 6;
-
-   SPI_1_AF   : constant SPI_AF := 5;
-   SPI_2_3_AF : constant SPI_AF := 6;
-   SPI_3_6_AF : constant SPI_AF := 5;
-
-   procedure Init_GPIO (Item : Pin; AF : SPI_AF);
+   procedure Init_GPIO (Item : Pin; AF : STM32.SPI_AF.SPI_AF);
 
    generic
       Periph    : in out STM32.Registers.SPI.SPI_Peripheral;
       Interrupt : Ada.Interrupts.Interrupt_ID;
       Priority  : System.Interrupt_Priority;
-      AF        : SPI_AF;
+      AF        : STM32.SPI_AF.SPI_AF;
    package SPI_Implementation is
       --  Generic implementation for SPI initializaion, operations and
       --  interrupt handling procedure
@@ -100,7 +95,7 @@ private
       Channel   : STM32.DMA.Channel_Id;
       Interrupt : Ada.Interrupts.Interrupt_ID;
       Priority  : System.Interrupt_Priority;
-      AF        : SPI_AF;
+      AF        : STM32.SPI_AF.SPI_AF;
 
       with package RX_Stream is new STM32.DMA.Generic_DMA_Stream (<>);
       with package TX_Stream is new STM32.DMA.Generic_DMA_Stream (<>);
@@ -145,7 +140,7 @@ private
 
    generic
       Periph : in out STM32.Registers.SPI.SPI_Peripheral;
-      AF     : SPI_AF;
+      AF     : STM32.SPI_AF.SPI_AF;
    package Polling_Implementation is
 
       procedure Configure
