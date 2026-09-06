@@ -38,7 +38,7 @@ package STM32.SPI.Polling_SPI_2 is
 private
 
    package Implementation is new Polling_Implementation
-     (STM32.Registers.SPI.SPI2_Periph, SPI_2_3_AF);
+     (STM32.Registers.SPI.SPI2_Periph, STM32.SPI_AF.SPI_2_AF);
 
    function Status return STM32.SPI.Status renames Implementation.Status;
 

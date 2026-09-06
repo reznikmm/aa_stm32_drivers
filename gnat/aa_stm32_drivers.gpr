@@ -8,15 +8,101 @@ with "../config/aa_stm32_drivers_config.gpr";
 project Aa_Stm32_Drivers is
 
    for Library_Name use "aa_stm32";
-   for Library_Version use Project'Library_Name & ".so." & Aa_Stm32_Drivers_Config.Crate_Version;
+   for Library_Version use Project'Library_Name & ".so."
+     & Aa_Stm32_Drivers_Config.Crate_Version;
 
    MCU := Aa_Stm32_Drivers_Config.AA_MCU;
+
+   TIM6_Source :=
+     ("../source/peripherals/tim6",
+      "../source/impl/peripherals/tim6",
+      "../source/polling/peripherals/tim6");
+
+   TIM7_Source :=
+     ("../source/peripherals/tim7",
+      "../source/impl/peripherals/tim7",
+      "../source/polling/peripherals/tim7");
+
+   TIM8_Source :=
+     ("../source/impl/peripherals/tim8",
+      "../source/polling/peripherals/tim8");
+
+   SPI4_Source :=
+     ("../source/peripherals/spi4", "../source/impl/peripherals/spi4");
+
+   SPI5_Source :=
+     ("../source/peripherals/spi5", "../source/impl/peripherals/spi5");
+
+   RNG_Source :=
+     ("../source/peripherals/rng", "../source/impl/peripherals/rng");
+
+   UART3_Source :=
+     ("../source/peripherals/uart3",
+      "../source/impl/peripherals/uart3",
+      "../source/polling/peripherals/uart3");
+
+   UART4_Source :=
+     ("../source/peripherals/uart4",
+      "../source/impl/peripherals/uart4",
+      "../source/polling/peripherals/uart4");
+
+   UART5_Source :=
+     ("../source/peripherals/uart5",
+      "../source/impl/peripherals/uart5",
+      "../source/polling/peripherals/uart5");
+
+   ADC1_Source :=
+     ("../source/peripherals/adc1",
+      "../source/impl/peripherals/adc1");
+
+   MCU_Specific_Source := ();
+   case MCU is
+      when "stm32f4" =>
+         MCU_Specific_Source :=
+           ("../source/impl/runtime/std", -- for gnat runtime
+            "../source/peripherals/dcmi",
+            "../source/impl/peripherals/tim12",
+            "../source/impl/peripherals/tim13",
+            "../source/impl/peripherals/tim14")
+           & RNG_Source
+           & TIM6_Source
+           & TIM7_Source
+           & TIM8_Source
+           & UART3_Source
+           & UART4_Source
+           & UART5_Source;
+
+      when "stm32f411" =>
+         MCU_Specific_Source :=
+           ("../source/impl/runtime/ext") --  for internal runtime
+           & SPI4_Source
+           & ADC1_Source;
+
+      when "stm32f429disco" => null;
+         MCU_Specific_Source :=
+           ("../source/impl/runtime/std", -- for gnat runtime
+            "../source/peripherals/dcmi",
+            "../source/impl/peripherals/tim12",
+            "../source/impl/peripherals/tim13",
+            "../source/impl/peripherals/tim14")
+           & Rng_Source
+           & SPI4_Source
+           & SPI5_Source
+           & TIM6_Source
+           & TIM7_Source
+           & TIM8_Source
+           & UART3_Source
+           & UART4_Source
+           & UART5_Source;
+
+      when others => null;
+   end case;
 
    for Source_Dirs use
      ("../source/",
       "../source/impl",
       "../source/polling",
-      "../source/" & MCU);
+      "../source/" & MCU) & MCU_Specific_Source;
 
    for Object_Dir use "../obj/" & Aa_Stm32_Drivers_Config.Build_Profile;
    for Create_Missing_Dirs use "True";
