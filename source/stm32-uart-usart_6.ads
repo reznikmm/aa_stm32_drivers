@@ -68,6 +68,8 @@ package STM32.UART.USART_6 is
    --  sent trigger Done callback. No other call to Start_Writing is allowed
    --  until Done is triggered.
 
+   procedure Stop;
+   --  Stop reading/writing
 private
 
    package Implementation is new UART_Implementation

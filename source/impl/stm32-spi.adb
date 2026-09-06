@@ -12,7 +12,7 @@ package body STM32.SPI is
 
    procedure Configure
      (Periph : in out STM32.Registers.SPI.SPI_Peripheral;
-      AF     : SPI_AF;
+      AF     : STM32.SPI_AF.SPI_AF;
       SCK    : Pin;
       MISO   : Pin;
       MOSI   : Pin;
@@ -26,7 +26,7 @@ package body STM32.SPI is
 
    procedure Configure
      (Periph : in out STM32.Registers.SPI.SPI_Peripheral;
-      AF     : SPI_AF;
+      AF     : STM32.SPI_AF.SPI_AF;
       SCK    : Pin;
       MISO   : Pin;
       MOSI   : Pin;
@@ -75,7 +75,7 @@ package body STM32.SPI is
    -- Init_GPIO --
    ---------------
 
-   procedure Init_GPIO (Item : Pin; AF : SPI_AF) is
+   procedure Init_GPIO (Item : Pin; AF : STM32.SPI_AF.SPI_AF) is
 
       procedure Init_GPIO
         (Periph : in out STM32.Registers.GPIO.GPIO_Peripheral;

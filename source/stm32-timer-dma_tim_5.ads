@@ -17,18 +17,16 @@ generic
    --  Priority is used for underlying protected object.
 package STM32.Timer.DMA_TIM_5 is
 
-   subtype Pin_Array is STM32.Timer.Pin_Array
-     with Dynamic_Predicate =>
-       (if 1 in Pin_Array'Range then Pin_Array (1) = (PA, 0)) and
-       (if 2 in Pin_Array'Range then Pin_Array (2) = (PA, 1)) and
-       (if 3 in Pin_Array'Range then Pin_Array (3) = (PA, 2)) and
-       (if 4 in Pin_Array'Range then Pin_Array (4) = (PA, 3));
-
    procedure Configure_PWM
-     (Pins    : Pin_Array;
+     (Pins    : STM32.Timer.Pin_Array;
       Speed   : Interfaces.Unsigned_32;
       Period  : Interfaces.Unsigned_32;
-      Duty    : Interfaces.Unsigned_32);
+      Duty    : Interfaces.Unsigned_32)
+     with Pre =>
+       (if 1 in Pins'Range then Pins (1) = (PA, 0)) and
+       (if 2 in Pins'Range then Pins (2) = (PA, 1)) and
+       (if 3 in Pins'Range then Pins (3) = (PA, 2)) and
+       (if 4 in Pins'Range then Pins (4) = (PA, 3));
    --  Configure TIM5 on given pins, speed, constant period and duty.
 
    procedure Start_PWM_With_Period

@@ -17,20 +17,17 @@ generic
    --  Priority is used for underlying protected object.
 package STM32.Timer.DMA_TIM_3 is
 
-   subtype Pin_Array is STM32.Timer.Pin_Array
-     with Dynamic_Predicate =>
-       (if 1 in Pin_Array'Range
-          then Pin_Array (1) in (PA, 6) | (PB, 4) | (PC, 6)) and
-       (if 2 in Pin_Array'Range
-          then Pin_Array (2) in (PA, 7) | (PB, 5) | (PC, 7)) and
-       (if 3 in Pin_Array'Range then Pin_Array (3) in (PB, 0) | (PC, 8)) and
-       (if 4 in Pin_Array'Range then Pin_Array (4) in (PB, 1) | (PC, 9));
-
    procedure Configure_PWM
-     (Pins    : Pin_Array;
+     (Pins    : STM32.Timer.Pin_Array;
       Speed   : Interfaces.Unsigned_32;
       Period  : Interfaces.Unsigned_16;
-      Duty    : Interfaces.Unsigned_16);
+      Duty    : Interfaces.Unsigned_16)
+     with Pre =>
+       (if 1 in Pins'Range then Pins (1) in (PA, 6) | (PB, 4) | (PC, 6)) and
+       (if 2 in Pins'Range then Pins (2) in (PA, 7) | (PB, 5) | (PC, 7)) and
+       (if 3 in Pins'Range then Pins (3) in (PB, 0) | (PC, 8)) and
+       (if 4 in Pins'Range then Pins (4) in (PB, 1) | (PC, 9));
+
    --  Configure TIM3 on given pins, speed, constant period and duty.
    --  The Speed parameter specifies in what units the Period and Duty values
    --  are given. For example, to specify values in microseconds, set
