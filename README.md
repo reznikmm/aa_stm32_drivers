@@ -18,6 +18,7 @@ prioritizing simplicity and efficiency.
 | RNG   |   Y     |  Y  |     |
 | Flash |   -     |  Y  |     |
 | UID   |   Y     |     |     |
+| SDIO  |   Y     |  Y  |  Y  |
 | FSMC  |         |     |     |
 | SDRAM |         |     |     |
 
@@ -52,6 +53,7 @@ prioritizing simplicity and efficiency.
   - [FSMC (Flexible static memory controller)](#flexible-static-memory-controller-fsmc)
   - [SDRAM (Flexible memory controller, FMC)](#sdram-flexible-memory-controller-fmc)
   - [RNG (Random Number Generator)](#rng)
+  - [SDIO](#sdio)
 - [Demos](#demos)
 - [Maintainer](#maintainer)
 - [Contribute](#contribute)
@@ -66,6 +68,7 @@ prioritizing simplicity and efficiency.
   - SPI (Polling, Interrupts, DMA APIs)
   - Timers (Interrupts, DMA APIs)
   - MCUs UID
+  - SDIO host controller for `stm32f4` and `stm32f429` (Polling, Interrupts, DMA APIs)
   - Flash for `stm32f429` (Interrupts API)
   - Flexible static memory controller (FSMC) for `stm32f40x`
   - SDRAM controller (FMC SDRAM) for `stm32f429disco`
@@ -931,6 +934,68 @@ begin
 end Main;
 ```
 
+### SDIO
+
+The SDIO driver is a low level host controller driver. It sends a command,
+receives a response and optionally transfers data blocks. The SD/SDIO
+protocol (enumeration, CMD52/CMD53 encoding) belongs to the upper layer
+and not included here.
+There are three variants with the same command model:
+
+- Polling: `STM32.Polling.SDIO` (renaming of `STM32.SDIO.Polling_SDIO`)
+- Interrupt-driven: `STM32.SDIO.Generic_SDIO`
+- DMA-assisted: `STM32.SDIO.DMA_SDIO` (DMA2 Stream 3, channel 4,
+  peripheral flow control)
+
+The MCU has a single SDIO peripheral, so use only one variant in a program.
+Pins are fixed on STM32F40x/STM32F42x: CK = PC12, CMD = PD2,
+D0..D3 = PC8..PC11 (D4..D7 = PB8, PB9, PC6, PC7), while F411 has more
+choices.
+
+```ada
+SDIO.Configure
+  (Clock_Pin   => (STM32.PC, 12),
+   Command_Pin => (STM32.PD, 2),
+   Data_Pins   => ((STM32.PC, 8), (STM32.PC, 9), (STM32.PC, 10), (STM32.PC, 11)),
+   Speed       => 400_000);  --  Bus rate
+--  Enable and configure SDIO 1-bit bus with given pins and rate
+
+SDIO.Start_Command
+  ((Command  => 5,  --  CMD5
+    Argument => 0,
+    Response => STM32.SDIO.Short_Response_Without_CRC),
+   Done);
+--  CMD5 has R4 response without CRC.
+--  Wait for Done, then check SDIO.Has_Error and STM32.SDIO.Short_Response
+
+SDIO.Set_Bus (Speed => 24_000_000, Width => 4);
+--  Switch bus rate and width
+
+SDIO.Start_Command
+  (Item   => (Command => 53, Argument => Argument, others => <>),
+   Data   =>
+     (Direction  => STM32.SDIO.Card_To_Host,
+      Block_Size => 64,
+      Length     => 64,
+      Timeout    => 40_000),  --  In SDIO clock periods - 0.1s
+   Buffer => Buffer'Address,  --  Should be word aligned
+   Done   => Done);
+```
+
+Notes:
+
+- Responses R3/R4 have no CRC; use `Short_Response_Without_CRC` for them,
+  so the CRC failure reported by the hardware is ignored.
+- Hardware flow control is never enabled (errata ES0182), so in the polling
+  and interrupt variants the CPU must keep up with the bus. Keep the bus
+  speed moderate there, or use the DMA variant.
+- DMA buffers must be word aligned and located outside of the CCM RAM.
+- `Enable_Card_Interrupt` arms a one-shot callback for the SDIO card
+  interrupt (DAT1). Clear the source in the card and enable it again.
+
+See `demos/shared/sdio` for SDIO card enumeration (written for BCM43362
+style WiFi modules) in all three variants.
+
 ## Demos
 
 The repository includes board-specific demo crates in `demos/`.
@@ -957,6 +1022,8 @@ Available demos:
 - `rtc/rtc_main.adb`: RTC clock/calendar example
 - `i2c/i2c.adb`: I2C bus scanner over addresses `0x08 .. 0x77` with UART output
 - `fmc/sdram.adb` (STM32F429): FMC SDRAM initialization and memory test loop
+- `sdio/sdio_polling.adb`, `sdio/sdio_irq.adb`, `sdio/sdio_dma.adb`: SDIO card
+  enumeration (CMD0/5/3/7, CMD52, CMD53) in polling, interrupt and DMA modes
 
 ## Maintainer
 

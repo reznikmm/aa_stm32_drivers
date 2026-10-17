@@ -55,6 +55,11 @@ project Aa_Stm32_Drivers is
      ("../source/peripherals/adc1",
       "../source/impl/peripherals/adc1");
 
+   SDIO_Source :=
+     ("../source/peripherals/sdio",
+      "../source/impl/peripherals/sdio",
+      "../source/polling/peripherals/sdio");
+
    MCU_Specific_Source := ();
    case MCU is
       when "stm32f4" =>
@@ -65,6 +70,7 @@ project Aa_Stm32_Drivers is
             "../source/impl/peripherals/tim13",
             "../source/impl/peripherals/tim14")
            & RNG_Source
+           & SDIO_Source
            & TIM6_Source
            & TIM7_Source
            & TIM8_Source
@@ -75,6 +81,7 @@ project Aa_Stm32_Drivers is
       when "stm32f411" =>
          MCU_Specific_Source :=
            ("../source/impl/runtime/ext") --  for internal runtime
+           & SDIO_Source
            & SPI4_Source
            & ADC1_Source;
 
@@ -85,7 +92,8 @@ project Aa_Stm32_Drivers is
             "../source/impl/peripherals/tim12",
             "../source/impl/peripherals/tim13",
             "../source/impl/peripherals/tim14")
-           & Rng_Source
+           & RNG_Source
+           & SDIO_Source
            & SPI4_Source
            & SPI5_Source
            & TIM6_Source
