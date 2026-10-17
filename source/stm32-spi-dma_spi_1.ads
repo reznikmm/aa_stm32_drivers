@@ -13,7 +13,7 @@ with A0B.Callbacks;
 private with Ada.Interrupts.Names;
 private with STM32.Registers.SPI;
 private with STM32.DMA.Stream_2_0;
-private with STM32.DMA.Stream_2_3;
+private with STM32.DMA.Stream_2_5;
 
 generic
    Priority : System.Any_Priority;
@@ -47,7 +47,7 @@ package STM32.SPI.DMA_SPI_1 is
 private
 
    package Stream_2_0 is new STM32.DMA.Stream_2_0 (Priority);
-   package Stream_2_3 is new STM32.DMA.Stream_2_3 (Priority);
+   package Stream_2_5 is new STM32.DMA.Stream_2_5 (Priority);
 
    package Implementation is new DMA_Implementation
      (STM32.Registers.SPI.SPI1_Periph,
@@ -56,6 +56,6 @@ private
       Priority  => Priority,
       AF        => STM32.SPI_AF.SPI_1_AF,
       RX_Stream => Stream_2_0.Stream,
-      TX_Stream => Stream_2_3.Stream);
+      TX_Stream => Stream_2_5.Stream);
 
 end STM32.SPI.DMA_SPI_1;
