@@ -32,6 +32,21 @@ package body SDIO_Card is
    CCCR_Block_Size_Low   : constant := 16#10#;
    CCCR_Block_Size_High  : constant := 16#11#;
 
+   CCCR_IO_Enable        : constant := 16#02#;
+   CCCR_IO_Ready         : constant := 16#03#;
+   CCCR_IO_Abort         : constant := 16#06#;
+   FBR1_Block_Size_Low   : constant := 16#110#;
+   FBR1_Block_Size_High  : constant := 16#111#;
+
+   Backplane_Function    : constant := 1;
+   Backplane_Window      : constant := 16#1000A#;
+   --  Three bytes: bits 15 .. 8, 23 .. 16, 31 .. 24 of backplane address
+   Backplane_Word_Access : constant := 16#8000#;
+   --  Offset of 32-bit access area in the backplane window
+
+   Chipcommon_Base       : constant := 16#1800_0000#;
+   --  Chip id register is the first register of the chipcommon core
+
    CIS_Length : constant := 64;
 
    procedure Check (Name : String; Error : STM32.SDIO.Error_Kind);
@@ -51,14 +66,30 @@ package body SDIO_Card is
    procedure Read_Byte
      (Address : Register_Address;
       Value   : out Interfaces.Unsigned_8;
-      Error   : out STM32.SDIO.Error_Kind);
-   --  Read a byte of function 0 with CMD52
+      Error   : out STM32.SDIO.Error_Kind;
+      Number  : Function_Number := 0);
+   --  Read a byte of function Number with CMD52
 
    procedure Write_Byte
      (Address : Register_Address;
       Value   : Interfaces.Unsigned_8;
-      Error   : out STM32.SDIO.Error_Kind);
-   --  Write a byte of function 0 with CMD52
+      Error   : out STM32.SDIO.Error_Kind;
+      Number  : Function_Number := 0);
+   --  Write a byte of function Number with CMD52
+
+   procedure Reset_IO;
+   --  Write RES bit in CCCR I/O abort register. It resets the I/O part of
+   --  the card (bus width, enabled functions) if the card has not been
+   --  powered off since the previous run. A card after power-on doesn't
+   --  respond, that's fine.
+
+   procedure Enable_Backplane (Success : out Boolean);
+   --  Enable function 1 (backplane of Broadcom WiFi chips), set its block
+   --  size and point the backplane window to the chipcommon core.
+
+   procedure Read_Chip_Id (Title : String; Success : out Boolean);
+   --  Read chipcommon chip id register with CMD53 (function 1), compare it
+   --  with CMD52 byte reads.
 
    procedure Read_CIS
      (Title   : String;
@@ -137,11 +168,12 @@ package body SDIO_Card is
    procedure Read_Byte
      (Address : Register_Address;
       Value   : out Interfaces.Unsigned_8;
-      Error   : out STM32.SDIO.Error_Kind)
+      Error   : out STM32.SDIO.Error_Kind;
+      Number  : Function_Number := 0)
    is
       Response : Interfaces.Unsigned_32;
    begin
-      Send_Command (IO_Read_Write_Direct (False, 0, Address), Error);
+      Send_Command (IO_Read_Write_Direct (False, Number, Address), Error);
       Response := STM32.SDIO.Short_Response;
       Value := Interfaces.Unsigned_8 (Response mod 256);
 
@@ -151,6 +183,114 @@ package body SDIO_Card is
          Put ("R5 flags: " & Hex (Response / 256, 2) & New_Line);
       end if;
    end Read_Byte;
+
+   ----------------------
+   -- Enable_Backplane --
+   ----------------------
+
+   procedure Enable_Backplane (Success : out Boolean) is
+      Error : STM32.SDIO.Error_Kind;
+      Value : Interfaces.Unsigned_8;
+   begin
+      Write_Byte (FBR1_Block_Size_Low, 64, Error);
+      Write_Byte (FBR1_Block_Size_High, 0, Error);
+
+      Write_Byte (CCCR_IO_Enable, 2 ** Backplane_Function, Error);
+      Check ("Enable function 1", Error);
+
+      for Attempt in 1 .. 100 loop
+         Read_Byte (CCCR_IO_Ready, Value, Error);
+         exit when (Value and 2 ** Backplane_Function) /= 0;
+         delay 0.001;
+      end loop;
+
+      Success := (Value and 2 ** Backplane_Function) /= 0;
+      Put ("IO ready: " & Hex (Interfaces.Unsigned_32 (Value), 2)
+           & New_Line);
+
+      if not Success then
+         return;
+      end if;
+
+      --  Backplane window := chipcommon base
+      for J in 0 .. 2 loop
+         Write_Byte
+           (Backplane_Window + Register_Address (J),
+            Interfaces.Unsigned_8 (Chipcommon_Base / 2 ** (8 * (J + 1))
+                                   mod 256),
+            Error,
+            Number => Backplane_Function);
+      end loop;
+
+      Check ("Backplane window", Error);
+   end Enable_Backplane;
+
+   ------------------
+   -- Read_Chip_Id --
+   ------------------
+
+   procedure Read_Chip_Id (Title : String; Success : out Boolean) is
+      Error  : STM32.SDIO.Error_Kind;
+      Value  : Interfaces.Unsigned_8;
+      Buffer : Byte_Array (1 .. 4) := (others => 0)
+        with Alignment => 4;
+   begin
+      Send_Data_Command
+        (Item   =>
+           (Index    => 53,
+            Argument =>
+              Backplane_Function * 2 ** 28
+              + 2 ** 26  --  OP code: incrementing address
+              + Backplane_Word_Access * 2 ** 9
+              + Buffer'Length,
+            Response => STM32.SDIO.Short_Response),
+         Data   =>
+           (Direction  => STM32.SDIO.Card_To_Host,
+            Block_Size => Buffer'Length,
+            Length     => Buffer'Length,
+            Timeout    => 0.1),
+         Buffer => Buffer'Address,
+         Error  => Error);
+
+      Check ("CMD53 chip id " & Title, Error);
+      Put ("CMD53 R5: " & Hex (STM32.SDIO.Short_Response, 8) & New_Line);
+      Put ("Chip id register:");
+
+      for Item of reverse Buffer loop
+         Put (" " & Hex (Interfaces.Unsigned_32 (Item), 2));
+      end loop;
+
+      Put (", chip: " & Hex (Interfaces.Unsigned_32 (Buffer (2)), 2)
+           & Hex (Interfaces.Unsigned_32 (Buffer (1)), 2)
+           & " (BCM43362 is A962)" & New_Line);
+
+      --  Compare with CMD52 byte access to the same register
+      for J in Buffer'Range loop
+         Read_Byte
+           (Register_Address (J - 1), Value, Error, Backplane_Function);
+
+         if Value /= Buffer (J) then
+            Put ("Mismatch at" & J'Image & ", CMD52 gives "
+                 & Hex (Interfaces.Unsigned_32 (Value), 2) & New_Line);
+            Success := False;
+            return;
+         end if;
+      end loop;
+
+      Put ("CMD53 data matches CMD52" & New_Line);
+      Success := True;
+   end Read_Chip_Id;
+
+   --------------
+   -- Reset_IO --
+   --------------
+
+   procedure Reset_IO is
+      Error : STM32.SDIO.Error_Kind;
+   begin
+      Write_Byte (CCCR_IO_Abort, 16#08#, Error);
+      delay 0.02;  --  The chip needs time to react
+   end Reset_IO;
 
    --------------
    -- Read_CIS --
@@ -225,6 +365,8 @@ package body SDIO_Card is
       Buffer   : Byte_Array (1 .. CIS_Length) := (others => 0)
         with Alignment => 16;
    begin
+      Reset_IO;
+
       --  Reset and probe the card: CMD0 + CMD5 (IO_SEND_OP_COND)
       for Attempt in 1 .. 100 loop
          Send_Command
@@ -304,6 +446,12 @@ package body SDIO_Card is
 
       --  Data transfer in 1-bit mode first, to separate data path problems
       --  from bus width problems.
+      Enable_Backplane (Success);
+
+      if Success then
+         Read_Chip_Id ("1-bit", Success);
+      end if;
+
       Read_CIS ("1-bit", CIS, Buffer, Success);
 
       --  Switch to 4-bit bus: card first, then host
@@ -318,7 +466,7 @@ package body SDIO_Card is
 
       Set_Bus (Data_Speed, 4);
 
-      Buffer := (others => 0);
+      Read_Chip_Id ("4-bit", Success);
       Read_CIS ("4-bit", CIS, Buffer, Success);
 
       if not Success then
@@ -353,11 +501,13 @@ package body SDIO_Card is
    procedure Write_Byte
      (Address : Register_Address;
       Value   : Interfaces.Unsigned_8;
-      Error   : out STM32.SDIO.Error_Kind)
+      Error   : out STM32.SDIO.Error_Kind;
+      Number  : Function_Number := 0)
    is
       Response : Interfaces.Unsigned_32;
    begin
-      Send_Command (IO_Read_Write_Direct (True, 0, Address, Value), Error);
+      Send_Command
+        (IO_Read_Write_Direct (True, Number, Address, Value), Error);
       Response := STM32.SDIO.Short_Response;
 
       if Error = STM32.SDIO.No_Error
