@@ -1,7 +1,7 @@
---  SPDX-FileCopyrightText: 2025 Max Reznik <reznikmm@gmail.com>
+--  SPDX-FileCopyrightText: 2025-2026 Max Reznik <reznikmm@gmail.com>
 --
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-----------------------------------------------------------------
+---------------------------------------------------------------------
 
 with A0B.Callbacks;
 with Ada.Synchronous_Task_Control;
@@ -10,7 +10,7 @@ with STM32.GPIO;
 with Suspension_Object_Callbacks;
 
 procedure SPI_DMA is
-   package UART renames SPI_Devices.UART_4;
+   package UART renames SPI_Devices.USART_2;
 
    CS : constant STM32.Pin := (STM32.PB, 0);
 
@@ -20,8 +20,8 @@ procedure SPI_DMA is
      Suspension_Object_Callbacks.Create_Callback (Signal);
 begin
    UART.Configure
-     (TX   => (STM32.PC, 10),
-      RX   => (STM32.PC, 11),
+     (TX   => (STM32.PA, 2),
+      RX   => (STM32.PA, 3),
       Rate => 115_200);
 
    UART.Start_Writing (Buffer'Address, Buffer'Length, Done);

@@ -30,4 +30,4 @@ cortex_m.core = "m4f"
 
 [[actions]]
 type = "test"
-command  = ["sh", "-c", "set -e -x; for J in f4 f429;do alr -C demos/stm32$J build;done"]
+command  = ["sh", "-c", "set -e -x; for J in f4 f411 f429;do alr -C demos/stm32$J build;done"]

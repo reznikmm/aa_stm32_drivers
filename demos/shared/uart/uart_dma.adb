@@ -10,7 +10,7 @@ with STM32;
 with Suspension_Object_Callbacks;
 
 procedure UART_DMA is
-   package UART renames Devices.UART_4;
+   package UART renames Devices.USART_2;
    Buffer  : String := "      Hello, World!" & ASCII.LF;
    Count   : Natural := 0;
    Signal  : aliased Ada.Synchronous_Task_Control.Suspension_Object;
@@ -18,8 +18,8 @@ procedure UART_DMA is
      Suspension_Object_Callbacks.Create_Callback (Signal);
 begin
    UART.Configure
-     (TX   => (STM32.PC, 10),
-      RX   => (STM32.PC, 11),
+     (TX   => (STM32.PA, 2),
+      RX   => (STM32.PA, 3),
       Rate => 115_200);
 
    loop
