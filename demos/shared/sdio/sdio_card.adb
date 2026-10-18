@@ -60,6 +60,14 @@ package body SDIO_Card is
       Error   : out STM32.SDIO.Error_Kind);
    --  Write a byte of function 0 with CMD52
 
+   procedure Read_CIS
+     (Title   : String;
+      CIS     : Register_Address;
+      Buffer  : out Byte_Array;
+      Success : out Boolean);
+   --  Read Buffer'Length bytes of the common CIS with CMD53, print them and
+   --  compare first bytes with CMD52.
+
    -----------
    -- Check --
    -----------
@@ -144,6 +152,65 @@ package body SDIO_Card is
       end if;
    end Read_Byte;
 
+   --------------
+   -- Read_CIS --
+   --------------
+
+   procedure Read_CIS
+     (Title   : String;
+      CIS     : Register_Address;
+      Buffer  : out Byte_Array;
+      Success : out Boolean)
+   is
+      Error : STM32.SDIO.Error_Kind;
+      Value : Interfaces.Unsigned_8;
+   begin
+      Buffer := (others => 0);
+
+      --  CMD53 (IO_RW_EXTENDED): read bytes of function 0 in byte mode
+      --  with incrementing address.
+      Send_Data_Command
+        (Item   =>
+           (Index    => 53,
+            Argument =>
+              2 ** 26  --  OP code: incrementing address
+              + CIS * 2 ** 9
+              + Buffer'Length,
+            Response => STM32.SDIO.Short_Response),
+         Data   =>
+           (Direction  => STM32.SDIO.Card_To_Host,
+            Block_Size => Buffer'Length,
+            Length     => Buffer'Length,
+            Timeout    => 0.1),
+         Buffer => Buffer'Address,
+         Error  => Error);
+
+      Check ("CMD53 " & Title, Error);
+      Put ("CMD53 R5: " & Hex (STM32.SDIO.Short_Response, 8)
+           & ", response command:"
+           & STM32.SDIO.Response_Command'Image & New_Line);
+
+      for J in Buffer'Range loop
+         Put (Hex (Interfaces.Unsigned_32 (Buffer (J)), 2));
+         Put (if J mod 16 = 0 then New_Line else " ");
+      end loop;
+
+      --  Compare with CMD52
+      for J in 1 .. 8 loop
+         Read_Byte (CIS + Register_Address (J - 1), Value, Error);
+
+         if Value /= Buffer (J) then
+            Put ("Mismatch at" & J'Image & ", CMD52 gives "
+                 & Hex (Interfaces.Unsigned_32 (Value), 2) & New_Line);
+            Success := False;
+            return;
+         end if;
+      end loop;
+
+      Put ("CMD53 data matches CMD52" & New_Line);
+      Success := True;
+   end Read_CIS;
+
    ---------
    -- Run --
    ---------
@@ -154,6 +221,7 @@ package body SDIO_Card is
       RCA      : Interfaces.Unsigned_32;
       Value    : Interfaces.Unsigned_8;
       CIS      : Interfaces.Unsigned_32 := 0;
+      Success  : Boolean;
       Buffer   : Byte_Array (1 .. CIS_Length) := (others => 0)
         with Alignment => 16;
    begin
@@ -224,53 +292,38 @@ package body SDIO_Card is
 
       Put ("Common CIS: " & Hex (CIS, 5) & New_Line);
 
+      --  Function 0 block size
+      Write_Byte (CCCR_Block_Size_Low, CIS_Length, Error);
+      Check ("Block size low", Error);
+      Write_Byte (CCCR_Block_Size_High, 0, Error);
+      Check ("Block size high", Error);
+
+      Read_Byte (CCCR_Block_Size_Low, Value, Error);
+      Put ("Block size: " & Hex (Interfaces.Unsigned_32 (Value), 2)
+           & New_Line);
+
+      --  Data transfer in 1-bit mode first, to separate data path problems
+      --  from bus width problems.
+      Read_CIS ("1-bit", CIS, Buffer, Success);
+
       --  Switch to 4-bit bus: card first, then host
       Read_Byte (CCCR_Bus_Control, Value, Error);
+      Put ("Bus control: " & Hex (Interfaces.Unsigned_32 (Value), 2)
+           & New_Line);
       Write_Byte (CCCR_Bus_Control, (Value and 16#FC#) or 2, Error);
       Check ("Bus width 4", Error);
+      Read_Byte (CCCR_Bus_Control, Value, Error);
+      Put ("Bus control: " & Hex (Interfaces.Unsigned_32 (Value), 2)
+           & New_Line);
 
       Set_Bus (Data_Speed, 4);
 
-      --  Function 0 block size
-      Write_Byte (CCCR_Block_Size_Low, CIS_Length, Error);
-      Write_Byte (CCCR_Block_Size_High, 0, Error);
+      Buffer := (others => 0);
+      Read_CIS ("4-bit", CIS, Buffer, Success);
 
-      --  CMD53 (IO_RW_EXTENDED): read CIS_Length bytes, function 0, byte
-      --  mode, incrementing address.
-      Send_Data_Command
-        (Item   =>
-           (Index    => 53,
-            Argument =>
-              2 ** 26  --  OP code: incrementing address
-              + CIS * 2 ** 9
-              + CIS_Length,
-            Response => STM32.SDIO.Short_Response),
-         Data   =>
-           (Direction  => STM32.SDIO.Card_To_Host,
-            Block_Size => CIS_Length,
-            Length     => CIS_Length,
-            Timeout    => 0.1),
-         Buffer => Buffer'Address,
-         Error  => Error);
-
-      Check ("CMD53", Error);
-
-      for J in Buffer'Range loop
-         Put (Hex (Interfaces.Unsigned_32 (Buffer (J)), 2));
-         Put (if J mod 16 = 0 then New_Line else " ");
-      end loop;
-
-      --  Compare with CMD52
-      for J in 1 .. 8 loop
-         Read_Byte (CIS + Register_Address (J - 1), Value, Error);
-
-         if Value /= Buffer (J) then
-            Put ("Mismatch at" & J'Image & New_Line);
-            return;
-         end if;
-      end loop;
-
-      Put ("CMD53 data matches CMD52" & New_Line);
+      if not Success then
+         return;
+      end if;
 
       --  Look for CISTPL_MANFID tuple
       declare
@@ -300,9 +353,18 @@ package body SDIO_Card is
    procedure Write_Byte
      (Address : Register_Address;
       Value   : Interfaces.Unsigned_8;
-      Error   : out STM32.SDIO.Error_Kind) is
+      Error   : out STM32.SDIO.Error_Kind)
+   is
+      Response : Interfaces.Unsigned_32;
    begin
       Send_Command (IO_Read_Write_Direct (True, 0, Address, Value), Error);
+      Response := STM32.SDIO.Short_Response;
+
+      if Error = STM32.SDIO.No_Error
+        and then (Response and R5_Error_Flags) /= 0
+      then
+         Put ("R5 flags: " & Hex (Response / 256, 2) & New_Line);
+      end if;
    end Write_Byte;
 
 end SDIO_Card;

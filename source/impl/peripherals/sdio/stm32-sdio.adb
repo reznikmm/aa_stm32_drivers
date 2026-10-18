@@ -60,12 +60,13 @@ package body STM32.SDIO is
         else No_Error);
 
    function Data_Error (Status : Registers.STA_Register) return Error_Kind is
-     (if Status.DTIMEOUT then Data_Timeout
+     (if Status.STBITERR then Start_Bit_Error
       elsif Status.DCRCFAIL then Data_CRC_Fail
       elsif Status.TXUNDERR then Transmit_Underrun
       elsif Status.RXOVERR then Receive_Overrun
-      elsif Status.STBITERR then Start_Bit_Error
+      elsif Status.DTIMEOUT then Data_Timeout
       else No_Error);
+   --  A timeout could be a consequence of other errors, so report it last
 
    procedure Clear_Command_Flags;
    procedure Clear_Data_Flags;
