@@ -30,7 +30,8 @@ project Demos is
       "spi_dma.adb", "spi_polling.adb",
       "tim_dma.adb", "rtc_main.adb",
       "i2c.adb",
-      "sdio_polling.adb", "sdio_irq.adb", "sdio_dma.adb");
+      "sdio_polling.adb", "sdio_irq.adb", "sdio_dma.adb",
+      "sd_card_polling.adb", "sd_card_irq.adb", "sd_card_dma.adb");
 
    package Compiler is
       for Default_Switches ("Ada") use STM32F411_Demos_Config.Ada_Compiler_Switches;
