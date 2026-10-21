@@ -1,0 +1,17 @@
+name = "linux_demos"
+description = "Linux UART demo using the STM32 UART API"
+version = "0.1.0-dev"
+licenses = "Apache-2.0 WITH LLVM-exception"
+executables = ["uart_irq"]
+project-files = ["demos.gpr"]
+
+[build-switches]
+development.style_checks = ["-gnaty"]
+development.contracts = "Yes"
+
+[[depends-on]]
+aa_stm32_drivers = "~0.1.0"
+a0b_callbacks = "~0.2.0"
+
+[[pins]]
+aa_stm32_drivers = { path = "../.." }

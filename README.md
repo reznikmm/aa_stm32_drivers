@@ -1,6 +1,88 @@
 # aa_stm32_drivers
 
-> Another Ada STM32 MCU Drivers Library
+> Linux backend for the STM32 UART API
+
+## Linux UART backend
+
+This branch builds `STM32.UART.USART_2` for native Linux using
+`GNAT.Serial_Communications`. The build no longer depends on `gnat_arm_elf`,
+`cortex_m`, an MCU configuration, or a board runtime. Other STM32 driver
+sources and their reference documentation below remain in the repository,
+but are not included in the Linux library.
+
+Select and use a native compiler through Alire:
+
+```shell
+alr toolchain --select gnat_native gprbuild
+alr build
+alr -C demos/linux build
+```
+
+The existing generic and pin-based API is retained:
+
+```ada
+with STM32;
+with STM32.UART.USART_2;
+with System;
+
+--  Inside a declaration section:
+package UART is new STM32.UART.USART_2
+  (Priority => System.Interrupt_Priority'First);
+
+--  Inside a statement section:
+UART.Configure
+  (TX => (STM32.PA, 2), RX => (STM32.PA, 3), Rate => 115_200);
+```
+
+`Configure` opens `./uart_2_<TX-pin>_<RX-pin>` relative to the process working
+directory. Pins are written without punctuation: the example opens
+`./uart_2_PA2_PA3`; `(PD, 5)` and `(PD, 6)` open `./uart_2_PD5_PD6`.
+Create a symlink to a serial device (or a pseudo terminal) before running:
+
+```shell
+cd demos/linux
+ln -s /dev/ttyUSB0 uart_2_PA2_PA3
+alr run uart_irq
+# Or send exactly two messages and exit:
+alr run uart_irq --args="2"
+```
+
+The demo is based on `demos/shared/uart/uart_irq.adb`: it sends
+`Hello, World!`, waits for its completion callback, and repeats once a second.
+
+`Start_Reading` fills the requested buffer. `Start_Reading_Till_Idle` completes
+when the buffer is full or after 100 ms without input following the first
+byte. `Bytes_Read` reports the completed read length. Separate Linux tasks
+handle reading and writing concurrently; callbacks run outside protected
+operations and can start the next transfer. Buffers must remain valid until
+their callback completes. Callbacks must not raise exceptions.
+
+`Disable` cancels pending transfers, which still invoke their callbacks.
+Wait for completion before calling `Enable`. The additional `Has_Error`
+function reports failure or cancellation for either direction's last transfer;
+starting another transfer clears that direction's error. `Close` cancels IO,
+waits for it to stop, and closes the descriptor; call it before leaving your
+application. Do not call `Close` from a callback. Configuration and lifecycle
+calls must be serialized by the application.
+
+Eight data bits, no/even/odd parity, and one or two stop bits are supported.
+Unsupported baud rates and fractional stop bits raise `Constraint_Error`.
+The generic `Priority` parameter is retained for compatibility and is ignored
+by the Linux backend. Use the native runtime's `System.Interrupt_Priority`
+range rather than an STM32-specific priority number.
+
+Run the Ada pseudo-terminal integration tests:
+
+```shell
+alr test
+```
+
+The tests build with `alr` and exercise full-duplex IO, partial reads, idle
+completion, cancellation, callback rearming, large writes, disconnection,
+path selection, missing devices, and the demo executable.
+
+## Original STM32 driver reference
+
 
 A lightweight, generic-based driver library for STM32 microcontrollers.
 This library provides low-level drivers for common peripherals while
@@ -933,30 +1015,14 @@ end Main;
 
 ## Demos
 
-The repository includes board-specific demo crates in `demos/`.
-
-Build all STM32F4 demos:
+This branch builds the Linux UART demo in `demos/linux`:
 
 ```shell
-alr -C demos/stm32f4 build
+alr -C demos/linux build
 ```
 
-Build all STM32F429 demos (including SDRAM):
-
-```shell
-alr -C demos/stm32f429 build
-```
-
-Available demos:
-
-- `uart/uart.adb`: UART polling send/receive example
-- `uart/uart_dma.adb`: UART transfer using DMA
-- `spi/spi_polling.adb`: SPI transfer using polling
-- `spi/spi_dma.adb`: SPI transfer using DMA
-- `tim/tim_dma.adb`: Timer PWM generation with DMA updates
-- `rtc/rtc_main.adb`: RTC clock/calendar example
-- `i2c/i2c.adb`: I2C bus scanner over addresses `0x08 .. 0x77` with UART output
-- `fmc/sdram.adb` (STM32F429): FMC SDRAM initialization and memory test loop
+The original examples in `demos/shared` remain as reference source. The
+STM32 board-specific demo projects have been removed from this branch.
 
 ## Maintainer
 

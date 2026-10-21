@@ -10,12 +10,9 @@ with System;
 
 with A0B.Callbacks;
 
-private with Ada.Interrupts.Names;
-private with STM32.Registers.USART;
-
 generic
    Priority : System.Interrupt_Priority;
-   --  Priority is used for underlying protected object.
+   --  Kept for API compatibility; Linux workers use normal task priorities.
 package STM32.UART.USART_2 is
 
    procedure Configure
@@ -28,7 +25,8 @@ package STM32.UART.USART_2 is
        TX in (PA, 2) | (PD, 5) and then
        RX in (PA, 3) | (PD, 6);
    --
-   --  Configure USART_2 on given pins and speed as UART
+   --  Open ./uart_2_<TX-pin>_<RX-pin>, e.g. ./uart_2_PA2_PA3.
+   --  The path is relative to the process working directory.
 
    procedure Set_Baud_Rate (Rate : Interfaces.Unsigned_32);
    --  Reconfigure USART_2 speed (baud rate)
@@ -41,15 +39,14 @@ package STM32.UART.USART_2 is
 
    procedure Set_Parity (Value : Parity)
      with Pre => not Is_Busy;
-   --  Reconfigure hardware parity control
-   --  Also set M bit if Parity /= None to have 8bit data.
-   --  See RM0090 Table 147.
+   --  Reconfigure parity, retaining eight data bits.
 
    procedure Enable;
-   --  Enable UART
+   --  Enable UART after Configure or Disable.
 
    procedure Disable;
-   --  Disable UART
+   --  Cancel outstanding operations; their callbacks still run.
+   --  Wait for completion before enabling or reconfiguring the port.
 
    procedure Start_Reading
      (Buffer : System.Address;
@@ -67,10 +64,13 @@ package STM32.UART.USART_2 is
    --  Start a read operation into the provided Buffer of given Length. The
    --  read operation will complete and the Done callback will be triggered
    --  either when the Buffer is completely filled, or when an idle line
-   --  condition (no new bytes received for a defined period) is detected on
+   --  condition (no new bytes received for a 100 ms) is detected on
    --  the UART line after at least one byte has been received. No other call
    --  to Start_Reading_Till_Idle or Start_Reading is allowed until Done is
    --  triggered.
+
+   --  Buffers must remain valid until their callback runs. Callbacks execute
+   --  in worker tasks, outside protected actions, and may start another IO.
 
    function Bytes_Read return Natural;
    --  Returns the number of bytes actually read during the last
@@ -89,14 +89,12 @@ package STM32.UART.USART_2 is
    function Is_Busy return Boolean;
    --  Returns True if device is reading or writing data
 
-private
+   function Has_Error return Boolean;
+   --  True if either direction's last operation failed or was cancelled.
+   --  Starting an operation clears the error for that direction.
 
-   package Implementation is new UART_Implementation
-     (STM32.Registers.USART.USART2_Periph,
-      UART_1_3,
-      Ada.Interrupts.Names.USART2_Interrupt,
-      Priority);
-
-   function Bytes_Read return Natural is (Implementation.Device.Bytes_Read);
+   procedure Close;
+   --  Cancel operations, wait for IO to stop, and close the file descriptor.
+   --  Do not call from a completion callback.
 
 end STM32.UART.USART_2;

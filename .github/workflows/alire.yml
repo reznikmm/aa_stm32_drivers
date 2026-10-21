@@ -13,7 +13,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: alire-project/setup-alire@v5
       with:
-        toolchain: 'gnat_arm_elf gprbuild'
+        toolchain: 'gnat_native gprbuild'
     - name: Build project and demos
       run: alr test
     - name: Dump log

@@ -1,0 +1,21 @@
+--  SPDX-FileCopyrightText: 2025-2026 Max Reznik <reznikmm@gmail.com>
+--
+--  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+with "aa_stm32_drivers.gpr";
+with "a0b_callbacks.gpr";
+with "config/linux_demos_config.gpr";
+
+project Demos is
+   for Source_Dirs use (".");
+   for Main use ("uart_irq.adb");
+   for Object_Dir use "obj/" & Linux_Demos_Config.Build_Profile;
+   for Exec_Dir use "bin";
+   for Create_Missing_Dirs use "True";
+   package Compiler is
+      for Default_Switches ("Ada") use Linux_Demos_Config.Ada_Compiler_Switches;
+   end Compiler;
+   package Binder is
+      for Switches ("Ada") use ("-Es");
+   end Binder;
+end Demos;
