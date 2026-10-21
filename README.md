@@ -1,6 +1,6 @@
 # aa_stm32_drivers
 
-> Linux backend for the STM32 UART API
+> Linux backends for the STM32 drivers API
 
 ## Linux UART backend
 
@@ -114,6 +114,24 @@ To add another UART, add a port definition to `Linux_Devices`, a thin public
 package, and its source entries to the GPR project. No IO, cancellation,
 callback, or scheduling logic needs to be copied. Each device instance owns
 its descriptor and reader/writer slots; all slots use the single dispatcher.
+
+### Linux device UID
+
+`STM32.UIDs.UID` reads `./stm32-uid.bin` relative to the process working
+directory on each call. The file must contain exactly eight binary bytes in
+little-endian order. For example, the bytes `ABCDEFGH` return
+`16#4847_4645_4443_4241#`. Create a sample ID with:
+
+```shell
+printf 'ABCDEFGH' > stm32-uid.bin
+```
+
+`STM32.UIDs.UID_Image` returns the eight file bytes as characters, replacing
+bytes outside ASCII `!` through `~` (including spaces) with `?`, as in the
+original API. A missing file raises `Ada.IO_Exceptions.Name_Error`; a file
+whose size is not eight bytes raises `Ada.IO_Exceptions.Data_Error`.
+The Ada UID tests cover decoding, image filtering, updated file contents,
+missing files, and invalid sizes; they run as part of `alr test`.
 
 ### Internal workers for device backends
 

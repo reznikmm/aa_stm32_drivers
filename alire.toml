@@ -1,5 +1,5 @@
 name = "aa_stm32_drivers"
-description = "Linux UART backend for the STM32 drivers API"
+description = "Linux backends for the STM32 drivers API"
 version = "0.1.0-dev"
 
 authors = ["Max Reznik"]
@@ -35,3 +35,7 @@ command = ["tests/bin/test_uart"]
 [[actions]]
 type = "test"
 command = ["tests/bin/workers_tests"]
+
+[[actions]]
+type = "test"
+command = ["tests/bin/uid_tests"]
