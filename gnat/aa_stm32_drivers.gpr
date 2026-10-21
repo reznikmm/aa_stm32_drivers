@@ -11,7 +11,8 @@ project Aa_Stm32_Drivers is
      ("../source", "../source/impl", "../source/peripherals/uart3",
       "../source/peripherals/uart4", "../source/peripherals/uart5");
    for Source_Files use
-     ("stm32.ads", "stm32-uids.ads", "stm32-uids.adb", "stm32-uart.ads",
+     ("stm32.ads", "stm32-flash.ads", "stm32-flash.adb",
+      "stm32-uids.ads", "stm32-uids.adb", "stm32-uart.ads",
       "stm32-uart-generic_uart.ads", "stm32-uart-generic_uart.adb",
       "stm32-uart-linux_devices.ads",
       "stm32-uart-usart_1.ads", "stm32-uart-usart_2.ads",

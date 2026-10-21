@@ -8,7 +8,8 @@ This branch builds `STM32.UART.USART_1`, `USART_2`, `USART_6`, `UART_3`,
 `UART_4`, and `UART_5` for native Linux using `GNAT.Serial_Communications`.
 `STM32.UART.USART_3` is also available as a compatibility name for `UART_3`.
 The build no longer depends on `gnat_arm_elf`,
-`cortex_m`, an MCU configuration, or a board runtime. Other STM32 driver
+`cortex_m`, an MCU configuration, or a board runtime. `STM32.UIDs` and
+`STM32.Flash` also have file backends described below. Other STM32 driver
 sources and their reference documentation below remain in the repository,
 but are not included in the Linux library.
 
@@ -132,6 +133,42 @@ original API. A missing file raises `Ada.IO_Exceptions.Name_Error`; a file
 whose size is not eight bytes raises `Ada.IO_Exceptions.Data_Error`.
 The Ada UID tests cover decoding, image filtering, updated file contents,
 missing files, and invalid sizes; they run as part of `alr test`.
+
+### Linux flash backend
+
+`STM32.Flash` maps `./stm32-flash.bin` into the original flash address space
+when `Unlock` is first called. A missing file is initialized with exactly
+2 MiB of `FF` bytes; existing contents are retained, and a wrong file size
+raises `Ada.IO_Exceptions.Data_Error`.
+
+`First_Bank` remains `16#0800_0000#` and `Second_Bank` remains `16#0810_0000#`.
+Each 1 MiB bank has four 16 KiB sectors, one 64 KiB sector, and seven 128 KiB
+sectors. `Erase_Sector` accepts any address inside a sector, returns its size
+immediately, and erases it to `FF` in 4 KiB steps on the shared dispatcher.
+The callback runs when the erase completes, including on failure; check
+`Has_Error` after completion. `Is_Busy` reports an outstanding erase.
+
+The original `Unlock`, `Lock`, `Erase_Sector`, and `Programming` API is retained.
+After the erase callback, call `Programming` before writing directly through
+an imported object at a flash address, just as on STM32. `Programming` enables
+writes; erase completion and `Lock` make the mapping read-only again. Erase
+and programming require an unlocked, idle device. Invalid addresses raise
+`Constraint_Error`; locked or busy operations raise `Program_Error`.
+
+`Flush` synchronously persists mapped changes. `Lock` also flushes, and
+`Close` waits for erase/callback completion, flushes, and unmaps. Direct flash
+objects must not be accessed before `Unlock` or after `Close`. The erase
+callback signals completion in mapped memory; use `Flush`, `Lock`, or `Close`
+from the application task when synchronous disk persistence is needed.
+Callbacks must be short and nonblocking.
+
+The fixed mapping never replaces existing process memory. If the address
+range is occupied, `Unlock` raises `Ada.IO_Exceptions.Use_Error`. Use the
+backing file exclusively and do not resize it while mapped. This is a file
+backend: ordinary mapped stores do not enforce flash hardware's zero-to-one
+bit restrictions or per-write programming sequences. The Ada tests cover
+all 24 sectors, both banks, persistence across close/reopen, lock checks,
+invalid files/addresses, callbacks, and preservation of occupied mappings.
 
 ### Internal workers for device backends
 

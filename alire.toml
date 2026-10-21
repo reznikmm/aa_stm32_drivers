@@ -39,3 +39,7 @@ command = ["tests/bin/workers_tests"]
 [[actions]]
 type = "test"
 command = ["tests/bin/uid_tests"]
+
+[[actions]]
+type = "test"
+command = ["tests/bin/flash_tests"]
