@@ -70,7 +70,8 @@ package STM32.UART.USART_2 is
    --  triggered.
 
    --  Buffers must remain valid until their callback runs. Callbacks execute
-   --  in worker tasks, outside protected actions, and may start another IO.
+   --  in the shared dispatcher, outside protected actions, and may start
+   --  another IO. They must be short, nonblocking, and must not raise.
 
    function Bytes_Read return Natural;
    --  Returns the number of bytes actually read during the last
@@ -94,7 +95,7 @@ package STM32.UART.USART_2 is
    --  Starting an operation clears the error for that direction.
 
    procedure Close;
-   --  Cancel operations, wait for IO to stop, and close the file descriptor.
+   --  Cancel operations, wait for IO and callbacks, and close the descriptor.
    --  Do not call from a completion callback.
 
 end STM32.UART.USART_2;

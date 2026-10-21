@@ -31,3 +31,7 @@ command = ["alr", "-n", "exec", "--", "gprbuild", "-P", "tests/uart_tests.gpr"]
 [[actions]]
 type = "test"
 command = ["tests/bin/test_uart"]
+
+[[actions]]
+type = "test"
+command = ["tests/bin/workers_tests"]

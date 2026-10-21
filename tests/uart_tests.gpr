@@ -3,7 +3,7 @@ with "a0b_callbacks.gpr";
 
 project UART_Tests is
    for Source_Dirs use (".", "../demos/linux");
-   for Main use ("uart_tests.adb", "test_uart.adb");
+   for Main use ("uart_tests.adb", "test_uart.adb", "workers_tests.adb");
    for Object_Dir use "obj";
    for Exec_Dir use "bin";
    for Create_Missing_Dirs use "True";

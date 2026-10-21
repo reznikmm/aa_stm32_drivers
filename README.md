@@ -52,8 +52,8 @@ The demo is based on `demos/shared/uart/uart_irq.adb`: it sends
 
 `Start_Reading` fills the requested buffer. `Start_Reading_Till_Idle` completes
 when the buffer is full or after 100 ms without input following the first
-byte. `Bytes_Read` reports the completed read length. Separate Linux tasks
-handle reading and writing concurrently; callbacks run outside protected
+byte. `Bytes_Read` reports the completed read length. One shared dispatcher
+interleaves reading and writing; callbacks run outside protected
 operations and can start the next transfer. Buffers must remain valid until
 their callback completes. Callbacks must not raise exceptions.
 
@@ -80,6 +80,51 @@ alr test
 The tests build with `alr` and exercise full-duplex IO, partial reads, idle
 completion, cancellation, callback rearming, large writes, disconnection,
 path selection, missing devices, and the demo executable.
+
+### Internal workers for device backends
+
+`STM32.Workers` has one dispatcher task for all UART, SPI, and other device
+operations. `Generic_Worker` instances are operation slots containing a
+request, cancellation state, completion callback, busy flag, error flag, and
+completed count. They do not create tasks. Each slot accepts any definite
+request type, including paired TX/RX buffers for SPI transactions.
+
+A device backend defines its request record and a nonblocking step procedure,
+then instantiates a slot:
+
+```ada
+procedure Transaction_Step
+  (Request : in out Transaction;
+   Count   : in out Natural;
+   Status  : out STM32.Workers.Step_Status);
+
+package Bus_Worker is new STM32.Workers.Generic_Worker
+  (Request_Type => Transaction, Step => Transaction_Step);
+```
+
+Call `Enable` before `Start (Request, Done)`. Each slot accepts one outstanding
+request. The dispatcher visits active slots in round-robin order, pausing
+1 ms between steps to avoid busy spinning. It sleeps when no work remains.
+The step returns `Pending`, `Completed`, or `Failed`; request changes and
+`Count` persist between steps. It must return promptly: use nonblocking IO,
+`poll(..., 0)`, and monotonic timestamps rather than sleeping or waiting.
+Unhandled step exceptions report failure with a zero count and preserve the
+dispatcher for other operations.
+
+`Disable` prevents new requests and cancels outstanding work before its next
+step, preserving completed progress. Use `Wait_Until_Idle` before closing the
+device descriptor. It waits for both IO and the callback. Completion clears
+`Is_Busy` before invoking the callback, allowing the callback to submit the
+next request. Callbacks share the dispatcher and must be short and nonblocking.
+Never call `Wait_Until_Idle` from a step or callback. Scope exit disables and
+drains a slot before releasing its internal state.
+
+`USART_2` uses independent reader and writer slots on the same dispatcher.
+Another UART adds its own slots; SPI can use a slot for complete bus
+transactions. Linux port setup and nonblocking `poll` remain in the device
+backend. The Ada tests verify that steps of different slots run in the same
+task, along with isolation, cancellation, rejection of busy/disabled requests,
+and recovery after a step exception.
 
 ## Original STM32 driver reference
 

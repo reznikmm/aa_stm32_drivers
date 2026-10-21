@@ -10,7 +10,7 @@ project Aa_Stm32_Drivers is
    for Source_Dirs use ("../source", "../source/impl");
    for Source_Files use
      ("stm32.ads", "stm32-uart.ads", "stm32-uart-usart_2.ads",
-      "stm32-uart-usart_2.adb");
+      "stm32-uart-usart_2.adb", "stm32-workers.ads", "stm32-workers.adb");
    for Object_Dir use "../obj/" & Aa_Stm32_Drivers_Config.Build_Profile;
    for Create_Missing_Dirs use "True";
    for Library_Dir use "../lib";
