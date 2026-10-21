@@ -209,6 +209,97 @@ procedure Test_UART is
          Cleanup;
          raise;
    end Run_Case;
+   procedure Run_Ports is
+      type Descriptor_Array is array (1 .. 6) of aliased C.int;
+      Masters, Slaves : Descriptor_Array := (others => -1);
+      Template : C.char_array := C.To_C ("/tmp/uart-test-XXXXXX");
+      Name : aliased C.char_array (0 .. 255);
+      Child : GNAT.Expect.Process_Descriptor;
+      Args : OS.Argument_List (1 .. 0);
+      Started, Created : Boolean := False;
+      Match : GNAT.Expect.Expect_Match;
+      Status : Integer;
+      Deleted : Boolean;
+
+      function Path (J : Positive) return String is
+        (case J is
+           when 1 => "uart_1_PA9_PA10",
+           when 2 => "uart_2_PA2_PA3",
+           when 3 => "uart_3_PB10_PB11",
+           when 4 => "uart_4_PA0_PA1",
+           when 5 => "uart_5_PC12_PD2",
+           when 6 => "uart_6_PC6_PC7",
+           when others => raise Program_Error);
+
+      procedure Cleanup is
+      begin
+         if Started then
+            GNAT.Expect.Close (Child);
+            Started := False;
+         end if;
+         for J in Masters'Range loop
+            if Masters (J) >= 0 then
+               OS.Close (OS.File_Descriptor (Masters (J)));
+               Masters (J) := -1;
+            end if;
+            if Slaves (J) >= 0 then
+               OS.Close (OS.File_Descriptor (Slaves (J)));
+               Slaves (J) := -1;
+            end if;
+         end loop;
+         Ada.Directories.Set_Directory (Root);
+         if Created then
+            for J in Masters'Range loop
+               OS.Delete_File (C.To_Ada (Template) & "/" & Path (J), Deleted);
+            end loop;
+            Ada.Directories.Delete_Directory (C.To_Ada (Template));
+            Created := False;
+         end if;
+      end Cleanup;
+   begin
+      Check (Make_Temp_Dir (Template) /= System.Null_Address,
+             "Cannot create temporary directory");
+      Created := True;
+      Ada.Directories.Set_Directory (C.To_Ada (Template));
+      for J in Masters'Range loop
+         Name := (others => C.nul);
+         Check
+           (Open_PTY (Masters (J)'Access, Slaves (J)'Access, Name'Address,
+                      System.Null_Address, System.Null_Address) = 0,
+            "Cannot open pseudo terminal");
+         Check (Set_FD_Flags (Masters (J), 2, 1) = 0, "Cannot set CLOEXEC");
+         Check (Set_FD_Flags (Slaves (J), 2, 1) = 0, "Cannot set CLOEXEC");
+         Check (Symlink (Name, C.To_C (Path (J))) = 0, "Cannot link UART");
+      end loop;
+      GNAT.Expect.Non_Blocking_Spawn
+        (Child, Root & "/tests/bin/multi_uart_tests", Args, Err_To_Out => True);
+      Started := True;
+      Ready (Child);
+      Read_Exact (OS.File_Descriptor (Masters (3)), "ALIAS");
+      for J in Masters'Range loop
+         Read_Exact
+           (OS.File_Descriptor (Masters (J)), "PORT" & Character'Val (48 + J));
+         Send (OS.File_Descriptor (Masters (J)), "DATA" & Character'Val (48 + J));
+      end loop;
+      Read_Exact (OS.File_Descriptor (Masters (5)), "PORT5");
+      Read_Exact (OS.File_Descriptor (Masters (6)), "PORT6");
+      begin
+         GNAT.Expect.Expect (Child, Match, "", Timeout => 5_000);
+         raise Program_Error with "Multi UART child exit timeout";
+      exception
+         when GNAT.Expect.Process_Died => null;
+      end;
+      GNAT.Expect.Close (Child, Status);
+      Started := False;
+      Check (Status = 0, "Multi UART child failed, status" & Status'Image);
+      Cleanup;
+      Ada.Text_IO.Put_Line ("PASS all six ports: concurrent IO, USART_3, Stop");
+   exception
+      when others =>
+         Cleanup;
+         raise;
+   end Run_Ports;
+
 begin
    Run_Case ("missing");
    Run_Case ("duplex");
@@ -220,4 +311,5 @@ begin
    Run_Case ("large");
    Run_Case ("disconnect");
    Run_Case ("demo");
+   Run_Ports;
 end Test_UART;

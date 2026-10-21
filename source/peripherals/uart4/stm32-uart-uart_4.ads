@@ -1,22 +1,16 @@
---  SPDX-FileCopyrightText: 2025 Max Reznik <reznikmm@gmail.com>
---
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-----------------------------------------------------------------
-
---  UART_4 device.
 
 with Interfaces;
 with System;
-
 with A0B.Callbacks;
-
-private with Ada.Interrupts.Names;
-private with STM32.Registers.USART;
+with STM32.UART.Linux_Devices;
 
 generic
    Priority : System.Interrupt_Priority;
-   --  Priority is used for underlying protected object.
 package STM32.UART.UART_4 is
+
+   package Implementation is new Linux_Devices.Port_4.Device (Priority);
+   --  Thin API aliases; all behavior is in Generic_UART.Device.
 
    procedure Configure
      (TX        : Pin;
@@ -24,58 +18,57 @@ package STM32.UART.UART_4 is
       Rate      : Interfaces.Unsigned_32;
       Parity    : STM32.UART.Parity := None;
       Stop_Bits : Standard_Stop_Bits := 1)
-     with Pre =>
-       TX in (PA, 0) | (PC, 10) and then
-       RX in (PA, 1) | (PC, 11);
-   --
-   --  Configure UART_4 on given pins and speed (baud rate)
+     renames Implementation.Configure;
 
-   procedure Set_Baud_Rate (Rate : Interfaces.Unsigned_32);
-   --  Reconfigure UART_4 speed (baud rate)
+   procedure Set_Baud_Rate (Rate : Interfaces.Unsigned_32)
+     renames Implementation.Set_Baud_Rate;
+
+   procedure Set_Stop_Bits (Value : Standard_Stop_Bits)
+     renames Implementation.Set_Stop_Bits;
+
+   procedure Set_Stop_Bits (Value : Extended_Stop_Bits)
+     renames Implementation.Set_Stop_Bits;
+
+   procedure Set_Parity (Value : Parity)
+     renames Implementation.Set_Parity;
+
+   procedure Enable
+     renames Implementation.Enable;
+
+   procedure Disable
+     renames Implementation.Disable;
 
    procedure Start_Reading
      (Buffer : System.Address;
       Length : Positive;
-      Done   : A0B.Callbacks.Callback);
-   --  Start reading into given Buffer of provided Length. When Buffer
-   --  is filled with input bytes trigger Done callback. No other call to
-   --  Start_Reading or Start_Reading_Till_Idle is allowed until Done is
-   --  triggered.
+      Done   : A0B.Callbacks.Callback)
+     renames Implementation.Start_Reading;
 
    procedure Start_Reading_Till_Idle
      (Buffer : System.Address;
       Length : Positive;
-      Done   : A0B.Callbacks.Callback);
-   --  Start a read operation into the provided Buffer of given Length. The
-   --  read operation will complete and the Done callback will be triggered
-   --  either when the Buffer is completely filled, or when an idle line
-   --  condition (no new bytes received for a defined period) is detected on
-   --  the UART line after at least one byte has been received. No other call
-   --  to Start_Reading_Till_Idle or Start_Reading is allowed until Done is
-   --  triggered.
+      Done   : A0B.Callbacks.Callback)
+     renames Implementation.Start_Reading_Till_Idle;
 
-   function Bytes_Read return Natural;
-   --  Returns the number of bytes actually read during the last
-   --  completed asynchronous read operation (e.g., Start_Reading or
-   --  Start_Reading_Till_Idle). This function should be called only after
-   --  the Done callback for a read operation has been triggered.
+   function Bytes_Read return Natural
+     renames Implementation.Bytes_Read;
 
    procedure Start_Writing
      (Buffer : System.Address;
       Length : Positive;
-      Done   : A0B.Callbacks.Callback);
-   --  Start writing given Buffer of provided Length. When Buffer is
-   --  sent trigger Done callback. No other call to Start_Writing is allowed
-   --  until Done is triggered.
+      Done   : A0B.Callbacks.Callback)
+     renames Implementation.Start_Writing;
 
-private
+   function Is_Busy return Boolean
+     renames Implementation.Is_Busy;
 
-   package Implementation is new UART_Implementation
-     (STM32.Registers.USART.UART4_Periph,
-      UART_4_8,
-      Ada.Interrupts.Names.UART4_Interrupt,
-      Priority);
+   function Has_Error return Boolean
+     renames Implementation.Has_Error;
 
-   function Bytes_Read return Natural is (Implementation.Device.Bytes_Read);
+   procedure Stop
+     renames Implementation.Stop;
+
+   procedure Close
+     renames Implementation.Close;
 
 end STM32.UART.UART_4;

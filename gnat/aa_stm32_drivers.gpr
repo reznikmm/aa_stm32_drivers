@@ -7,10 +7,17 @@ with "../config/aa_stm32_drivers_config.gpr";
 
 project Aa_Stm32_Drivers is
    for Library_Name use "aa_stm32";
-   for Source_Dirs use ("../source", "../source/impl");
+   for Source_Dirs use
+     ("../source", "../source/impl", "../source/peripherals/uart3",
+      "../source/peripherals/uart4", "../source/peripherals/uart5");
    for Source_Files use
-     ("stm32.ads", "stm32-uart.ads", "stm32-uart-usart_2.ads",
-      "stm32-uart-usart_2.adb", "stm32-workers.ads", "stm32-workers.adb");
+     ("stm32.ads", "stm32-uart.ads",
+      "stm32-uart-generic_uart.ads", "stm32-uart-generic_uart.adb",
+      "stm32-uart-linux_devices.ads",
+      "stm32-uart-usart_1.ads", "stm32-uart-usart_2.ads",
+      "stm32-uart-usart_3.ads", "stm32-uart-usart_6.ads",
+      "stm32-uart-uart_3.ads", "stm32-uart-uart_4.ads",
+      "stm32-uart-uart_5.ads", "stm32-workers.ads", "stm32-workers.adb");
    for Object_Dir use "../obj/" & Aa_Stm32_Drivers_Config.Build_Profile;
    for Create_Missing_Dirs use "True";
    for Library_Dir use "../lib";

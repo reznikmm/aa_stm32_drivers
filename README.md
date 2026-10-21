@@ -4,8 +4,10 @@
 
 ## Linux UART backend
 
-This branch builds `STM32.UART.USART_2` for native Linux using
-`GNAT.Serial_Communications`. The build no longer depends on `gnat_arm_elf`,
+This branch builds `STM32.UART.USART_1`, `USART_2`, `USART_6`, `UART_3`,
+`UART_4`, and `UART_5` for native Linux using `GNAT.Serial_Communications`.
+`STM32.UART.USART_3` is also available as a compatibility name for `UART_3`.
+The build no longer depends on `gnat_arm_elf`,
 `cortex_m`, an MCU configuration, or a board runtime. Other STM32 driver
 sources and their reference documentation below remain in the repository,
 but are not included in the Linux library.
@@ -34,9 +36,25 @@ UART.Configure
   (TX => (STM32.PA, 2), RX => (STM32.PA, 3), Rate => 115_200);
 ```
 
-`Configure` opens `./uart_2_<TX-pin>_<RX-pin>` relative to the process working
-directory. Pins are written without punctuation: the example opens
+`Configure` opens `./uart_<number>_<TX-pin>_<RX-pin>` relative to the process
+working directory. Pins are written without punctuation: the example opens
 `./uart_2_PA2_PA3`; `(PD, 5)` and `(PD, 6)` open `./uart_2_PD5_PD6`.
+
+| Package under `STM32.UART` | TX pins | RX pins | Example path |
+| --- | --- | --- | --- |
+| `USART_1` | PA9, PB6 | PA10, PB7 | `./uart_1_PA9_PA10` |
+| `USART_2` | PA2, PD5 | PA3, PD6 | `./uart_2_PA2_PA3` |
+| `UART_3` / `USART_3` | PB10, PC10, PD8 | PB11, PC11, PD9 | `./uart_3_PB10_PB11` |
+| `UART_4` | PA0, PC10 | PA1, PC11 | `./uart_4_PA0_PA1` |
+| `UART_5` | PC12 | PD2 | `./uart_5_PC12_PD2` |
+| `USART_6` | PC6 | PC7 | `./uart_6_PC6_PC7` |
+
+Every package accepts `Priority` and exposes the same asynchronous operations,
+configuration setters, `Stop`, `Close`, and status functions. `Configure` on
+`UART_4` and `UART_5` retains its `Standard_Stop_Bits` parameter (default `1`);
+the others retain `Extended_Stop_Bits` (default `1.0`). `Stop` cancels IO and
+waits for callbacks while leaving the port open and enabled for the next IO.
+
 Create a symlink to a serial device (or a pseudo terminal) before running:
 
 ```shell
@@ -79,7 +97,23 @@ alr test
 
 The tests build with `alr` and exercise full-duplex IO, partial reads, idle
 completion, cancellation, callback rearming, large writes, disconnection,
-path selection, missing devices, and the demo executable.
+path selection, missing devices, and the demo executable. A further test
+exchanges different messages through all six ports simultaneously, checks
+the `USART_3` compatibility name, pin contracts, and the original `Stop` API.
+
+### Shared UART implementation
+
+`STM32.UART.Generic_UART` contains the complete Linux backend. Its outer
+generic binds the port number, allowed pin arrays, and `Configure` stop-bit
+type; its nested `Device` generic retains the public `Priority` parameter.
+`STM32.UART.Linux_Devices` defines these bindings for the six ports. Public
+UART packages only instantiate `Device` and rename its operations; they have
+no device-specific bodies. `USART_3` renames the `UART_3` generic.
+
+To add another UART, add a port definition to `Linux_Devices`, a thin public
+package, and its source entries to the GPR project. No IO, cancellation,
+callback, or scheduling logic needs to be copied. Each device instance owns
+its descriptor and reader/writer slots; all slots use the single dispatcher.
 
 ### Internal workers for device backends
 
