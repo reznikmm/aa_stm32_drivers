@@ -106,6 +106,11 @@ private
       procedure Disable_Card_Interrupt;
 
       function Last_Error return Error_Kind;
+      --  SDIO result of the last operation. DMA errors are checked by the
+      --  package level Last_Error.
+
+      function Has_Data_Transfer return Boolean;
+      --  The last operation used DMA
 
    private
       procedure Interrupt_Handler;
@@ -120,16 +125,24 @@ private
       State          : Transfer_State;
       Busy           : Boolean := False;
       Wait_DMA       : Boolean := False;
-      DMA_Failed     : Boolean := False;
+      Uses_DMA       : Boolean := False;
       Error          : Error_Kind := No_Error;
       Done           : A0B.Callbacks.Callback;
       Card_Enabled   : Boolean := False;
       Card_Interrupt : A0B.Callbacks.Callback;
    end Device;
 
-   function Last_Error return Error_Kind is (Device.Last_Error);
+   function Last_Error return Error_Kind is
+     (if Device.Last_Error = No_Error
+        and then Device.Has_Data_Transfer
+        and then Stream_2_3.Has_Error
+      then DMA_Error
+      else Device.Last_Error);
+   --  Stream_2_3.Has_Error can't be called from DMA_Complete, because it is
+   --  executed inside the DMA protected object (the stream callback), so
+   --  the DMA error is checked here, outside of both protected actions.
 
-   function Has_Error return Boolean is (Device.Last_Error /= No_Error);
+   function Has_Error return Boolean is (Last_Error /= No_Error);
 
    function Short_Response return Interfaces.Unsigned_32 renames
      STM32.SDIO.Short_Response;

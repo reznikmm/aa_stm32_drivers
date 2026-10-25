@@ -55,8 +55,9 @@ package body STM32.SDIO.DMA_SDIO is
       procedure DMA_Complete is
       begin
          if Wait_DMA then
+            --  This is called by the DMA stream callback inside the stream
+            --  protected object, so don't call Stream.Has_Error here.
             Wait_DMA := False;
-            DMA_Failed := Stream_2_3.Has_Error;
             Try_To_Finish;
          end if;
       end DMA_Complete;
@@ -99,6 +100,12 @@ package body STM32.SDIO.DMA_SDIO is
 
       function Last_Error return Error_Kind is (Error);
 
+      -----------------------
+      -- Has_Data_Transfer --
+      -----------------------
+
+      function Has_Data_Transfer return Boolean is (Uses_DMA);
+
       -------------------
       -- Start_Command --
       -------------------
@@ -131,7 +138,7 @@ package body STM32.SDIO.DMA_SDIO is
          Device.Done := Done;
          Busy := True;
          Wait_DMA := Has_Data;
-         DMA_Failed := False;
+         Uses_DMA := Has_Data;
          Error := No_Error;
 
          if Has_Data then
@@ -178,12 +185,11 @@ package body STM32.SDIO.DMA_SDIO is
 
          if Busy and Is_Finished (State) and not Wait_DMA then
             Busy := False;
-            Error :=
-              (if Result (State) /= No_Error then Result (State)
-               elsif DMA_Failed then DMA_Error
-               else No_Error);
+            Error := Result (State);
 
-            Periph.DCTRL.DMAEN := False;
+            --  Don't touch DCTRL here: DTEN reads back as 1, so a
+            --  read-modify-write of DCTRL starts a new data transfer. The
+            --  next Start_Data_Path writes the whole register anyway.
             Periph.MASK := Interrupt_Mask (State, Card_Enabled);
             A0B.Callbacks.Emit (Done);
          else

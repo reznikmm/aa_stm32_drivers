@@ -9,10 +9,10 @@ package body STM32.DMA is
 
    function To_Size (X : Length_In_Bytes) return Interfaces.Unsigned_32 is
      (case X is
-         when 1 => 0,
-         when 2 => 1,
-         when 4 => 3,
-         when others => 4);
+         when 1 => 0,  --  Byte
+         when 2 => 1,  --  Half-word
+         when 4 => 2,  --  Word
+         when others => raise Program_Error);
 
    function To_Burst (X : Burst_Length) return Interfaces.Unsigned_32 is
      (case X is
@@ -68,7 +68,8 @@ package body STM32.DMA is
 
       function Is_DMA2 return Boolean is
         (System."="
-           (Periph.ISR'Address, STM32.Registers.DMA.DMA2_Periph.IFCR'Address));
+           (Periph.ISR'Address, STM32.Registers.DMA.DMA2_Periph.ISR'Address));
+      --  Compare the same register of both controllers
 
       function Has_Peripheral_Controled_Flow
         (Channel : Channel_Id) return Boolean is
