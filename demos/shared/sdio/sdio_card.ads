@@ -5,9 +5,9 @@
 
 --  SDIO card enumeration shared by SDIO demos.
 --
---  It powers the card up (optionally), runs CMD0, CMD5, CMD3, CMD7, reads
---  CCCR with CMD52, switches the bus to 4 bits, then reads the common CIS
---  with CMD53 (data transfer) and compares the first bytes with CMD52.
+--  It runs CMD0, CMD5, CMD3, CMD7, reads CCCR and CIS with CMD52, enables
+--  function 1 (backplane) and reads the chip id with CMD53 (data transfer)
+--  in 1-bit and 4-bit modes, comparing it with CMD52.
 
 with Interfaces;
 with System;
