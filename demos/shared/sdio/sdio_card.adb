@@ -45,7 +45,7 @@ package body SDIO_Card is
    Chipcommon_Base       : constant := 16#1800_0000#;
    --  Chip id register is the first register of the chipcommon core
 
-   CIS_Length : constant := 64;
+   Block_Size : constant := 64;
 
    procedure Check (Name : String; Error : STM32.SDIO.Error_Kind);
    --  Print the command result
@@ -89,13 +89,8 @@ package body SDIO_Card is
    --  Read chipcommon chip id register with CMD53 (function 1), compare it
    --  with CMD52 byte reads.
 
-   procedure Read_CIS
-     (Title   : String;
-      CIS     : Register_Address;
-      Buffer  : out Byte_Array;
-      Success : out Boolean);
-   --  Read Buffer'Length bytes of the common CIS with CMD53, print them and
-   --  compare first bytes with CMD52.
+   procedure Print_Manufacturer (CIS : Register_Address);
+   --  Walk the common CIS with CMD52 and print CISTPL_MANFID tuple
 
    -----------
    -- Check --
@@ -190,7 +185,7 @@ package body SDIO_Card is
       Error : STM32.SDIO.Error_Kind;
       Value : Interfaces.Unsigned_8;
    begin
-      Write_Byte (FBR1_Block_Size_Low, 64, Error);
+      Write_Byte (FBR1_Block_Size_Low, Block_Size, Error);
       Write_Byte (FBR1_Block_Size_High, 0, Error);
 
       Write_Byte (CCCR_IO_Enable, 2 ** Backplane_Function, Error);
@@ -251,7 +246,13 @@ package body SDIO_Card is
          Error  => Error);
 
       Check ("CMD53 chip id " & Title, Error);
-      Put ("CMD53 R5: " & Hex (Short_Response, 8) & New_Line);
+      Put ("CMD53 R5: " & Hex (Short_Response, 8)
+           & ", response command:"
+           & Response_Command'Image & New_Line);
+
+      if (Short_Response and R5_Error_Flags) /= 0 then
+         Put ("R5 has error flags" & New_Line);
+      end if;
       Put ("Chip id register:");
 
       for Item of reverse Buffer loop
@@ -290,64 +291,44 @@ package body SDIO_Card is
       delay 0.02;  --  The chip needs time to react
    end Reset_IO;
 
-   --------------
-   -- Read_CIS --
-   --------------
+   ------------------------
+   -- Print_Manufacturer --
+   ------------------------
 
-   procedure Read_CIS
-     (Title   : String;
-      CIS     : Register_Address;
-      Buffer  : out Byte_Array;
-      Success : out Boolean)
-   is
-      Error : STM32.SDIO.Error_Kind;
-      Value : Interfaces.Unsigned_8;
+   procedure Print_Manufacturer (CIS : Register_Address) is
+      Error   : STM32.SDIO.Error_Kind;
+      Code    : Interfaces.Unsigned_8;
+      Length  : Interfaces.Unsigned_8;
+      Address : Register_Address := CIS;
+      Data    : Byte_Array (1 .. 4);
    begin
-      Buffer := (others => 0);
+      --  Function 0 CIS isn't accessible with CMD53 on BCM43362 (R5 has
+      --  OUT_OF_RANGE), so use CMD52 like Linux and WICED do.
+      for Tuple in 1 .. 32 loop
+         Read_Byte (Address, Code, Error);
+         exit when Error /= STM32.SDIO.No_Error or Code = 16#FF#;
+         Read_Byte (Address + 1, Length, Error);
 
-      --  CMD53 (IO_RW_EXTENDED): read bytes of function 0 in byte mode
-      --  with incrementing address.
-      Send_Data_Command
-        (Item   =>
-           (Command  => 53,
-            Argument =>
-              2 ** 26  --  OP code: incrementing address
-              + CIS * 2 ** 9
-              + Buffer'Length,
-            Response => STM32.SDIO.Short_Response),
-         Data   =>
-           (Direction  => STM32.SDIO.Card_To_Host,
-            Block_Size => Buffer'Length,
-            Length     => Buffer'Length,
-            Timeout    => 1_000_000),
-         Buffer => Buffer'Address,
-         Error  => Error);
+         if Code = 16#20# then  --  CISTPL_MANFID
+            for J in Data'Range loop
+               Read_Byte (Address + 1 + Register_Address (J), Data (J), Error);
+            end loop;
 
-      Check ("CMD53 " & Title, Error);
-      Put ("CMD53 R5: " & Hex (Short_Response, 8)
-           & ", response command:"
-           & Response_Command'Image & New_Line);
-
-      for J in Buffer'Range loop
-         Put (Hex (Interfaces.Unsigned_32 (Buffer (J)), 2));
-         Put (if J mod 16 = 0 then New_Line else " ");
-      end loop;
-
-      --  Compare with CMD52
-      for J in 1 .. 8 loop
-         Read_Byte (CIS + Register_Address (J - 1), Value, Error);
-
-         if Value /= Buffer (J) then
-            Put ("Mismatch at" & J'Image & ", CMD52 gives "
-                 & Hex (Interfaces.Unsigned_32 (Value), 2) & New_Line);
-            Success := False;
+            Put ("Manufacturer: "
+                 & Hex (Interfaces.Unsigned_32 (Data (2)), 2)
+                 & Hex (Interfaces.Unsigned_32 (Data (1)), 2)
+                 & ", card: "
+                 & Hex (Interfaces.Unsigned_32 (Data (4)), 2)
+                 & Hex (Interfaces.Unsigned_32 (Data (3)), 2)
+                 & New_Line);
             return;
          end if;
+
+         Address := Address + 2 + Register_Address (Length);
       end loop;
 
-      Put ("CMD53 data matches CMD52" & New_Line);
-      Success := True;
-   end Read_CIS;
+      Put ("No CISTPL_MANFID" & New_Line);
+   end Print_Manufacturer;
 
    ---------
    -- Run --
@@ -360,8 +341,6 @@ package body SDIO_Card is
       Value    : Interfaces.Unsigned_8;
       CIS      : Interfaces.Unsigned_32 := 0;
       Success  : Boolean;
-      Buffer   : Byte_Array (1 .. CIS_Length) := (others => 0)
-        with Alignment => 16;
    begin
       Reset_IO;
 
@@ -433,7 +412,7 @@ package body SDIO_Card is
       Put ("Common CIS: " & Hex (CIS, 5) & New_Line);
 
       --  Function 0 block size
-      Write_Byte (CCCR_Block_Size_Low, CIS_Length, Error);
+      Write_Byte (CCCR_Block_Size_Low, Block_Size, Error);
       Check ("Block size low", Error);
       Write_Byte (CCCR_Block_Size_High, 0, Error);
       Check ("Block size high", Error);
@@ -450,7 +429,7 @@ package body SDIO_Card is
          Read_Chip_Id ("1-bit", Success);
       end if;
 
-      Read_CIS ("1-bit", CIS, Buffer, Success);
+      Print_Manufacturer (CIS);
 
       --  Switch to 4-bit bus: card first, then host
       Read_Byte (CCCR_Bus_Control, Value, Error);
@@ -465,31 +444,6 @@ package body SDIO_Card is
       Set_Bus (Data_Speed, 4);
 
       Read_Chip_Id ("4-bit", Success);
-      Read_CIS ("4-bit", CIS, Buffer, Success);
-
-      if not Success then
-         return;
-      end if;
-
-      --  Look for CISTPL_MANFID tuple
-      declare
-         Index : Positive := 1;
-      begin
-         while Index + 5 <= Buffer'Last and then Buffer (Index) /= 16#FF# loop
-            if Buffer (Index) = 16#20# then
-               Put ("Manufacturer: "
-                    & Hex (Interfaces.Unsigned_32 (Buffer (Index + 3)), 2)
-                    & Hex (Interfaces.Unsigned_32 (Buffer (Index + 2)), 2)
-                    & ", card: "
-                    & Hex (Interfaces.Unsigned_32 (Buffer (Index + 5)), 2)
-                    & Hex (Interfaces.Unsigned_32 (Buffer (Index + 4)), 2)
-                    & New_Line);
-               exit;
-            end if;
-
-            Index := Index + 2 + Natural (Buffer (Index + 1));
-         end loop;
-      end;
    end Run;
 
    ----------------
