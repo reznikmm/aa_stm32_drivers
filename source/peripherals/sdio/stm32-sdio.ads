@@ -15,8 +15,21 @@
 --  * DMA_SDIO     - interrupt driven, data is moved by DMA2 Stream 3
 --    (channel 4) in the peripheral flow control mode.
 --
---  Use only one variant in a program, because all of them drive the same
---  peripheral.
+--  All variants drive the same peripheral. Polling_SDIO could be combined
+--  with Generic_SDIO or DMA_SDIO in one program, for instance, to send short
+--  commands by polling and to transfer big blocks with DMA. Then:
+--
+--  * the user guarantees that transactions don't overlap: a Polling_SDIO
+--    call is made only when the other variant is not busy (see Is_Busy),
+--    and a Start_Command is made only when no Polling_SDIO call is running;
+--  * Configure is called only once (by any variant), because it resets the
+--    peripheral;
+--  * the card interrupt (DAT1) is handled by one variant only.
+--
+--  This works because a finished interrupt driven transaction leaves only
+--  the card interrupt enabled in the mask register, the polling variant
+--  doesn't touch the mask register, and a new transaction clears only the
+--  command and data flags, not the card interrupt flag.
 --
 --  The driver doesn't know anything about SD/SDIO protocol. It sends a
 --  command, receives a response and optionally transfers a data block(s).

@@ -76,6 +76,12 @@ package body STM32.SDIO.Generic_SDIO is
          Periph.MASK := Interrupt_Mask (State, Card_Enabled);
       end Interrupt_Handler;
 
+      -------------
+      -- Is_Busy --
+      -------------
+
+      function Is_Busy return Boolean is (Busy);
+
       ----------------
       -- Last_Error --
       ----------------

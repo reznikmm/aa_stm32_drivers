@@ -94,6 +94,12 @@ package body STM32.SDIO.DMA_SDIO is
          end if;
       end Interrupt_Handler;
 
+      -------------
+      -- Is_Busy --
+      -------------
+
+      function Is_Busy return Boolean is (Busy);
+
       ----------------
       -- Last_Error --
       ----------------

@@ -68,6 +68,10 @@ package STM32.SDIO.Generic_SDIO is
    function Response_Command return Command_Index;
    --  Command index of the last response (63 for R2, R3, R4)
 
+   function Is_Busy return Boolean;
+   --  A command started by Start_Command is not completed yet. Don't use
+   --  Polling_SDIO while it is True.
+
    function Has_Error return Boolean;
    --  The last operation has failed
 
@@ -99,6 +103,8 @@ private
 
       function Last_Error return Error_Kind;
 
+      function Is_Busy return Boolean;
+
    private
       procedure Interrupt_Handler;
 
@@ -114,6 +120,8 @@ private
    end Device;
 
    function Last_Error return Error_Kind is (Device.Last_Error);
+
+   function Is_Busy return Boolean is (Device.Is_Busy);
 
    function Has_Error return Boolean is (Device.Last_Error /= No_Error);
 

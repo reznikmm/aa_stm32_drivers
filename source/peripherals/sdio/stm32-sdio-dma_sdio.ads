@@ -71,6 +71,10 @@ package STM32.SDIO.DMA_SDIO is
    function Response_Command return Command_Index;
    --  Command index of the last response (63 for R2, R3, R4)
 
+   function Is_Busy return Boolean;
+   --  A command started by Start_Command is not completed yet. Don't use
+   --  Polling_SDIO while it is True.
+
    function Has_Error return Boolean;
    --  The last operation has failed
 
@@ -106,6 +110,8 @@ private
       procedure Disable_Card_Interrupt;
 
       function Last_Error return Error_Kind;
+
+      function Is_Busy return Boolean;
       --  SDIO result of the last operation. DMA errors are checked by the
       --  package level Last_Error.
 
@@ -141,6 +147,8 @@ private
    --  Stream_2_3.Has_Error can't be called from DMA_Complete, because it is
    --  executed inside the DMA protected object (the stream callback), so
    --  the DMA error is checked here, outside of both protected actions.
+
+   function Is_Busy return Boolean is (Device.Is_Busy);
 
    function Has_Error return Boolean is (Last_Error /= No_Error);
 
