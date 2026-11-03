@@ -16,6 +16,7 @@ project Demos is
    for Source_Dirs use
     ("src",
      "../shared/spi",
+     "../shared/i2s",
      "../shared/tim",
      "../shared/uart",
      "../shared/rtc",
@@ -28,6 +29,7 @@ project Demos is
    for Main use
      ("uart_irq.adb", "uart_dma.adb", "uart_polling.adb",
       "spi_dma.adb", "spi_polling.adb",
+      "i2s_polling.adb", "i2s_irq.adb", "i2s_dma.adb",
       "tim_dma.adb", "rtc_main.adb",
       "i2c.adb",
       "sdio_polling.adb", "sdio_irq.adb", "sdio_dma.adb",

@@ -14,6 +14,7 @@ prioritizing simplicity and efficiency.
 | UART  |   Y     |  Y  |  Y  |
 | I2C   |   -     |  Y  |  Y  |
 | SPI   |   Y     |  Y  |  Y  |
+| I2S RX|   Y     |  Y  |  Y  |
 | TIM   |   basic |  Y  |  Y  |
 | RNG   |   Y     |  Y  |     |
 | Flash |   -     |  Y  |     |
@@ -40,6 +41,7 @@ prioritizing simplicity and efficiency.
   - [SPI](#spi)
     - [SPI Polling](#spi-polling)
     - [SPI Interrupts and DMA](#spi-interrupts-and-dma)
+  - [I2S master reception](#i2s-master-reception)
   - [Timers](#timers)
     - [Basic timer with no compare/capture channel (no GPIO pin)](#basic-timer-with-no-comparecapture-channel-no-gpio-pin)
     - [Generic timer with a single compare/capture channel (1 GPIO pin)](#generic-timer-with-a-single-comparecapture-channel-1-gpio-pin)
@@ -66,6 +68,7 @@ prioritizing simplicity and efficiency.
   - UART (Polling, Interrupts, DMA APIs)
   - I2C (Interrupts, DMA APIs)
   - SPI (Polling, Interrupts, DMA APIs)
+  - I2S master reception (Polling, Interrupts, DMA APIs)
   - Timers (Interrupts, DMA APIs)
   - MCUs UID
   - SDIO host controller for `stm32f4` and `stm32f429` (Polling, Interrupts, DMA APIs)
@@ -405,6 +408,87 @@ SPI_1.Start_Data_Exchange
 ```
 
 The callback is called when the transfer is complete.
+
+### I2S master reception
+
+I2S2 and I2S3 are supported on all three targets (`stm32f4`, `stm32f411`,
+`stm32f429disco`). Choose one variant per peripheral:
+
+- Polling: `STM32.Polling.I2S_2` / `I2S_3`
+  (also available as `STM32.I2S.Polling_I2S_2` / `Polling_I2S_3`).
+- Interrupts: instantiate `STM32.I2S.I2S_2` / `I2S_3` at library level.
+- DMA: instantiate `STM32.I2S.DMA_I2S_2` / `DMA_I2S_3` at library level.
+
+The driver generates CK and WS and receives SD from a slave audio source.
+It supports Philips I2S, MSB-justified and LSB-justified standards, either
+clock polarity, and these formats:
+
+| Format | Channel slot | Half-words per stereo frame |
+| --- | --- | --- |
+| `Data_16` | 16 bits | 2 |
+| `Data_16_Extended` | 32 bits, 16 bits of data | 2 |
+| `Data_24` | 32 bits, 24 bits of data | 4 |
+| `Data_32` | 32 bits | 4 |
+
+Configure and enable the I2S clock source in RCC before receiving: either
+PLLI2S or external I2S_CKIN. Pass its frequency in Hz as `Clock`; this is
+separate from PCLK1. `Frequency` is the requested stereo sample rate in Hz.
+The driver rounds the prescaler to the nearest integer and raises
+`Constraint_Error` if it falls outside the hardware range. With MCLK
+disabled, the actual sample rate is
+`Clock / (frame_bits * (2 * I2SDIV + ODD))`, where `frame_bits` is 32 for
+`Data_16` and 64 otherwise. MCLK output is not provided.
+
+```ada
+with STM32;
+with STM32.I2S;
+with STM32.Polling.I2S_2;
+
+procedure Capture is
+   package Audio renames STM32.Polling.I2S_2;
+   Buffer : STM32.I2S.Sample_Buffer (1 .. 256);
+begin
+   --  First configure PLLI2S or external I2S_CKIN for 49.152 MHz.
+   Audio.Configure
+     (CK        => (STM32.PB, 13),
+      WS        => (STM32.PB, 12),
+      SD        => (STM32.PB, 15),
+      Frequency => 48_000,
+      Clock     => 49_152_000,
+      Format    => STM32.I2S.Data_24);
+
+   Audio.Receive (Buffer'Address, Buffer'Length);
+   if Audio.Has_Error then
+      raise Program_Error;
+   end if;
+end Capture;
+```
+
+For IRQ/DMA, configure the device the same way and call
+`Audio.Start_Reading (Buffer'Address, Buffer'Length, Done)`. The buffer
+must remain available until `Done` is emitted. The callback runs once on
+completion or error, in interrupt context; use it to signal a waiting task.
+Query `Has_Error` and start the next capture from that task. `Is_Busy` is
+also available. Overruns and DMA transfer errors invalidate the capture;
+the next `Start_Reading` clears the previous error state.
+
+`Length` always counts 16-bit half-words, not bytes or channel samples,
+and must be a multiple of the stereo frame length in the table above.
+Buffers must be half-word aligned; invalid lengths, null buffers and
+misaligned buffers raise `Constraint_Error`. The driver stores raw data
+in wire order: left channel then right channel, with the most significant
+half-word first for 24-/32-bit data. For 24-bit audio, the final eight bits
+of each channel are padding. No sign extension or sample conversion is done.
+
+Each capture starts and stops the I2S clocks, so successive buffers have
+gaps. Polling blocks until completion or overrun. IRQ/DMA report errors
+through `Has_Error`; starting or reconfiguring an active asynchronous
+capture raises `Program_Error`. Serialize configuration and capture calls.
+
+I2S2 DMA uses DMA1 stream 3, channel 0; I2S3 uses DMA1 stream 0, channel 0.
+DMA buffers must reside in DMA-accessible SRAM, outside CCM. The selected
+SPI/I2S peripheral, its interrupt, and its DMA stream must not be used by
+another driver at the same time.
 
 ### Timers
 
@@ -1018,6 +1102,9 @@ Available demos:
 - `uart/uart_dma.adb`: UART transfer using DMA
 - `spi/spi_polling.adb`: SPI transfer using polling
 - `spi/spi_dma.adb`: SPI transfer using DMA
+- `i2s/i2s_polling.adb`, `i2s/i2s_irq.adb`, `i2s/i2s_dma.adb`: finite I2S2
+  master receive captures; adjust `i2s/i2s_board.ads` and its body for the
+  board's pins and I2S clock source
 - `tim/tim_dma.adb`: Timer PWM generation with DMA updates
 - `rtc/rtc_main.adb`: RTC clock/calendar example
 - `i2c/i2c.adb`: I2C bus scanner over addresses `0x08 .. 0x77` with UART output
